@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   autoAnalyze: false,
   academicLevel: 'undergrad',
   inPageIntegration: true,
+  uiMode: 'blended',
   customLabels: [
     { name: 'Thesis / Research', color: '#8b5cf6', keywords: ['thesis', 'dissertation', 'advisor', 'lab meeting'] },
     { name: 'Financial Aid', color: '#10b981', keywords: ['scholarship', 'bursar', 'grant', 'tuition', 'finaid'] },

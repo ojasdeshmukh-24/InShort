@@ -68,6 +68,8 @@ export interface AggregatedDeadline {
 
 export type PolishTone = 'formal' | 'extension' | 'doubt' | 'lor';
 
+export type UiIntegrationMode = 'blended' | 'floating' | 'off';
+
 export interface UserSettings {
   apiKey: string;
   provider: 'gemini' | 'groq' | 'openai';
@@ -75,7 +77,8 @@ export interface UserSettings {
   openaiApiKey?: string;
   autoAnalyze: boolean;
   academicLevel?: 'undergrad' | 'grad' | 'researcher' | 'faculty';
-  inPageIntegration?: boolean; // When true, injects native filter toolbar & in-email AI card into Gmail
+  inPageIntegration?: boolean; // When true, injects in-page elements into Gmail
+  uiMode?: UiIntegrationMode; // 'blended' (Native Material 3), 'floating' (Pill toolbar), 'off' (Side Panel only)
   customLabels: {
     name: string;
     color: string;

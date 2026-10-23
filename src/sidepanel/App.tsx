@@ -41,7 +41,8 @@ import {
   AnalysisResult,
   CategoryType,
   InboxRowItem,
-  AggregatedDeadline
+  AggregatedDeadline,
+  UiIntegrationMode
 } from '../types';
 import { analyzeAcademicEmail } from '../services/ai';
 import { createGoogleCalendarUrl } from '../services/calendar';
@@ -58,6 +59,7 @@ export default function App() {
   const [groqKey, setGroqKey] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [inPageIntegration, setInPageIntegration] = useState(true);
+  const [uiMode, setUiMode] = useState<UiIntegrationMode>('blended');
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedReplyIndex, setCopiedReplyIndex] = useState<number | null>(null);
 
@@ -89,6 +91,13 @@ export default function App() {
       setApiKey(settings.apiKey || '');
       setGroqKey(settings.groqApiKey || '');
       setInPageIntegration(settings.inPageIntegration !== false);
+      if (settings.uiMode) {
+        setUiMode(settings.uiMode);
+      } else if (settings.inPageIntegration === false) {
+        setUiMode('off');
+      } else {
+        setUiMode('blended');
+      }
       if (!settings.apiKey && !settings.groqApiKey) {
         setShowSettings(true);
       }
@@ -341,21 +350,27 @@ export default function App() {
     }
   };
 
-  const handleToggleInPage = async (enabled: boolean) => {
-    setInPageIntegration(enabled);
-    await saveSettings({ inPageIntegration: enabled });
+  const handleSetUiMode = async (mode: UiIntegrationMode) => {
+    setUiMode(mode);
+    setInPageIntegration(mode !== 'off');
+    await saveSettings({ uiMode: mode, inPageIntegration: mode !== 'off' });
     const tab = await getGmailTab();
     if (tab?.id) {
       chrome.tabs.sendMessage(tab.id, {
-        type: 'TOGGLE_IN_PAGE_INTEGRATION',
-        enabled,
+        type: 'SET_UI_MODE',
+        mode,
       }).catch(() => {});
     }
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveSettings({ apiKey: apiKey.trim(), groqApiKey: groqKey.trim(), inPageIntegration });
+    await saveSettings({
+      apiKey: apiKey.trim(),
+      groqApiKey: groqKey.trim(),
+      inPageIntegration: uiMode !== 'off',
+      uiMode,
+    });
     setShowSettings(false);
     setError(null);
     if (email) {
@@ -670,30 +685,67 @@ export default function App() {
                   />
                 </div>
 
-                {/* In-Gmail Native Interface Toggle */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <div className="pr-2">
+                {/* In-Gmail Integration & Revert Options */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                  <div>
                     <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] flex items-center gap-1.5">
                       <LayoutGrid className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span>In-Gmail Native Interface</span>
+                      <span>Gmail Integration & Revert</span>
                     </div>
                     <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
-                      Filter bar above inbox & AI brief card inside open emails
+                      Select how AcadMail integrates inside Gmail
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleInPage(!inPageIntegration)}
-                    className={`w-9 h-5 flex items-center rounded-full p-0.5 transition duration-200 shrink-0 cursor-pointer ${
-                      inPageIntegration ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
-                    }`}
-                  >
-                    <div
-                      className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition duration-200 ${
-                        inPageIntegration ? 'translate-x-4' : 'translate-x-0'
+
+                  <div className="grid grid-cols-3 gap-1.5 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSetUiMode('blended')}
+                      className={`p-2 rounded-xl text-left border transition ${
+                        uiMode === 'blended'
+                          ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-700 dark:text-blue-300 font-bold shadow-2xs'
+                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                       }`}
-                    />
-                  </button>
+                    >
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span>✨</span>
+                        <span>Blended M3</span>
+                      </div>
+                      <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Native Google UI</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSetUiMode('floating')}
+                      className={`p-2 rounded-xl text-left border transition ${
+                        uiMode === 'floating'
+                          ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-700 dark:text-blue-300 font-bold shadow-2xs'
+                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span>⚡</span>
+                        <span>Floating Bar</span>
+                      </div>
+                      <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Capsule toolbar</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSetUiMode('off')}
+                      className={`p-2 rounded-xl text-left border transition ${
+                        uiMode === 'off'
+                          ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-500 text-rose-700 dark:text-rose-300 font-bold shadow-2xs'
+                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span>🛡️</span>
+                        <span>Revert (Off)</span>
+                      </div>
+                      <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Side panel only</p>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-1">

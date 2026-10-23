@@ -1,11 +1,11 @@
-import { ExtractedEmail, InboxRowItem, CategoryType } from '../types';
+import { ExtractedEmail, InboxRowItem, CategoryType, UiIntegrationMode } from '../types';
 
-console.log('[AcadMail AI] In-Gmail Native Content Script initialized.');
+console.log('[AcadMail AI] Material 3 Blended Content Script initialized.');
 
 let lastClickedRow: HTMLElement | null = null;
 let currentActiveFilter: CategoryType | 'ALL' = 'ALL';
 let scannedItemsCache: InboxRowItem[] = [];
-let inPageIntegrationEnabled = true;
+let uiMode: UiIntegrationMode = 'blended';
 let isFilterBarMinimized = false;
 
 // Safe message sender
@@ -17,32 +17,56 @@ function safeSendMessage(message: any) {
   } catch (e) {}
 }
 
-// Load inPageIntegration setting
+// Detect Gmail Dark Mode
+function isGmailDark(): boolean {
+  try {
+    const bg = window.getComputedStyle(document.body).backgroundColor;
+    if (bg) {
+      const rgb = bg.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+        return brightness < 128;
+      }
+    }
+  } catch (e) {}
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// Load UI Mode Settings
 function loadSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     chrome.storage.local.get(['acadmail_settings'], (res) => {
-      if (res.acadmail_settings && typeof res.acadmail_settings.inPageIntegration === 'boolean') {
-        inPageIntegrationEnabled = res.acadmail_settings.inPageIntegration;
-      } else {
-        inPageIntegrationEnabled = true;
+      if (res.acadmail_settings) {
+        if (res.acadmail_settings.uiMode) {
+          uiMode = res.acadmail_settings.uiMode;
+        } else if (res.acadmail_settings.inPageIntegration === false) {
+          uiMode = 'off';
+        } else {
+          uiMode = 'blended';
+        }
       }
-      applyIntegrationState();
+      applyUiMode();
     });
   }
 }
 
-function applyIntegrationState() {
-  if (!inPageIntegrationEnabled) {
-    // Remove in-page bars if disabled
-    document.getElementById('acadmail-inbox-filter-bar')?.remove();
-    document.getElementById('acadmail-minimized-pill')?.remove();
-    document.getElementById('acadmail-email-brief-card')?.remove();
+function applyUiMode() {
+  // Clean up existing elements
+  document.getElementById('acadmail-inbox-filter-bar')?.remove();
+  document.getElementById('acadmail-native-chip-bar')?.remove();
+  document.getElementById('acadmail-minimized-pill')?.remove();
+  document.getElementById('acadmail-email-brief-card')?.remove();
+  document.getElementById('acadmail-siderail-btn')?.remove();
+
+  if (uiMode === 'off') {
     filterGmailDom('ALL');
-  } else {
-    // Re-inject if on inbox or email
-    scanVisibleInbox();
-    checkAndInjectEmailBrief();
+    return;
   }
+
+  // Inject based on mode
+  scanVisibleInbox();
+  checkAndInjectEmailBrief();
+  injectSideRailIcon();
 }
 
 // Inlined classifier for standalone content.js
@@ -254,15 +278,16 @@ function scanVisibleInbox(): InboxRowItem[] {
 
   scannedItemsCache = items;
 
-  // If in-page integration is active, inject/update the native filter bar
-  if (inPageIntegrationEnabled && items.length > 0) {
-    injectInboxFilterBar(items);
+  if (uiMode === 'blended') {
+    injectMaterial3ChipBar(items);
+  } else if (uiMode === 'floating') {
+    injectFloatingFilterBar(items);
   }
 
   return items;
 }
 
-// Inject modern badge directly into the Gmail row
+// Inject modern badge directly into the Gmail row (Material styled)
 function injectRowBadge(
   rowEl: HTMLElement,
   category: CategoryType,
@@ -275,31 +300,44 @@ function injectRowBadge(
   const subjectContainer = rowEl.querySelector('.y6, .bog');
   if (!subjectContainer) return;
 
+  const isDark = isGmailDark();
   const badge = document.createElement('span');
   badge.className = 'acadmail-row-badge';
 
-  let badgeColor = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
+  let badgeColor = isDark
+    ? 'background: #1e3a5f; color: #a8c7fa; border: 1px solid #2b5278;'
+    : 'background: #e8f0fe; color: #1967d2; border: 1px solid #d2e3fc;';
   let icon = '🎓';
   let labelText = courseCode || 'Academics';
 
   if (category === 'Competitions & Tournaments') {
-    badgeColor = 'background: #fffbeb; color: #b45309; border: 1px solid #fde68a;';
+    badgeColor = isDark
+      ? 'background: #4a3410; color: #fed7aa; border: 1px solid #785312;'
+      : 'background: #fef3c7; color: #b45309; border: 1px solid #fde68a;';
     icon = '🏆';
     labelText = 'Contest / Sports';
   } else if (category === 'Workshops') {
-    badgeColor = 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;';
+    badgeColor = isDark
+      ? 'background: #143e2e; color: #a7f3d0; border: 1px solid #1e5e45;'
+      : 'background: #e6f4ea; color: #137333; border: 1px solid #ceead6;';
     icon = '🛠️';
     labelText = 'Workshop / Talk';
   } else if (category === 'Class Rescheduling') {
-    badgeColor = 'background: #fff1f2; color: #be123c; border: 1px solid #fecdd3;';
+    badgeColor = isDark
+      ? 'background: #4c1d24; color: #fecdd3; border: 1px solid #881337;'
+      : 'background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;';
     icon = '⏰';
     labelText = 'Rescheduled';
   } else if (isPhd) {
-    badgeColor = 'background: #f8fafc; color: #475569; border: 1px solid #cbd5e1;';
+    badgeColor = isDark
+      ? 'background: #2a2b2e; color: #c4c7c5; border: 1px solid #444746;'
+      : 'background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0;';
     icon = '📜';
     labelText = 'PhD / Viva';
   } else if (category === 'General') {
-    badgeColor = 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;';
+    badgeColor = isDark
+      ? 'background: #23272e; color: #c4c7c5; border: 1px solid #3c4043;'
+      : 'background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0;';
     icon = '📢';
     labelText = 'General';
   }
@@ -310,21 +348,46 @@ function injectRowBadge(
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    padding: 1px 7px;
+    padding: 0 6px;
+    height: 18px;
     margin-right: 6px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 600;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    letter-spacing: -0.01em;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
     vertical-align: middle;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    cursor: ${courseCode ? 'pointer' : 'default'};
     ${badgeColor}
   `
   );
 
   badge.innerText = `${icon} ${labelText}`;
+
+  // Course code quick search capability
+  if (courseCode) {
+    badge.title = `Search Gmail for "${courseCode}"`;
+    badge.onclick = (e) => {
+      e.stopPropagation();
+      executeGmailSearch(courseCode);
+    };
+  }
+
   subjectContainer.prepend(badge);
+}
+
+// 1-Click Search Gmail for a course code
+function executeGmailSearch(query: string) {
+  const searchInput = document.querySelector('input[name="q"], input[aria-label*="Search"]') as HTMLInputElement;
+  if (searchInput) {
+    searchInput.value = query;
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const form = searchInput.closest('form');
+    if (form) {
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    } else {
+      searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+    }
+  }
 }
 
 // Filter rows on Gmail DOM
@@ -335,7 +398,6 @@ function filterGmailDom(category: CategoryType | 'ALL') {
   rows.forEach((row) => {
     const rowEl = row as HTMLElement;
     if (category === 'ALL') {
-      rowEl.style.opacity = '1';
       rowEl.style.display = '';
       return;
     }
@@ -351,16 +413,13 @@ function filterGmailDom(category: CategoryType | 'ALL') {
     if (category === 'General' && (badgeText.includes('📢') || badgeText.includes('General') || badgeText.includes('PhD'))) match = true;
 
     if (match) {
-      rowEl.style.opacity = '1';
       rowEl.style.display = '';
     } else {
-      // Clean hiding for high-signal triage
       rowEl.style.display = 'none';
     }
   });
 
-  // Update filter bar pills if present
-  updateFilterBarActiveState();
+  updateChipBarActiveState();
 }
 
 function clickRowByIndex(index: number) {
@@ -371,7 +430,7 @@ function clickRowByIndex(index: number) {
   }
 }
 
-// Helper to create Google Calendar Event URL
+// Google Calendar URL generator
 function createGCalUrl(title: string, details: string, dueDateStr?: string): string {
   const baseUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
   let datesParam = '';
@@ -387,19 +446,18 @@ function createGCalUrl(title: string, details: string, dueDateStr?: string): str
 
   const params = new URLSearchParams({
     text: `[AcadMail] ${title}`,
-    details: `${details}\n\n— Auto-extracted by AcadMail AI`,
+    details: `${details}\n\n— Auto-extracted by AcadMail AI for Google Workspace`,
   });
 
   return `${baseUrl}&${params.toString()}${datesParam}`;
 }
 
 // =========================================================================
-// 1. IN-GMAIL NATIVE FILTER BAR (Injected directly above visible email list)
+// 1. MATERIAL 3 BLENDED FILTER CHIPS (Seamless with native Gmail action bar)
 // =========================================================================
-function injectInboxFilterBar(items: InboxRowItem[]) {
-  if (!inPageIntegrationEnabled) return;
+function injectMaterial3ChipBar(items: InboxRowItem[]) {
+  if (uiMode !== 'blended') return;
 
-  // Only inject if Gmail email table or inbox view is active
   const mailContainer =
     document.querySelector('div[gh="tm"]') ||
     document.querySelector('div.G-atb') ||
@@ -408,7 +466,6 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
 
   if (!mailContainer) return;
 
-  // Count items per category
   let acadCount = 0;
   let compCount = 0;
   let workCount = 0;
@@ -432,18 +489,12 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
     }
   });
 
-  let bar = document.getElementById('acadmail-inbox-filter-bar');
-
-  // If already minimized, ensure pill is present
-  if (isFilterBarMinimized) {
-    if (bar) bar.style.display = 'none';
-    injectMinimizedPill();
-    return;
-  }
+  const isDark = isGmailDark();
+  let bar = document.getElementById('acadmail-native-chip-bar');
 
   if (!bar) {
     bar = document.createElement('div');
-    bar.id = 'acadmail-inbox-filter-bar';
+    bar.id = 'acadmail-native-chip-bar';
     bar.setAttribute(
       'style',
       `
@@ -451,116 +502,141 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin: 8px 16px;
-      padding: 6px 14px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      box-shadow: 0 2px 8px -2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 11px;
-      z-index: 50;
-      transition: all 0.2s ease;
+      padding: 6px 16px;
+      background: transparent;
+      border-bottom: 1px solid ${isDark ? '#444746' : '#e0e2ec'};
+      font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      z-index: 20;
+      transition: background 0.2s ease;
     `
     );
 
-    // Insert right at top of mail list
     const targetAnchor = document.querySelector('div.aeF') || document.querySelector('div[gh="tm"]') || mailContainer;
     targetAnchor.parentElement?.insertBefore(bar, targetAnchor);
   }
 
+  // Material 3 Chip Styling
+  const getChipStyle = (cat: CategoryType | 'ALL') => {
+    const isActive = currentActiveFilter === cat;
+    if (isActive) {
+      return `
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 8px;
+        border: none;
+        background: ${isDark ? '#004a77' : '#c2e7ff'};
+        color: ${isDark ? '#c2e7ff' : '#001d35'};
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        transition: all 0.15s ease;
+      `;
+    }
+    return `
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid ${isDark ? '#444746' : '#747775'};
+      background: transparent;
+      color: ${isDark ? '#e3e3e3' : '#444746'};
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    `;
+  };
+
   bar.innerHTML = `
-    <!-- Left: Brand + Category Pills -->
-    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 1px;">
-      <div style="display: flex; align-items: center; gap: 5px; font-weight: 800; color: #1e293b; padding-right: 8px; border-right: 1px solid #e2e8f0; white-space: nowrap;">
-        <span style="font-size: 14px;">🎓</span>
-        <span style="letter-spacing: -0.02em;">AcadMail</span>
+    <!-- Left: Material 3 Horizontal Filter Chips -->
+    <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 2px 0;">
+      <!-- Google Gemini Sparkle Branding -->
+      <div title="AcadMail AI for Google Workspace" style="display: flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid ${
+        isDark ? '#444746' : '#dadce0'
+      }; color: ${isDark ? '#a8c7fa' : '#0b57d0'}; font-weight: 600; font-size: 13px; white-space: nowrap;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+        </svg>
+        <span>AcadMail</span>
       </div>
 
-      <button class="acad-pill-btn" data-cat="ALL" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid #cbd5e1; font-weight: 600; font-size: 11px; white-space: nowrap; transition: all 0.15s ease; ${
-        currentActiveFilter === 'ALL'
-          ? 'background: #0f172a; color: #ffffff; border-color: #0f172a;'
-          : 'background: #f8fafc; color: #475569;'
-      }">
-        All (${items.length})
+      <button class="m3-chip" data-cat="ALL" style="${getChipStyle('ALL')}">
+        ${currentActiveFilter === 'ALL' ? '✓ ' : ''}All (${items.length})
       </button>
 
-      <button class="acad-pill-btn" data-cat="Academics" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
-        currentActiveFilter === 'Academics' ? '#2563eb' : '#bfdbfe'
-      }; font-weight: 600; font-size: 11px; white-space: nowrap; transition: all 0.15s ease; ${
-        currentActiveFilter === 'Academics'
-          ? 'background: #2563eb; color: #ffffff;'
-          : 'background: #eff6ff; color: #1d4ed8;'
-      }">
-        🎓 Academics (${acadCount})
+      <button class="m3-chip" data-cat="Academics" style="${getChipStyle('Academics')}">
+        ${currentActiveFilter === 'Academics' ? '✓ ' : ''}🎓 Academics (${acadCount})
       </button>
 
-      <button class="acad-pill-btn" data-cat="Competitions & Tournaments" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
-        currentActiveFilter === 'Competitions & Tournaments' ? '#d97706' : '#fde68a'
-      }; font-weight: 600; font-size: 11px; white-space: nowrap; transition: all 0.15s ease; ${
-        currentActiveFilter === 'Competitions & Tournaments'
-          ? 'background: #d97706; color: #ffffff;'
-          : 'background: #fffbeb; color: #b45309;'
-      }">
-        🏆 Competitions (${compCount})
+      <button class="m3-chip" data-cat="Competitions & Tournaments" style="${getChipStyle('Competitions & Tournaments')}">
+        ${currentActiveFilter === 'Competitions & Tournaments' ? '✓ ' : ''}🏆 Competitions (${compCount})
       </button>
 
-      <button class="acad-pill-btn" data-cat="Workshops" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
-        currentActiveFilter === 'Workshops' ? '#059669' : '#a7f3d0'
-      }; font-weight: 600; font-size: 11px; white-space: nowrap; transition: all 0.15s ease; ${
-        currentActiveFilter === 'Workshops'
-          ? 'background: #059669; color: #ffffff;'
-          : 'background: #ecfdf5; color: #047857;'
-      }">
-        🛠️ Workshops & Talks (${workCount})
+      <button class="m3-chip" data-cat="Workshops" style="${getChipStyle('Workshops')}">
+        ${currentActiveFilter === 'Workshops' ? '✓ ' : ''}🛠️ Workshops & Talks (${workCount})
       </button>
 
-      <button class="acad-pill-btn" data-cat="Class Rescheduling" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
-        currentActiveFilter === 'Class Rescheduling' ? '#e11d48' : '#fecdd3'
-      }; font-weight: 600; font-size: 11px; white-space: nowrap; transition: all 0.15s ease; ${
-        currentActiveFilter === 'Class Rescheduling'
-          ? 'background: #e11d48; color: #ffffff;'
-          : 'background: #fff1f2; color: #be123c;'
-      }">
-        ⏰ Rescheduled (${reschedCount})
+      <button class="m3-chip" data-cat="Class Rescheduling" style="${getChipStyle('Class Rescheduling')}">
+        ${currentActiveFilter === 'Class Rescheduling' ? '✓ ' : ''}⏰ Rescheduled (${reschedCount})
       </button>
 
-      <button class="acad-pill-btn" data-cat="General" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
-        currentActiveFilter === 'General' ? '#475569' : '#e2e8f0'
-      }; font-weight: 600; font-size: 11px; white-space: nowrap; transition: all 0.15s ease; ${
-        currentActiveFilter === 'General'
-          ? 'background: #475569; color: #ffffff;'
-          : 'background: #f8fafc; color: #64748b;'
-      }">
-        📜 PhD & General (${genCount})
+      <button class="m3-chip" data-cat="General" style="${getChipStyle('General')}">
+        ${currentActiveFilter === 'General' ? '✓ ' : ''}📜 PhD & General (${genCount})
       </button>
     </div>
 
-    <!-- Right: Deadlines Quick Popover + Actions -->
-    <div style="display: flex; align-items: center; gap: 6px; shrink: 0; padding-left: 6px;">
+    <!-- Right: Deadlines Quick Access & Mode Revert Dropdown -->
+    <div style="display: flex; align-items: center; gap: 8px; shrink: 0;">
       <div style="position: relative;">
-        <button id="acadmail-deadlines-btn" style="cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 11px; font-weight: 600; transition: all 0.15s;">
+        <button id="m3-deadlines-btn" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid ${
+          isDark ? '#444746' : '#747775'
+        }; background: transparent; color: ${
+    isDark ? '#e3e3e3' : '#444746'
+  }; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px;">
           <span>📅</span>
-          <span>Deadlines (${deadlineList.length})</span>
+          <span>Due Dates (${deadlineList.length})</span>
         </button>
-        <div id="acadmail-deadlines-popover" style="display: none; position: absolute; right: 0; top: 32px; width: 300px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); padding: 10px; z-index: 99999;">
-          <div style="font-weight: 700; color: #1e293b; font-size: 11px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-            <span>Detected Inbox Deadlines</span>
-            <span style="font-size: 9px; color: #64748b; font-weight: 400;">1-Click Google Calendar</span>
+
+        <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 320px; background: ${
+          isDark ? '#1e1f20' : '#ffffff'
+        }; border: 1px solid ${
+    isDark ? '#444746' : '#e0e2ec'
+  }; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 12px; z-index: 99999;">
+          <div style="font-weight: 600; color: ${
+            isDark ? '#e3e3e3' : '#1f1f1f'
+          }; font-size: 13px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Detected Deadlines</span>
+            <span style="font-size: 11px; color: ${isDark ? '#a8c7fa' : '#0b57d0'};">1-Click Google Calendar</span>
           </div>
-          <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;">
+          <div style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
             ${
               deadlineList.length === 0
-                ? '<div style="color: #94a3b8; font-size: 10px; text-align: center; padding: 12px 0;">No active deadlines detected in current view</div>'
+                ? `<div style="color: ${
+                    isDark ? '#8e918f' : '#747775'
+                  }; font-size: 12px; text-align: center; padding: 12px 0;">No active deadlines detected in current view</div>`
                 : deadlineList
                     .map(
                       (d) => `
-              <div style="padding: 6px 8px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+              <div style="padding: 8px 10px; background: ${
+                isDark ? '#2b2c2f' : '#f0f4f9'
+              }; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                 <div style="overflow: hidden;">
-                  <div style="font-size: 10px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
-                  <div style="font-size: 9px; color: #b45309; font-weight: 600;">⏰ ${d.deadline}</div>
+                  <div style="font-size: 12px; font-weight: 500; color: ${
+                    isDark ? '#e3e3e3' : '#1f1f1f'
+                  }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
+                  <div style="font-size: 11px; color: ${isDark ? '#fed7aa' : '#b45309'}; font-weight: 600;">⏰ ${d.deadline}</div>
                 </div>
-                <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; shrink: 0; padding: 2px 6px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 9px; font-weight: 600;">+ GCal</a>
+                <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; shrink: 0; padding: 4px 8px; background: ${
+                        isDark ? '#004a77' : '#c2e7ff'
+                      }; color: ${
+                        isDark ? '#c2e7ff' : '#001d35'
+                      }; border-radius: 6px; font-size: 11px; font-weight: 600;">+ GCal</a>
               </div>
             `
                     )
@@ -570,18 +646,47 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
         </div>
       </div>
 
-      <button id="acadmail-open-sidepanel-btn" title="Open Copilot Side Panel" style="cursor: pointer; padding: 4px 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; font-size: 11px; font-weight: 600;">
-        ⚡ Side Panel
-      </button>
+      <!-- Quick Mode & Revert Menu -->
+      <div style="position: relative;">
+        <button id="m3-options-btn" title="AcadMail Display & Revert Options" style="height: 32px; width: 32px; border-radius: 8px; border: 1px solid ${
+          isDark ? '#444746' : '#dadce0'
+        }; background: transparent; color: ${
+    isDark ? '#c4c7c5' : '#5f6368'
+  }; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+          ⋮
+        </button>
 
-      <button id="acadmail-minimize-bar-btn" title="Minimize Bar (Switch to compact pill)" style="cursor: pointer; padding: 4px 6px; border-radius: 8px; border: none; background: transparent; color: #94a3b8; font-size: 12px;">
-        ✕
-      </button>
+        <div id="m3-options-menu" style="display: none; position: absolute; right: 0; top: 38px; width: 220px; background: ${
+          isDark ? '#1e1f20' : '#ffffff'
+        }; border: 1px solid ${
+    isDark ? '#444746' : '#e0e2ec'
+  }; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 6px; z-index: 99999;">
+          <div style="padding: 6px 8px; font-size: 11px; font-weight: 700; color: ${
+            isDark ? '#8e918f' : '#747775'
+          }; text-transform: uppercase;">
+            Display Integration
+          </div>
+          <button class="m3-menu-opt" data-mode="blended" style="text-align: left; width: 100%; padding: 7px 10px; border-radius: 8px; border: none; background: ${
+            isDark ? '#2b2c2f' : '#e8f0fe'
+          }; color: ${isDark ? '#a8c7fa' : '#1967d2'}; font-size: 12px; font-weight: 600; cursor: pointer;">
+            ✓ Blended Native M3
+          </button>
+          <button class="m3-menu-opt" data-mode="floating" style="text-align: left; width: 100%; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; color: ${
+            isDark ? '#e3e3e3' : '#444746'
+          }; font-size: 12px; cursor: pointer; margin-top: 2px;">
+            Floating Pill Toolbar
+          </button>
+          <div style="border-top: 1px solid ${isDark ? '#333537' : '#f1f3f4'}; margin: 4px 0;"></div>
+          <button class="m3-menu-opt" data-mode="off" style="text-align: left; width: 100%; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; color: #ef4444; font-size: 12px; font-weight: 600; cursor: pointer;">
+            ✕ Revert to Original Gmail
+          </button>
+        </div>
+      </div>
     </div>
   `;
 
-  // Pill click listeners
-  bar.querySelectorAll('.acad-pill-btn').forEach((btn) => {
+  // Attach chip events
+  bar.querySelectorAll('.m3-chip').forEach((btn) => {
     const buttonEl = btn as HTMLElement;
     buttonEl.onclick = () => {
       const cat = buttonEl.getAttribute('data-cat') as CategoryType | 'ALL';
@@ -593,104 +698,127 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
     };
   });
 
-  // Deadlines toggle
-  const dlBtn = bar.querySelector('#acadmail-deadlines-btn') as HTMLElement;
-  const dlPop = bar.querySelector('#acadmail-deadlines-popover') as HTMLElement;
+  // Deadlines Popover
+  const dlBtn = bar.querySelector('#m3-deadlines-btn') as HTMLElement;
+  const dlPop = bar.querySelector('#m3-deadlines-popover') as HTMLElement;
   if (dlBtn && dlPop) {
     dlBtn.onclick = (e) => {
       e.stopPropagation();
       dlPop.style.display = dlPop.style.display === 'block' ? 'none' : 'block';
     };
-    document.addEventListener('click', (e) => {
-      if (!dlPop.contains(e.target as Node) && e.target !== dlBtn) {
-        dlPop.style.display = 'none';
-      }
+  }
+
+  // Options Menu & Revert Click Handlers
+  const optBtn = bar.querySelector('#m3-options-btn') as HTMLElement;
+  const optMenu = bar.querySelector('#m3-options-menu') as HTMLElement;
+  if (optBtn && optMenu) {
+    optBtn.onclick = (e) => {
+      e.stopPropagation();
+      optMenu.style.display = optMenu.style.display === 'block' ? 'none' : 'block';
+    };
+
+    optMenu.querySelectorAll('.m3-menu-opt').forEach((item) => {
+      const itemEl = item as HTMLElement;
+      itemEl.onclick = async () => {
+        const mode = itemEl.getAttribute('data-mode') as UiIntegrationMode;
+        uiMode = mode;
+        optMenu.style.display = 'none';
+
+        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+          chrome.storage.local.get(['acadmail_settings'], (res) => {
+            const current = res.acadmail_settings || {};
+            chrome.storage.local.set({
+              acadmail_settings: { ...current, uiMode: mode, inPageIntegration: mode !== 'off' },
+            });
+          });
+        }
+
+        applyUiMode();
+      };
     });
   }
 
-  // Open side panel
-  const sideBtn = bar.querySelector('#acadmail-open-sidepanel-btn') as HTMLElement;
-  if (sideBtn) {
-    sideBtn.onclick = () => safeSendMessage({ type: 'OPEN_SIDEPANEL' });
-  }
-
-  // Minimize bar
-  const minBtn = bar.querySelector('#acadmail-minimize-bar-btn') as HTMLElement;
-  if (minBtn) {
-    minBtn.onclick = () => {
-      isFilterBarMinimized = true;
-      if (bar) bar.style.display = 'none';
-      injectMinimizedPill();
-    };
-  }
-}
-
-function updateFilterBarActiveState() {
-  const bar = document.getElementById('acadmail-inbox-filter-bar');
-  if (!bar) return;
-
-  bar.querySelectorAll('.acad-pill-btn').forEach((btn) => {
-    const buttonEl = btn as HTMLElement;
-    const cat = buttonEl.getAttribute('data-cat');
-    if (cat === currentActiveFilter) {
-      buttonEl.style.boxShadow = '0 0 0 2px rgba(37,99,235,0.2)';
-    } else {
-      buttonEl.style.boxShadow = 'none';
+  // Close menus on outside click
+  document.addEventListener('click', (e) => {
+    if (dlPop && !dlPop.contains(e.target as Node) && e.target !== dlBtn) {
+      dlPop.style.display = 'none';
+    }
+    if (optMenu && !optMenu.contains(e.target as Node) && e.target !== optBtn) {
+      optMenu.style.display = 'none';
     }
   });
 }
 
-function injectMinimizedPill() {
-  if (document.getElementById('acadmail-minimized-pill')) return;
-
-  const pill = document.createElement('div');
-  pill.id = 'acadmail-minimized-pill';
-  pill.setAttribute(
-    'style',
-    `
-    position: fixed;
-    top: 65px;
-    right: 24px;
-    z-index: 9999;
-    padding: 4px 10px;
-    background: #0f172a;
-    color: #ffffff;
-    border-radius: 9999px;
-    font-size: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  `
-  );
-  pill.innerHTML = `<span>🎓 AcadMail Bar</span> <span style="color: #94a3b8; font-size: 9px;">(Click to expand)</span>`;
-  pill.onclick = () => {
-    isFilterBarMinimized = false;
-    pill.remove();
-    const bar = document.getElementById('acadmail-inbox-filter-bar');
-    if (bar) bar.style.display = 'flex';
-    else scanVisibleInbox();
-  };
-  document.body.appendChild(pill);
+function updateChipBarActiveState() {
+  if (uiMode === 'blended' && scannedItemsCache.length > 0) {
+    injectMaterial3ChipBar(scannedItemsCache);
+  }
 }
 
 // =========================================================================
-// 2. IN-EMAIL READING VIEW: ACADEMIC COPILOT BRIEF CARD
+// 2. NATIVE GOOGLE WORKSPACE RIGHT SIDE-RAIL ICON (1:1 with Keep/Calendar)
+// =========================================================================
+function injectSideRailIcon() {
+  if (uiMode === 'off' || document.getElementById('acadmail-siderail-btn')) return;
+
+  // Look for Gmail's native right side-rail
+  const sideRail =
+    document.querySelector('div.aDG') ||
+    document.querySelector('div[aria-label="Side panel"]') ||
+    document.querySelector('div.bq9');
+
+  if (!sideRail) return;
+
+  const btn = document.createElement('div');
+  btn.id = 'acadmail-siderail-btn';
+  btn.title = 'AcadMail AI Copilot';
+  btn.setAttribute('role', 'button');
+  btn.setAttribute('tabindex', '0');
+
+  const isDark = isGmailDark();
+  btn.setAttribute(
+    'style',
+    `
+    width: 40px;
+    height: 40px;
+    margin: 8px auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+    color: ${isDark ? '#a8c7fa' : '#0b57d0'};
+    transition: background 0.2s;
+  `
+  );
+
+  btn.innerHTML = `
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+    </svg>
+  `;
+
+  btn.onmouseenter = () => (btn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+  btn.onmouseleave = () => (btn.style.background = 'transparent');
+  btn.onclick = () => safeSendMessage({ type: 'OPEN_SIDEPANEL' });
+
+  sideRail.prepend(btn);
+}
+
+// =========================================================================
+// 3. IN-EMAIL READING VIEW: NATIVE GEMINI ACADEMIC CARD
 // =========================================================================
 function checkAndInjectEmailBrief() {
-  if (!inPageIntegrationEnabled) return;
+  if (uiMode === 'off') return;
 
   const emailData = extractGmailData();
   if (!emailData) {
-    // If not reading an email, remove any leftover card
     document.getElementById('acadmail-email-brief-card')?.remove();
     return;
   }
 
-  // Look for subject container to anchor the card beneath
   const subjectContainer =
     document.querySelector('div.ha') ||
     document.querySelector('h2.hP')?.parentElement ||
@@ -701,7 +829,6 @@ function checkAndInjectEmailBrief() {
   const existingCard = document.getElementById('acadmail-email-brief-card');
   const cardEmailId = existingCard?.getAttribute('data-email-id');
 
-  // If already rendered for this specific email, avoid thrashing
   if (existingCard && cardEmailId === emailData.id) {
     return;
   }
@@ -710,22 +837,18 @@ function checkAndInjectEmailBrief() {
     existingCard.remove();
   }
 
-  // Classify current email
   const classification = classifyInboxItem(emailData.subject, emailData.senderName, emailData.bodyText);
   const category = classification.category;
   const courseCode = classification.courseCode;
 
-  // Extract quick heuristics (deadlines, links, summary)
   const fullText = `${emailData.subject} ${emailData.bodyText}`;
   const datePattern = /\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/i;
   const deadlineMatch = fullText.match(datePattern);
   const detectedDeadline = deadlineMatch ? deadlineMatch[1] : null;
 
-  // Virtual meeting links
   const meetMatch = fullText.match(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?(?:zoom\.us\/j|meet\.google\.com|teams\.microsoft\.com\/l)\/[^\s<>"']+/i);
   const meetingUrl = meetMatch ? meetMatch[0] : null;
 
-  // Extract clean 2-3 sentence bullets
   const sentences = emailData.bodyText
     .split(/\.\s+/)
     .map((s) => s.trim())
@@ -735,7 +858,7 @@ function checkAndInjectEmailBrief() {
     bullets.push(`Notification regarding ${emailData.subject} from ${emailData.senderName}.`);
   }
 
-  // Build card
+  const isDark = isGmailDark();
   const card = document.createElement('div');
   card.id = 'acadmail-email-brief-card';
   card.setAttribute('data-email-id', emailData.id);
@@ -743,75 +866,94 @@ function checkAndInjectEmailBrief() {
     'style',
     `
     margin: 12px 0 16px 0;
-    padding: 12px 16px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    padding: 14px 18px;
+    background: ${isDark ? '#1e1f20' : '#f0f4f9'};
+    border: 1px solid ${isDark ? '#444746' : '#d3e3fd'};
     border-radius: 16px;
-    box-shadow: 0 4px 12px -2px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 11px;
-    color: #1e293b;
+    font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: ${isDark ? '#e3e3e3' : '#1f1f1f'};
     z-index: 20;
     transition: all 0.2s ease;
   `
   );
 
-  let categoryBadge = `<span style="padding: 2px 8px; border-radius: 9999px; font-weight: 700; font-size: 10px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">🎓 ${courseCode || 'Academics'}</span>`;
+  let categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
+    isDark ? '#004a77' : '#c2e7ff'
+  }; color: ${isDark ? '#c2e7ff' : '#001d35'};">🎓 ${courseCode || 'Academics'}</span>`;
   if (category === 'Competitions & Tournaments') {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 9999px; font-weight: 700; font-size: 10px; background: #fffbeb; color: #b45309; border: 1px solid #fde68a;">🏆 Competitions / Sports</span>`;
+    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
+      isDark ? '#785312' : '#fef3c7'
+    }; color: ${isDark ? '#fed7aa' : '#b45309'};">🏆 Competitions</span>`;
   } else if (category === 'Workshops') {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 9999px; font-weight: 700; font-size: 10px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">🛠️ Workshops & Talks</span>`;
+    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
+      isDark ? '#143e2e' : '#e6f4ea'
+    }; color: ${isDark ? '#a7f3d0' : '#137333'};">🛠️ Workshops & Talks</span>`;
   } else if (category === 'Class Rescheduling') {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 9999px; font-weight: 700; font-size: 10px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3;">⏰ Class Rescheduled</span>`;
+    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
+      isDark ? '#4c1d24' : '#fce8e6'
+    }; color: ${isDark ? '#fecdd3' : '#c5221f'};">⏰ Rescheduled</span>`;
   } else if (classification.isPhd) {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 9999px; font-weight: 700; font-size: 10px; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1;">📜 PhD Defense / Viva</span>`;
+    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
+      isDark ? '#2a2b2e' : '#f1f3f4'
+    }; color: ${isDark ? '#c4c7c5' : '#5f6368'};">📜 PhD Defense / Viva</span>`;
   }
 
   card.innerHTML = `
-    <!-- Top Header Bar -->
-    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+    <!-- Google Gemini Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid ${
+      isDark ? '#333537' : '#e0e2ec'
+    };">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 4px; font-weight: 800; font-size: 12px; color: #0f172a;">
-          <span style="font-size: 14px;">🎓</span>
-          <span>AcadMail Copilot Brief</span>
-        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="${isDark ? '#a8c7fa' : '#0b57d0'}">
+          <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+        </svg>
+        <span style="font-weight: 600; font-size: 13px; color: ${isDark ? '#e3e3e3' : '#1f1f1f'};">AcadMail AI Brief</span>
         ${categoryBadge}
       </div>
 
       <div style="display: flex; align-items: center; gap: 6px;">
-        <button id="acadmail-card-sidepanel-btn" style="cursor: pointer; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 10px; font-weight: 600; color: #475569;">
-          ⚡ Full AI Analysis
+        <button id="m3-card-sidepanel-btn" title="Open AI Side Panel" style="cursor: pointer; padding: 4px 10px; border-radius: 8px; border: 1px solid ${
+          isDark ? '#444746' : '#c4c7c5'
+        }; background: transparent; font-size: 12px; font-weight: 500; color: ${isDark ? '#e3e3e3' : '#444746'};">
+          ⚡ Side Panel
         </button>
-        <button id="acadmail-card-collapse-btn" style="cursor: pointer; padding: 2px 6px; border-radius: 6px; border: none; background: transparent; color: #94a3b8; font-size: 11px;">
+        <button id="m3-card-collapse-btn" title="Collapse" style="cursor: pointer; padding: 2px 6px; border-radius: 6px; border: none; background: transparent; color: ${
+          isDark ? '#8e918f' : '#747775'
+        }; font-size: 14px;">
           −
         </button>
       </div>
     </div>
 
-    <!-- Collapsible Body -->
-    <div id="acadmail-card-content" style="padding-top: 8px; display: flex; flex-direction: column; gap: 8px;">
-      <!-- Key Takeaways -->
-      <div style="background: #f8fafc; border-radius: 10px; padding: 8px 12px; border: 1px solid #f1f5f9;">
-        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;">
-          Key Takeaways
-        </div>
-        <ul style="margin: 0; padding-left: 14px; display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #334155; line-height: 1.4;">
-          ${bullets.map((b) => `<li>${b}</li>`).join('')}
-        </ul>
-      </div>
+    <!-- Body -->
+    <div id="m3-card-content" style="padding-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+      <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.5; color: ${
+        isDark ? '#c4c7c5' : '#334155'
+      };">
+        ${bullets.map((b) => `<li>${b}</li>`).join('')}
+      </ul>
 
-      <!-- Deadlines & Meeting Links (If detected) -->
+      <!-- Action Chips (Google Calendar + Meet) -->
       ${
         detectedDeadline || meetingUrl
           ? `
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 2px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px;">
           ${
             detectedDeadline
               ? `
-            <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 11px; font-weight: 600; color: #b45309;">
-              <span>⏰ Due: ${detectedDeadline}</span>
-              <a href="${createGCalUrl(emailData.subject, emailData.bodyText.slice(0, 300), detectedDeadline)}" target="_blank" style="padding: 2px 7px; background: #d97706; color: #ffffff; border-radius: 6px; text-decoration: none; font-size: 10px; font-weight: 700;">+ Add to Google Calendar</a>
-            </div>
+            <a href="${createGCalUrl(
+              emailData.subject,
+              emailData.bodyText.slice(0, 300),
+              detectedDeadline
+            )}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${
+                  isDark ? '#004a77' : '#c2e7ff'
+                }; color: ${
+                  isDark ? '#c2e7ff' : '#001d35'
+                }; border-radius: 8px; font-size: 12px; font-weight: 600;">
+              <span>📅</span>
+              <span>Due: ${detectedDeadline} • Add to Google Calendar</span>
+            </a>
           `
               : ''
           }
@@ -819,9 +961,13 @@ function checkAndInjectEmailBrief() {
           ${
             meetingUrl
               ? `
-            <a href="${meetingUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 11px; font-weight: 700; color: #1d4ed8; text-decoration: none;">
+            <a href="${meetingUrl}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${
+                  isDark ? '#143e2e' : '#e6f4ea'
+                }; color: ${
+                  isDark ? '#a7f3d0' : '#137333'
+                }; border-radius: 8px; font-size: 12px; font-weight: 600;">
               <span>🎥</span>
-              <span>Join Virtual Meeting</span>
+              <span>Join Video Meeting</span>
             </a>
           `
               : ''
@@ -831,28 +977,36 @@ function checkAndInjectEmailBrief() {
           : ''
       }
 
-      <!-- 1-Click Quick Reply Injector -->
-      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
-        <span style="font-size: 10px; font-weight: 700; color: #64748b;">1-Click Reply Draft:</span>
+      <!-- Suggested Reply Chips -->
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 6px; border-top: 1px solid ${
+        isDark ? '#333537' : '#e0e2ec'
+      };">
+        <span style="font-size: 11px; font-weight: 600; color: ${isDark ? '#8e918f' : '#747775'};">Suggested Reply:</span>
 
-        <button class="acad-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 3px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; font-size: 10px; font-weight: 600; transition: all 0.15s;">
+        <button class="m3-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 4px 10px; border-radius: 16px; border: 1px solid ${
+          isDark ? '#444746' : '#747775'
+        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#444746'}; font-size: 12px; font-weight: 500;">
           ✍️ Confirm Attendance
         </button>
 
-        <button class="acad-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 3px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; font-size: 10px; font-weight: 600; transition: all 0.15s;">
+        <button class="m3-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 4px 10px; border-radius: 16px; border: 1px solid ${
+          isDark ? '#444746' : '#747775'
+        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#444746'}; font-size: 12px; font-weight: 500;">
           ⏳ Request Extension
         </button>
 
-        <button class="acad-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 3px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; font-size: 10px; font-weight: 600; transition: all 0.15s;">
-          ❓ Ask Clarification
+        <button class="m3-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 4px 10px; border-radius: 16px; border: 1px solid ${
+          isDark ? '#444746' : '#747775'
+        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#444746'}; font-size: 12px; font-weight: 500;">
+          ❓ Clarify Doubt
         </button>
       </div>
     </div>
   `;
 
-  // Attach card events
-  const collapseBtn = card.querySelector('#acadmail-card-collapse-btn') as HTMLElement;
-  const contentDiv = card.querySelector('#acadmail-card-content') as HTMLElement;
+  // Collapse handler
+  const collapseBtn = card.querySelector('#m3-card-collapse-btn') as HTMLElement;
+  const contentDiv = card.querySelector('#m3-card-content') as HTMLElement;
   if (collapseBtn && contentDiv) {
     collapseBtn.onclick = () => {
       const isHidden = contentDiv.style.display === 'none';
@@ -861,13 +1015,13 @@ function checkAndInjectEmailBrief() {
     };
   }
 
-  const sidePanelBtn = card.querySelector('#acadmail-card-sidepanel-btn') as HTMLElement;
+  const sidePanelBtn = card.querySelector('#m3-card-sidepanel-btn') as HTMLElement;
   if (sidePanelBtn) {
     sidePanelBtn.onclick = () => safeSendMessage({ type: 'OPEN_SIDEPANEL' });
   }
 
   // Quick Reply handler
-  card.querySelectorAll('.acad-quick-reply-btn').forEach((btn) => {
+  card.querySelectorAll('.m3-quick-reply-btn').forEach((btn) => {
     const buttonEl = btn as HTMLElement;
     buttonEl.onclick = async () => {
       const type = buttonEl.getAttribute('data-reply');
@@ -884,16 +1038,14 @@ function checkAndInjectEmailBrief() {
     };
   });
 
-  // Inject below subject container
   subjectContainer.parentElement?.insertBefore(card, subjectContainer.nextSibling);
 }
 
-// Automatically clicks Gmail's reply button and inserts draft into compose textarea
+// Injects draft directly into Gmail's native reply compose box
 async function injectDraftIntoGmailReplyBox(replyText: string, triggerBtn: HTMLElement) {
   const originalText = triggerBtn.innerText;
   triggerBtn.innerText = 'Drafting in Gmail...';
 
-  // 1. Find Gmail's Reply button
   const replyButton =
     (document.querySelector('div[role="button"][aria-label*="Reply"]') as HTMLElement) ||
     (document.querySelector('.ams.bkH') as HTMLElement) ||
@@ -904,7 +1056,6 @@ async function injectDraftIntoGmailReplyBox(replyText: string, triggerBtn: HTMLE
     replyButton.click();
   }
 
-  // 2. Wait for Gmail's compose box to appear
   let attempts = 0;
   const interval = setInterval(() => {
     attempts++;
@@ -915,8 +1066,6 @@ async function injectDraftIntoGmailReplyBox(replyText: string, triggerBtn: HTMLE
       composeBox.focus();
       composeBox.innerText = replyText;
       composeBox.dispatchEvent(new Event('input', { bubbles: true }));
-
-      // Scroll smoothly to compose box
       composeBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       triggerBtn.innerText = '✅ Drafted in Gmail!';
@@ -998,9 +1147,64 @@ function extractGmailData(): ExtractedEmail | null {
   return null;
 }
 
-// ==========================================
-// INLINE "PROFESSOR TONE POLISHER" IN COMPOSE
-// ==========================================
+// Fallback floating filter bar (for 'floating' mode)
+function injectFloatingFilterBar(items: InboxRowItem[]) {
+  // If floating mode is chosen, we keep the earlier floating pill bar
+  const mailContainer =
+    document.querySelector('div[gh="tm"]') ||
+    document.querySelector('div.G-atb') ||
+    document.querySelector('div.aeF') ||
+    document.querySelector('div[role="main"]');
+
+  if (!mailContainer) return;
+
+  let bar = document.getElementById('acadmail-inbox-filter-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'acadmail-inbox-filter-bar';
+    bar.setAttribute(
+      'style',
+      `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 8px 16px;
+      padding: 6px 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px -2px rgba(0,0,0,0.06);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 11px;
+      z-index: 50;
+    `
+    );
+    const targetAnchor = document.querySelector('div.aeF') || document.querySelector('div[gh="tm"]') || mailContainer;
+    targetAnchor.parentElement?.insertBefore(bar, targetAnchor);
+  }
+
+  bar.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <span style="font-weight: 800; font-size: 12px;">🎓 AcadMail</span>
+      <button class="float-chip" data-cat="ALL" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #0f172a; color: #fff; font-size: 10px; font-weight: 600;">All (${items.length})</button>
+      <button class="float-chip" data-cat="Academics" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; font-size: 10px; font-weight: 600;">🎓 Academics</button>
+      <button class="float-chip" data-cat="Competitions & Tournaments" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #fde68a; background: #fffbeb; color: #b45309; font-size: 10px; font-weight: 600;">🏆 Competitions</button>
+      <button class="float-chip" data-cat="Workshops" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; font-size: 10px; font-weight: 600;">🛠️ Workshops</button>
+      <button class="float-chip" data-cat="Class Rescheduling" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #fecdd3; background: #fff1f2; color: #be123c; font-size: 10px; font-weight: 600;">⏰ Rescheduled</button>
+    </div>
+  `;
+
+  bar.querySelectorAll('.float-chip').forEach((btn) => {
+    const buttonEl = btn as HTMLElement;
+    buttonEl.onclick = () => {
+      const cat = buttonEl.getAttribute('data-cat') as CategoryType | 'ALL';
+      filterGmailDom(cat);
+    };
+  });
+}
+
+// Compose Toolbar Professor Polisher
 function injectComposePolisher() {
   const composeToolbars = document.querySelectorAll('tr.btC, .gU.Up');
 
@@ -1036,15 +1240,6 @@ function injectComposePolisher() {
       <span>Polish for Professor</span>
     `;
 
-    polishBtn.onmouseenter = () => {
-      polishBtn.style.transform = 'translateY(-1px)';
-      polishBtn.style.boxShadow = '0 4px 8px rgba(49, 46, 129, 0.3)';
-    };
-    polishBtn.onmouseleave = () => {
-      polishBtn.style.transform = 'translateY(0)';
-      polishBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-    };
-
     polishBtn.onclick = (e) => {
       e.stopPropagation();
       openToneMenu(toolbar as HTMLElement, polishBtn);
@@ -1077,7 +1272,7 @@ function openToneMenu(toolbar: HTMLElement, polishBtn: HTMLElement) {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 14px;
-    box-shadow: 0 12px 30px -5px rgba(0,0,0,0.18), 0 4px 6px -2px rgba(0,0,0,0.05);
+    box-shadow: 0 12px 30px -5px rgba(0,0,0,0.18);
     padding: 8px;
     width: 250px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -1085,48 +1280,17 @@ function openToneMenu(toolbar: HTMLElement, polishBtn: HTMLElement) {
   );
 
   menu.innerHTML = `
-    <div style="padding: 4px 8px 6px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9;">
-      Select Academic Polish Tone
-    </div>
+    <div style="padding: 4px 8px 6px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Select Academic Polish Tone</div>
     <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 6px;">
-      <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-        <span>🎓</span>
-        <div>
-          <div style="line-height: 1;">Respectful & Formal</div>
-          <div style="font-size: 9px; color: #94a3b8; font-weight: 400; margin-top: 2px;">General inquiry to professor</div>
-        </div>
-      </button>
-
-      <button class="acad-tone-opt" data-tone="extension" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-        <span>⏳</span>
-        <div>
-          <div style="line-height: 1;">Request Extension</div>
-          <div style="font-size: 9px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Deadline adjustment request</div>
-        </div>
-      </button>
-
-      <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-        <span>❓</span>
-        <div>
-          <div style="line-height: 1;">Clarify Doubt / Office Hours</div>
-          <div style="font-size: 9px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Coursework conceptual question</div>
-        </div>
-      </button>
-
-      <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-        <span>📝</span>
-        <div>
-          <div style="line-height: 1;">Request LoR / Reference</div>
-          <div style="font-size: 9px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Polite recommendation inquiry</div>
-        </div>
-      </button>
+      <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">🎓 Respectful & Formal</button>
+      <button class="acad-tone-opt" data-tone="extension" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">⏳ Request Extension</button>
+      <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">❓ Clarify Doubt</button>
+      <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">📝 Request LoR / Reference</button>
     </div>
   `;
 
   menu.querySelectorAll('.acad-tone-opt').forEach((btn) => {
     const buttonEl = btn as HTMLElement;
-    buttonEl.onmouseenter = () => (buttonEl.style.background = '#f1f5f9');
-    buttonEl.onmouseleave = () => (buttonEl.style.background = 'transparent');
     buttonEl.onclick = async () => {
       const tone = buttonEl.getAttribute('data-tone') || 'formal';
       menu.remove();
@@ -1167,7 +1331,7 @@ async function executePolish(
 
     const apiKey = settings.apiKey || '';
     const groqKey = settings.groqApiKey || '';
-    const textToPolish = roughText || 'Need extension for lab 3 assignment due this friday because of fever.';
+    const textToPolish = roughText || 'Need extension for lab assignment due this friday because of fever.';
 
     const polished = await callPolishAI(textToPolish, tone, apiKey, groqKey);
 
@@ -1180,7 +1344,6 @@ async function executePolish(
       polishBtn.innerHTML = originalBtnHTML;
     }, 2000);
   } catch (err: any) {
-    console.error('Polish error:', err);
     polishBtn.innerHTML = `<span>⚠️ Error</span>`;
     setTimeout(() => {
       polishBtn.innerHTML = originalBtnHTML;
@@ -1208,7 +1371,6 @@ Guidelines:
 Student's notes:
 ${rough}`;
 
-  // Groq API
   if (groqKey && groqKey.trim()) {
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1230,7 +1392,6 @@ ${rough}`;
     } catch (e) {}
   }
 
-  // Gemini API
   if (apiKey && apiKey.trim()) {
     const candidateModels = ['models/gemini-2.0-flash', 'models/gemini-3.8-flash', 'models/gemini-1.5-flash'];
     for (const m of candidateModels) {
@@ -1255,7 +1416,7 @@ ${rough}`;
   return `Dear Professor,\n\nI hope this email finds you well.\n\nI am writing to respectfully request your guidance regarding ${rough}.\n\nThank you for your time and consideration.\n\nSincerely,\n[Your Name]\n[Student ID]`;
 }
 
-// Listen for messages from SidePanel
+// Runtime message listener
 if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'GET_ACTIVE_EMAIL') {
@@ -1270,78 +1431,29 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
     } else if (message.type === 'CLICK_ROW') {
       clickRowByIndex(message.index);
       sendResponse({ success: true });
-    } else if (message.type === 'TOGGLE_IN_PAGE_INTEGRATION') {
-      inPageIntegrationEnabled = message.enabled;
-      applyIntegrationState();
+    } else if (message.type === 'SET_UI_MODE') {
+      uiMode = message.mode;
+      applyUiMode();
       sendResponse({ success: true });
     }
     return true;
   });
 }
 
-// Floating button
-function injectFloatingTrigger() {
-  if (document.getElementById('acadmail-floating-trigger')) return;
-
-  const button = document.createElement('button');
-  button.id = 'acadmail-floating-trigger';
-  button.innerHTML = `
-    <span style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background: rgba(255,255,255,0.2);">⚡</span>
-    <span style="font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -0.01em;">AcadMail Copilot</span>
-  `;
-  button.setAttribute(
-    'style',
-    `
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 999999;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: #0f172a;
-    color: #ffffff;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4), 0 4px 6px -2px rgba(15, 23, 42, 0.2);
-    cursor: pointer;
-    font-size: 12px;
-    backdrop-filter: blur(8px);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  `
-  );
-
-  button.onmouseenter = () => {
-    button.style.transform = 'translateY(-2px)';
-    button.style.background = '#1e293b';
-  };
-  button.onmouseleave = () => {
-    button.style.transform = 'translateY(0)';
-    button.style.background = '#0f172a';
-  };
-
-  button.onclick = () => {
-    safeSendMessage({ type: 'OPEN_SIDEPANEL' });
-  };
-
-  document.body.appendChild(button);
-}
-
-// Initial bootstrap
+// Bootstrap
 loadSettings();
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    injectFloatingTrigger();
     setTimeout(scanVisibleInbox, 1200);
     setTimeout(checkAndInjectEmailBrief, 1200);
+    setTimeout(injectSideRailIcon, 1200);
     setTimeout(injectComposePolisher, 1200);
   });
 } else {
-  injectFloatingTrigger();
   setTimeout(scanVisibleInbox, 1200);
   setTimeout(checkAndInjectEmailBrief, 1200);
+  setTimeout(injectSideRailIcon, 1200);
   setTimeout(injectComposePolisher, 1200);
 }
 
@@ -1355,6 +1467,7 @@ new MutationObserver(() => {
       safeSendMessage({ type: 'EMAIL_CHANGED' });
       scanVisibleInbox();
       checkAndInjectEmailBrief();
+      injectSideRailIcon();
     }, 400);
   }
   injectComposePolisher();
