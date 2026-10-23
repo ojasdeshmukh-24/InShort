@@ -33,7 +33,8 @@ import {
   Flame,
   ArrowUpRight,
   Moon,
-  Sun
+  Sun,
+  LayoutGrid
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -56,6 +57,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [inPageIntegration, setInPageIntegration] = useState(true);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedReplyIndex, setCopiedReplyIndex] = useState<number | null>(null);
 
@@ -86,6 +88,7 @@ export default function App() {
     getSettings().then((settings) => {
       setApiKey(settings.apiKey || '');
       setGroqKey(settings.groqApiKey || '');
+      setInPageIntegration(settings.inPageIntegration !== false);
       if (!settings.apiKey && !settings.groqApiKey) {
         setShowSettings(true);
       }
@@ -338,9 +341,21 @@ export default function App() {
     }
   };
 
+  const handleToggleInPage = async (enabled: boolean) => {
+    setInPageIntegration(enabled);
+    await saveSettings({ inPageIntegration: enabled });
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'TOGGLE_IN_PAGE_INTEGRATION',
+        enabled,
+      }).catch(() => {});
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveSettings({ apiKey: apiKey.trim(), groqApiKey: groqKey.trim() });
+    await saveSettings({ apiKey: apiKey.trim(), groqApiKey: groqKey.trim(), inPageIntegration });
     setShowSettings(false);
     setError(null);
     if (email) {
@@ -653,6 +668,32 @@ export default function App() {
                     placeholder="gsk_... (Optional backup)"
                     className="w-full px-2.5 py-1.5 text-xs bg-slate-50/50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 font-mono"
                   />
+                </div>
+
+                {/* In-Gmail Native Interface Toggle */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div className="pr-2">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] flex items-center gap-1.5">
+                      <LayoutGrid className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span>In-Gmail Native Interface</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                      Filter bar above inbox & AI brief card inside open emails
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleInPage(!inPageIntegration)}
+                    className={`w-9 h-5 flex items-center rounded-full p-0.5 transition duration-200 shrink-0 cursor-pointer ${
+                      inPageIntegration ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'
+                    }`}
+                  >
+                    <div
+                      className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition duration-200 ${
+                        inPageIntegration ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </div>
 
                 <div className="flex justify-end pt-1">

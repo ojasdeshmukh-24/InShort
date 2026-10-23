@@ -75,6 +75,7 @@ export interface UserSettings {
   openaiApiKey?: string;
   autoAnalyze: boolean;
   academicLevel?: 'undergrad' | 'grad' | 'researcher' | 'faculty';
+  inPageIntegration?: boolean; // When true, injects native filter toolbar & in-email AI card into Gmail
   customLabels: {
     name: string;
     color: string;
