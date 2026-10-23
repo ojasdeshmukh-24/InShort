@@ -1,12 +1,12 @@
 import { ExtractedEmail, InboxRowItem, CategoryType, UiIntegrationMode } from '../types';
 
-console.log('[AcadMail AI] Material 3 Blended Content Script initialized.');
+console.log('[AcadMail AI] Ultra-Clean Material 3 Gmail Script active.');
 
 let lastClickedRow: HTMLElement | null = null;
 let currentActiveFilter: CategoryType | 'ALL' = 'ALL';
 let scannedItemsCache: InboxRowItem[] = [];
 let uiMode: UiIntegrationMode = 'blended';
-let isFilterBarMinimized = false;
+let isBriefExpanded = false;
 
 // Safe message sender
 function safeSendMessage(message: any) {
@@ -17,7 +17,7 @@ function safeSendMessage(message: any) {
   } catch (e) {}
 }
 
-// Detect Gmail Dark Mode
+// Detect Gmail Dark Mode accurately
 function isGmailDark(): boolean {
   try {
     const bg = window.getComputedStyle(document.body).backgroundColor;
@@ -51,10 +51,9 @@ function loadSettings() {
 }
 
 function applyUiMode() {
-  // Clean up existing elements
-  document.getElementById('acadmail-inbox-filter-bar')?.remove();
+  // Clean up all possible injected elements
   document.getElementById('acadmail-native-chip-bar')?.remove();
-  document.getElementById('acadmail-minimized-pill')?.remove();
+  document.getElementById('acadmail-inbox-filter-bar')?.remove();
   document.getElementById('acadmail-email-brief-card')?.remove();
   document.getElementById('acadmail-siderail-btn')?.remove();
 
@@ -63,7 +62,6 @@ function applyUiMode() {
     return;
   }
 
-  // Inject based on mode
   scanVisibleInbox();
   checkAndInjectEmailBrief();
   injectSideRailIcon();
@@ -227,11 +225,11 @@ document.addEventListener(
       setTimeout(() => {
         safeSendMessage({ type: 'EMAIL_CHANGED' });
         checkAndInjectEmailBrief();
-      }, 400);
+      }, 350);
       setTimeout(() => {
         safeSendMessage({ type: 'EMAIL_CHANGED' });
         checkAndInjectEmailBrief();
-      }, 900);
+      }, 800);
     }
   },
   true
@@ -278,16 +276,14 @@ function scanVisibleInbox(): InboxRowItem[] {
 
   scannedItemsCache = items;
 
-  if (uiMode === 'blended') {
-    injectMaterial3ChipBar(items);
-  } else if (uiMode === 'floating') {
-    injectFloatingFilterBar(items);
+  if (uiMode === 'blended' && items.length > 0) {
+    injectMaterial3ToolbarChips(items);
   }
 
   return items;
 }
 
-// Inject modern badge directly into the Gmail row (Material styled)
+// Subtle, elegant micro-badge matching native Gmail labels
 function injectRowBadge(
   rowEl: HTMLElement,
   category: CategoryType,
@@ -305,38 +301,38 @@ function injectRowBadge(
   badge.className = 'acadmail-row-badge';
 
   let badgeColor = isDark
-    ? 'background: #1e3a5f; color: #a8c7fa; border: 1px solid #2b5278;'
-    : 'background: #e8f0fe; color: #1967d2; border: 1px solid #d2e3fc;';
+    ? 'background: rgba(56, 139, 253, 0.15); color: #79c0ff; border: 1px solid rgba(56, 139, 253, 0.3);'
+    : 'background: #edf5fd; color: #1a73e8; border: 1px solid #d2e3fc;';
   let icon = '🎓';
-  let labelText = courseCode || 'Academics';
+  let labelText = courseCode || 'Acads';
 
   if (category === 'Competitions & Tournaments') {
     badgeColor = isDark
-      ? 'background: #4a3410; color: #fed7aa; border: 1px solid #785312;'
-      : 'background: #fef3c7; color: #b45309; border: 1px solid #fde68a;';
+      ? 'background: rgba(210, 153, 34, 0.15); color: #e3b341; border: 1px solid rgba(210, 153, 34, 0.3);'
+      : 'background: #fef7e0; color: #b06000; border: 1px solid #fce8b2;';
     icon = '🏆';
-    labelText = 'Contest / Sports';
+    labelText = 'Contest';
   } else if (category === 'Workshops') {
     badgeColor = isDark
-      ? 'background: #143e2e; color: #a7f3d0; border: 1px solid #1e5e45;'
+      ? 'background: rgba(46, 160, 67, 0.15); color: #7ee787; border: 1px solid rgba(46, 160, 67, 0.3);'
       : 'background: #e6f4ea; color: #137333; border: 1px solid #ceead6;';
     icon = '🛠️';
-    labelText = 'Workshop / Talk';
+    labelText = 'Workshop';
   } else if (category === 'Class Rescheduling') {
     badgeColor = isDark
-      ? 'background: #4c1d24; color: #fecdd3; border: 1px solid #881337;'
+      ? 'background: rgba(248, 81, 73, 0.15); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.3);'
       : 'background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;';
     icon = '⏰';
     labelText = 'Rescheduled';
   } else if (isPhd) {
     badgeColor = isDark
-      ? 'background: #2a2b2e; color: #c4c7c5; border: 1px solid #444746;'
+      ? 'background: rgba(142, 145, 143, 0.15); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.3);'
       : 'background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0;';
     icon = '📜';
     labelText = 'PhD / Viva';
   } else if (category === 'General') {
     badgeColor = isDark
-      ? 'background: #23272e; color: #c4c7c5; border: 1px solid #3c4043;'
+      ? 'background: rgba(142, 145, 143, 0.12); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.2);'
       : 'background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0;';
     icon = '📢';
     labelText = 'General';
@@ -347,14 +343,14 @@ function injectRowBadge(
     `
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    padding: 0 6px;
-    height: 18px;
+    gap: 2.5px;
+    padding: 0 5px;
+    height: 16px;
     margin-right: 6px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
-    font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
     vertical-align: middle;
     cursor: ${courseCode ? 'pointer' : 'default'};
     ${badgeColor}
@@ -363,9 +359,8 @@ function injectRowBadge(
 
   badge.innerText = `${icon} ${labelText}`;
 
-  // Course code quick search capability
   if (courseCode) {
-    badge.title = `Search Gmail for "${courseCode}"`;
+    badge.title = `Filter Gmail for ${courseCode}`;
     badge.onclick = (e) => {
       e.stopPropagation();
       executeGmailSearch(courseCode);
@@ -406,7 +401,7 @@ function filterGmailDom(category: CategoryType | 'ALL') {
     const badgeText = badge?.textContent || '';
 
     let match = false;
-    if (category === 'Academics' && (badgeText.includes('🎓') || badgeText.includes('Academics'))) match = true;
+    if (category === 'Academics' && (badgeText.includes('🎓') || badgeText.includes('Acads'))) match = true;
     if (category === 'Competitions & Tournaments' && (badgeText.includes('🏆') || badgeText.includes('Contest'))) match = true;
     if (category === 'Workshops' && (badgeText.includes('🛠️') || badgeText.includes('Workshop'))) match = true;
     if (category === 'Class Rescheduling' && (badgeText.includes('⏰') || badgeText.includes('Rescheduled'))) match = true;
@@ -419,18 +414,10 @@ function filterGmailDom(category: CategoryType | 'ALL') {
     }
   });
 
-  updateChipBarActiveState();
+  updateToolbarChipsActiveState();
 }
 
-function clickRowByIndex(index: number) {
-  const rows = document.querySelectorAll('tr.zA');
-  if (rows[index]) {
-    const target = rows[index] as HTMLElement;
-    target.click();
-  }
-}
-
-// Google Calendar URL generator
+// Pre-filled Google Calendar URL generator
 function createGCalUrl(title: string, details: string, dueDateStr?: string): string {
   const baseUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
   let datesParam = '';
@@ -446,25 +433,25 @@ function createGCalUrl(title: string, details: string, dueDateStr?: string): str
 
   const params = new URLSearchParams({
     text: `[AcadMail] ${title}`,
-    details: `${details}\n\n— Auto-extracted by AcadMail AI for Google Workspace`,
+    details: `${details}\n\n— Auto-extracted by AcadMail AI`,
   });
 
   return `${baseUrl}&${params.toString()}${datesParam}`;
 }
 
 // =========================================================================
-// 1. MATERIAL 3 BLENDED FILTER CHIPS (Seamless with native Gmail action bar)
+// 1. INLINE MATERIAL 3 TOOLBAR CHIPS (Zero screen waste, sits in Gmail's bar)
 // =========================================================================
-function injectMaterial3ChipBar(items: InboxRowItem[]) {
+function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   if (uiMode !== 'blended') return;
 
-  const mailContainer =
+  // Locate Gmail's action bar container
+  const targetBar =
     document.querySelector('div[gh="tm"]') ||
     document.querySelector('div.G-atb') ||
-    document.querySelector('div.aeF') ||
-    document.querySelector('div[role="main"]');
+    document.querySelector('div.aeF');
 
-  if (!mailContainer) return;
+  if (!targetBar) return;
 
   let acadCount = 0;
   let compCount = 0;
@@ -501,29 +488,27 @@ function injectMaterial3ChipBar(items: InboxRowItem[]) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      padding: 6px 16px;
+      gap: 6px;
+      padding: 4px 16px;
+      margin: 0;
       background: transparent;
-      border-bottom: 1px solid ${isDark ? '#444746' : '#e0e2ec'};
-      font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
-      font-size: 13px;
-      z-index: 20;
-      transition: background 0.2s ease;
+      border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'};
+      font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
+      font-size: 12px;
+      z-index: 10;
     `
     );
 
-    const targetAnchor = document.querySelector('div.aeF') || document.querySelector('div[gh="tm"]') || mailContainer;
-    targetAnchor.parentElement?.insertBefore(bar, targetAnchor);
+    targetBar.parentElement?.insertBefore(bar, targetBar.nextSibling || targetBar);
   }
 
-  // Material 3 Chip Styling
-  const getChipStyle = (cat: CategoryType | 'ALL') => {
+  const getPillStyle = (cat: CategoryType | 'ALL') => {
     const isActive = currentActiveFilter === cat;
     if (isActive) {
       return `
-        height: 32px;
-        padding: 0 12px;
-        border-radius: 8px;
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 9999px;
         border: none;
         background: ${isDark ? '#004a77' : '#c2e7ff'};
         color: ${isDark ? '#c2e7ff' : '#001d35'};
@@ -531,157 +516,121 @@ function injectMaterial3ChipBar(items: InboxRowItem[]) {
         cursor: pointer;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: 13px;
+        gap: 4px;
+        font-size: 11.5px;
         transition: all 0.15s ease;
       `;
     }
     return `
-      height: 32px;
-      padding: 0 12px;
-      border-radius: 8px;
-      border: 1px solid ${isDark ? '#444746' : '#747775'};
-      background: transparent;
-      color: ${isDark ? '#e3e3e3' : '#444746'};
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 9999px;
+      border: 1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'};
+      background: ${isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'};
+      color: ${isDark ? '#c4c7c5' : '#444746'};
       font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
+      gap: 4px;
+      font-size: 11.5px;
       transition: all 0.15s ease;
     `;
   };
 
   bar.innerHTML = `
-    <!-- Left: Material 3 Horizontal Filter Chips -->
-    <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 2px 0;">
-      <!-- Google Gemini Sparkle Branding -->
-      <div title="AcadMail AI for Google Workspace" style="display: flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid ${
-        isDark ? '#444746' : '#dadce0'
-      }; color: ${isDark ? '#a8c7fa' : '#0b57d0'}; font-weight: 600; font-size: 13px; white-space: nowrap;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
-        </svg>
+    <!-- Left: Slim Material Chips -->
+    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto;">
+      <span style="font-weight: 700; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-size: 11px; margin-right: 4px; display: flex; align-items: center; gap: 3px;">
+        <span>🎓</span>
         <span>AcadMail</span>
-      </div>
+      </span>
 
-      <button class="m3-chip" data-cat="ALL" style="${getChipStyle('ALL')}">
-        ${currentActiveFilter === 'ALL' ? '✓ ' : ''}All (${items.length})
+      <button class="m3-chip" data-cat="ALL" style="${getPillStyle('ALL')}">
+        All (${items.length})
       </button>
 
-      <button class="m3-chip" data-cat="Academics" style="${getChipStyle('Academics')}">
-        ${currentActiveFilter === 'Academics' ? '✓ ' : ''}🎓 Academics (${acadCount})
+      <button class="m3-chip" data-cat="Academics" style="${getPillStyle('Academics')}">
+        🎓 Acads (${acadCount})
       </button>
 
-      <button class="m3-chip" data-cat="Competitions & Tournaments" style="${getChipStyle('Competitions & Tournaments')}">
-        ${currentActiveFilter === 'Competitions & Tournaments' ? '✓ ' : ''}🏆 Competitions (${compCount})
+      <button class="m3-chip" data-cat="Competitions & Tournaments" style="${getPillStyle('Competitions & Tournaments')}">
+        🏆 Contests (${compCount})
       </button>
 
-      <button class="m3-chip" data-cat="Workshops" style="${getChipStyle('Workshops')}">
-        ${currentActiveFilter === 'Workshops' ? '✓ ' : ''}🛠️ Workshops & Talks (${workCount})
+      <button class="m3-chip" data-cat="Workshops" style="${getPillStyle('Workshops')}">
+        🛠️ Workshops (${workCount})
       </button>
 
-      <button class="m3-chip" data-cat="Class Rescheduling" style="${getChipStyle('Class Rescheduling')}">
-        ${currentActiveFilter === 'Class Rescheduling' ? '✓ ' : ''}⏰ Rescheduled (${reschedCount})
+      <button class="m3-chip" data-cat="Class Rescheduling" style="${getPillStyle('Class Rescheduling')}">
+        ⏰ Rescheduled (${reschedCount})
       </button>
 
-      <button class="m3-chip" data-cat="General" style="${getChipStyle('General')}">
-        ${currentActiveFilter === 'General' ? '✓ ' : ''}📜 PhD & General (${genCount})
+      <button class="m3-chip" data-cat="General" style="${getPillStyle('General')}">
+        📜 PhD & General (${genCount})
       </button>
     </div>
 
-    <!-- Right: Deadlines Quick Access & Mode Revert Dropdown -->
-    <div style="display: flex; align-items: center; gap: 8px; shrink: 0;">
-      <div style="position: relative;">
-        <button id="m3-deadlines-btn" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid ${
-          isDark ? '#444746' : '#747775'
-        }; background: transparent; color: ${
-    isDark ? '#e3e3e3' : '#444746'
-  }; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-          <span>📅</span>
-          <span>Due Dates (${deadlineList.length})</span>
-        </button>
+    <!-- Right: Mini Deadlines Dropdown & Instant Revert Button -->
+    <div style="display: flex; align-items: center; gap: 6px; shrink: 0;">
+      ${
+        deadlineList.length > 0
+          ? `
+        <div style="position: relative;">
+          <button id="m3-deadlines-btn" style="height: 24px; padding: 0 8px; border-radius: 6px; border: 1px solid ${
+            isDark ? 'rgba(210,153,34,0.4)' : '#fde68a'
+          }; background: ${isDark ? 'rgba(210,153,34,0.1)' : '#fffbeb'}; color: ${
+              isDark ? '#e3b341' : '#b45309'
+            }; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <span>⏰</span>
+            <span>${deadlineList.length} Deadlines</span>
+          </button>
 
-        <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 320px; background: ${
-          isDark ? '#1e1f20' : '#ffffff'
-        }; border: 1px solid ${
-    isDark ? '#444746' : '#e0e2ec'
-  }; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 12px; z-index: 99999;">
-          <div style="font-weight: 600; color: ${
-            isDark ? '#e3e3e3' : '#1f1f1f'
-          }; font-size: 13px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span>Detected Deadlines</span>
-            <span style="font-size: 11px; color: ${isDark ? '#a8c7fa' : '#0b57d0'};">1-Click Google Calendar</span>
-          </div>
-          <div style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
-            ${
-              deadlineList.length === 0
-                ? `<div style="color: ${
-                    isDark ? '#8e918f' : '#747775'
-                  }; font-size: 12px; text-align: center; padding: 12px 0;">No active deadlines detected in current view</div>`
-                : deadlineList
-                    .map(
-                      (d) => `
-              <div style="padding: 8px 10px; background: ${
-                isDark ? '#2b2c2f' : '#f0f4f9'
-              }; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-                <div style="overflow: hidden;">
-                  <div style="font-size: 12px; font-weight: 500; color: ${
-                    isDark ? '#e3e3e3' : '#1f1f1f'
-                  }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
-                  <div style="font-size: 11px; color: ${isDark ? '#fed7aa' : '#b45309'}; font-weight: 600;">⏰ ${d.deadline}</div>
+          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 28px; width: 300px; background: ${
+            isDark ? '#1e1f20' : '#ffffff'
+          }; border: 1px solid ${
+              isDark ? '#3c4043' : '#e0e2ec'
+            }; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.16); padding: 10px; z-index: 99999;">
+            <div style="font-weight: 600; color: ${
+              isDark ? '#e3e3e3' : '#1f1f1f'
+            }; font-size: 11px; margin-bottom: 6px; display: flex; justify-content: space-between;">
+              <span>Detected Due Dates</span>
+              <span style="font-size: 9px; color: #1a73e8;">+ Add to Google Calendar</span>
+            </div>
+            <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+              ${deadlineList
+                .map(
+                  (d) => `
+                <div style="padding: 6px 8px; background: ${
+                  isDark ? '#2b2c2f' : '#f8fafd'
+                }; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                  <div style="overflow: hidden;">
+                    <div style="font-size: 11px; font-weight: 500; color: ${
+                      isDark ? '#e3e3e3' : '#1f1f1f'
+                    }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
+                    <div style="font-size: 10px; color: ${isDark ? '#e3b341' : '#b45309'}; font-weight: 600;">⏰ ${d.deadline}</div>
+                  </div>
+                  <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; shrink: 0; padding: 2px 6px; background: ${
+                    isDark ? '#004a77' : '#c2e7ff'
+                  }; color: ${isDark ? '#c2e7ff' : '#001d35'}; border-radius: 4px; font-size: 10px; font-weight: 600;">+ GCal</a>
                 </div>
-                <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; shrink: 0; padding: 4px 8px; background: ${
-                        isDark ? '#004a77' : '#c2e7ff'
-                      }; color: ${
-                        isDark ? '#c2e7ff' : '#001d35'
-                      }; border-radius: 6px; font-size: 11px; font-weight: 600;">+ GCal</a>
-              </div>
-            `
-                    )
-                    .join('')
-            }
+              `
+                )
+                .join('')}
+            </div>
           </div>
         </div>
-      </div>
+      `
+          : ''
+      }
 
-      <!-- Quick Mode & Revert Menu -->
-      <div style="position: relative;">
-        <button id="m3-options-btn" title="AcadMail Display & Revert Options" style="height: 32px; width: 32px; border-radius: 8px; border: 1px solid ${
-          isDark ? '#444746' : '#dadce0'
-        }; background: transparent; color: ${
-    isDark ? '#c4c7c5' : '#5f6368'
-  }; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">
-          ⋮
-        </button>
-
-        <div id="m3-options-menu" style="display: none; position: absolute; right: 0; top: 38px; width: 220px; background: ${
-          isDark ? '#1e1f20' : '#ffffff'
-        }; border: 1px solid ${
-    isDark ? '#444746' : '#e0e2ec'
-  }; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 6px; z-index: 99999;">
-          <div style="padding: 6px 8px; font-size: 11px; font-weight: 700; color: ${
-            isDark ? '#8e918f' : '#747775'
-          }; text-transform: uppercase;">
-            Display Integration
-          </div>
-          <button class="m3-menu-opt" data-mode="blended" style="text-align: left; width: 100%; padding: 7px 10px; border-radius: 8px; border: none; background: ${
-            isDark ? '#2b2c2f' : '#e8f0fe'
-          }; color: ${isDark ? '#a8c7fa' : '#1967d2'}; font-size: 12px; font-weight: 600; cursor: pointer;">
-            ✓ Blended Native M3
-          </button>
-          <button class="m3-menu-opt" data-mode="floating" style="text-align: left; width: 100%; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; color: ${
-            isDark ? '#e3e3e3' : '#444746'
-          }; font-size: 12px; cursor: pointer; margin-top: 2px;">
-            Floating Pill Toolbar
-          </button>
-          <div style="border-top: 1px solid ${isDark ? '#333537' : '#f1f3f4'}; margin: 4px 0;"></div>
-          <button class="m3-menu-opt" data-mode="off" style="text-align: left; width: 100%; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; color: #ef4444; font-size: 12px; font-weight: 600; cursor: pointer;">
-            ✕ Revert to Original Gmail
-          </button>
-        </div>
-      </div>
+      <!-- 1-Click Revert Button directly in Gmail -->
+      <button id="acadmail-instant-revert-btn" title="Revert to standard clean Gmail (Disable in-page elements)" style="height: 24px; padding: 0 6px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: ${
+        isDark ? '#8e918f' : '#94a3b8'
+      }; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 2px;">
+        <span>✕</span>
+        <span>Revert</span>
+      </button>
     </div>
   `;
 
@@ -706,109 +655,39 @@ function injectMaterial3ChipBar(items: InboxRowItem[]) {
       e.stopPropagation();
       dlPop.style.display = dlPop.style.display === 'block' ? 'none' : 'block';
     };
-  }
-
-  // Options Menu & Revert Click Handlers
-  const optBtn = bar.querySelector('#m3-options-btn') as HTMLElement;
-  const optMenu = bar.querySelector('#m3-options-menu') as HTMLElement;
-  if (optBtn && optMenu) {
-    optBtn.onclick = (e) => {
-      e.stopPropagation();
-      optMenu.style.display = optMenu.style.display === 'block' ? 'none' : 'block';
-    };
-
-    optMenu.querySelectorAll('.m3-menu-opt').forEach((item) => {
-      const itemEl = item as HTMLElement;
-      itemEl.onclick = async () => {
-        const mode = itemEl.getAttribute('data-mode') as UiIntegrationMode;
-        uiMode = mode;
-        optMenu.style.display = 'none';
-
-        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-          chrome.storage.local.get(['acadmail_settings'], (res) => {
-            const current = res.acadmail_settings || {};
-            chrome.storage.local.set({
-              acadmail_settings: { ...current, uiMode: mode, inPageIntegration: mode !== 'off' },
-            });
-          });
-        }
-
-        applyUiMode();
-      };
+    document.addEventListener('click', (e) => {
+      if (!dlPop.contains(e.target as Node) && e.target !== dlBtn) {
+        dlPop.style.display = 'none';
+      }
     });
   }
 
-  // Close menus on outside click
-  document.addEventListener('click', (e) => {
-    if (dlPop && !dlPop.contains(e.target as Node) && e.target !== dlBtn) {
-      dlPop.style.display = 'none';
-    }
-    if (optMenu && !optMenu.contains(e.target as Node) && e.target !== optBtn) {
-      optMenu.style.display = 'none';
-    }
-  });
+  // Instant Revert Click Handler
+  const revertBtn = bar.querySelector('#acadmail-instant-revert-btn') as HTMLElement;
+  if (revertBtn) {
+    revertBtn.onclick = () => {
+      uiMode = 'off';
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        chrome.storage.local.get(['acadmail_settings'], (res) => {
+          const current = res.acadmail_settings || {};
+          chrome.storage.local.set({
+            acadmail_settings: { ...current, uiMode: 'off', inPageIntegration: false },
+          });
+        });
+      }
+      applyUiMode();
+    };
+  }
 }
 
-function updateChipBarActiveState() {
+function updateToolbarChipsActiveState() {
   if (uiMode === 'blended' && scannedItemsCache.length > 0) {
-    injectMaterial3ChipBar(scannedItemsCache);
+    injectMaterial3ToolbarChips(scannedItemsCache);
   }
 }
 
 // =========================================================================
-// 2. NATIVE GOOGLE WORKSPACE RIGHT SIDE-RAIL ICON (1:1 with Keep/Calendar)
-// =========================================================================
-function injectSideRailIcon() {
-  if (uiMode === 'off' || document.getElementById('acadmail-siderail-btn')) return;
-
-  // Look for Gmail's native right side-rail
-  const sideRail =
-    document.querySelector('div.aDG') ||
-    document.querySelector('div[aria-label="Side panel"]') ||
-    document.querySelector('div.bq9');
-
-  if (!sideRail) return;
-
-  const btn = document.createElement('div');
-  btn.id = 'acadmail-siderail-btn';
-  btn.title = 'AcadMail AI Copilot';
-  btn.setAttribute('role', 'button');
-  btn.setAttribute('tabindex', '0');
-
-  const isDark = isGmailDark();
-  btn.setAttribute(
-    'style',
-    `
-    width: 40px;
-    height: 40px;
-    margin: 8px auto;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    background: transparent;
-    color: ${isDark ? '#a8c7fa' : '#0b57d0'};
-    transition: background 0.2s;
-  `
-  );
-
-  btn.innerHTML = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-    </svg>
-  `;
-
-  btn.onmouseenter = () => (btn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
-  btn.onmouseleave = () => (btn.style.background = 'transparent');
-  btn.onclick = () => safeSendMessage({ type: 'OPEN_SIDEPANEL' });
-
-  sideRail.prepend(btn);
-}
-
-// =========================================================================
-// 3. IN-EMAIL READING VIEW: NATIVE GEMINI ACADEMIC CARD
+// 2. IN-EMAIL READING VIEW: ULTRA-COMPACT GEMINI SMART CHIP (Accordion)
 // =========================================================================
 function checkAndInjectEmailBrief() {
   if (uiMode === 'off') return;
@@ -838,24 +717,25 @@ function checkAndInjectEmailBrief() {
   }
 
   const classification = classifyInboxItem(emailData.subject, emailData.senderName, emailData.bodyText);
-  const category = classification.category;
-  const courseCode = classification.courseCode;
-
   const fullText = `${emailData.subject} ${emailData.bodyText}`;
+
+  // Extract deadline
   const datePattern = /\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/i;
   const deadlineMatch = fullText.match(datePattern);
   const detectedDeadline = deadlineMatch ? deadlineMatch[1] : null;
 
+  // Extract meeting
   const meetMatch = fullText.match(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?(?:zoom\.us\/j|meet\.google\.com|teams\.microsoft\.com\/l)\/[^\s<>"']+/i);
   const meetingUrl = meetMatch ? meetMatch[0] : null;
 
+  // Key takeaways
   const sentences = emailData.bodyText
     .split(/\.\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 25 && !s.includes('http') && !s.includes('unsubscribe') && !s.includes('Regards'));
   const bullets = sentences.slice(0, 3);
   if (bullets.length === 0) {
-    bullets.push(`Notification regarding ${emailData.subject} from ${emailData.senderName}.`);
+    bullets.push(`Announcement regarding ${emailData.subject} from ${emailData.senderName}.`);
   }
 
   const isDark = isGmailDark();
@@ -865,159 +745,124 @@ function checkAndInjectEmailBrief() {
   card.setAttribute(
     'style',
     `
-    margin: 12px 0 16px 0;
-    padding: 14px 18px;
-    background: ${isDark ? '#1e1f20' : '#f0f4f9'};
-    border: 1px solid ${isDark ? '#444746' : '#d3e3fd'};
-    border-radius: 16px;
-    font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
-    font-size: 13px;
+    margin: 4px 0 10px 0;
+    padding: 6px 12px;
+    background: ${isDark ? '#1e1f20' : '#f8fafd'};
+    border: 1px solid ${isDark ? '#333537' : '#e0e7ff'};
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
+    font-size: 12px;
     color: ${isDark ? '#e3e3e3' : '#1f1f1f'};
-    z-index: 20;
     transition: all 0.2s ease;
   `
   );
 
-  let categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
-    isDark ? '#004a77' : '#c2e7ff'
-  }; color: ${isDark ? '#c2e7ff' : '#001d35'};">🎓 ${courseCode || 'Academics'}</span>`;
-  if (category === 'Competitions & Tournaments') {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
-      isDark ? '#785312' : '#fef3c7'
-    }; color: ${isDark ? '#fed7aa' : '#b45309'};">🏆 Competitions</span>`;
-  } else if (category === 'Workshops') {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
-      isDark ? '#143e2e' : '#e6f4ea'
-    }; color: ${isDark ? '#a7f3d0' : '#137333'};">🛠️ Workshops & Talks</span>`;
-  } else if (category === 'Class Rescheduling') {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
-      isDark ? '#4c1d24' : '#fce8e6'
-    }; color: ${isDark ? '#fecdd3' : '#c5221f'};">⏰ Rescheduled</span>`;
-  } else if (classification.isPhd) {
-    categoryBadge = `<span style="padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; background: ${
-      isDark ? '#2a2b2e' : '#f1f3f4'
-    }; color: ${isDark ? '#c4c7c5' : '#5f6368'};">📜 PhD Defense / Viva</span>`;
-  }
-
   card.innerHTML = `
-    <!-- Google Gemini Header -->
-    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid ${
-      isDark ? '#333537' : '#e0e2ec'
-    };">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="${isDark ? '#a8c7fa' : '#0b57d0'}">
-          <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
-        </svg>
-        <span style="font-weight: 600; font-size: 13px; color: ${isDark ? '#e3e3e3' : '#1f1f1f'};">AcadMail AI Brief</span>
-        ${categoryBadge}
+    <!-- Top 1-Line Compact Summary Bar -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+      <div id="m3-brief-toggle-line" style="display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; overflow: hidden;">
+        <span style="color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-size: 14px;">✨</span>
+        <span style="font-weight: 600; font-size: 11.5px; color: ${isDark ? '#79c0ff' : '#1a73e8'}; shrink: 0;">AcadMail:</span>
+        <span style="font-size: 11.5px; color: ${isDark ? '#c4c7c5' : '#475569'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${detectedDeadline ? `⏰ Due: <strong>${detectedDeadline}</strong> • ` : ''}${bullets[0]}
+        </span>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <button id="m3-card-sidepanel-btn" title="Open AI Side Panel" style="cursor: pointer; padding: 4px 10px; border-radius: 8px; border: 1px solid ${
-          isDark ? '#444746' : '#c4c7c5'
-        }; background: transparent; font-size: 12px; font-weight: 500; color: ${isDark ? '#e3e3e3' : '#444746'};">
-          ⚡ Side Panel
+      <div style="display: flex; align-items: center; gap: 6px; shrink: 0;">
+        ${
+          detectedDeadline
+            ? `
+          <a href="${createGCalUrl(
+            emailData.subject,
+            emailData.bodyText.slice(0, 300),
+            detectedDeadline
+          )}" target="_blank" style="text-decoration: none; padding: 2px 7px; background: ${
+                isDark ? '#004a77' : '#c2e7ff'
+              }; color: ${
+                isDark ? '#c2e7ff' : '#001d35'
+              }; border-radius: 6px; font-size: 10px; font-weight: 600;">+ GCal</a>
+        `
+            : ''
+        }
+        <button id="m3-brief-expand-btn" style="cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid ${
+          isDark ? '#444746' : '#d2e3fc'
+        }; background: transparent; font-size: 10px; font-weight: 600; color: ${isDark ? '#79c0ff' : '#1a73e8'};">
+          ${isBriefExpanded ? 'Collapse ▴' : 'Details ▾'}
         </button>
-        <button id="m3-card-collapse-btn" title="Collapse" style="cursor: pointer; padding: 2px 6px; border-radius: 6px; border: none; background: transparent; color: ${
-          isDark ? '#8e918f' : '#747775'
-        }; font-size: 14px;">
-          −
-        </button>
+        <button id="m3-brief-dismiss-btn" title="Dismiss card" style="cursor: pointer; padding: 2px 4px; border: none; background: transparent; color: #94a3b8; font-size: 11px;">✕</button>
       </div>
     </div>
 
-    <!-- Body -->
-    <div id="m3-card-content" style="padding-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-      <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.5; color: ${
+    <!-- Expandable Drawer Details -->
+    <div id="m3-brief-drawer" style="display: ${
+      isBriefExpanded ? 'flex' : 'none'
+    }; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed ${
+    isDark ? '#333537' : '#e0e2ec'
+  };">
+      <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: ${
         isDark ? '#c4c7c5' : '#334155'
-      };">
+      }; line-height: 1.45;">
         ${bullets.map((b) => `<li>${b}</li>`).join('')}
       </ul>
 
-      <!-- Action Chips (Google Calendar + Meet) -->
-      ${
-        detectedDeadline || meetingUrl
-          ? `
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px;">
-          ${
-            detectedDeadline
-              ? `
-            <a href="${createGCalUrl(
-              emailData.subject,
-              emailData.bodyText.slice(0, 300),
-              detectedDeadline
-            )}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${
-                  isDark ? '#004a77' : '#c2e7ff'
-                }; color: ${
-                  isDark ? '#c2e7ff' : '#001d35'
-                }; border-radius: 8px; font-size: 12px; font-weight: 600;">
-              <span>📅</span>
-              <span>Due: ${detectedDeadline} • Add to Google Calendar</span>
-            </a>
-          `
-              : ''
-          }
+      <!-- Action Row: Meeting Links + Quick Reply Chips -->
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 2px;">
+        ${
+          meetingUrl
+            ? `
+          <a href="${meetingUrl}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: ${
+                isDark ? '#143e2e' : '#e6f4ea'
+              }; color: ${
+                isDark ? '#a7f3d0' : '#137333'
+              }; border-radius: 6px; font-size: 10.5px; font-weight: 600;">
+            <span>🎥</span>
+            <span>Join Meeting</span>
+          </a>
+        `
+            : ''
+        }
 
-          ${
-            meetingUrl
-              ? `
-            <a href="${meetingUrl}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${
-                  isDark ? '#143e2e' : '#e6f4ea'
-                }; color: ${
-                  isDark ? '#a7f3d0' : '#137333'
-                }; border-radius: 8px; font-size: 12px; font-weight: 600;">
-              <span>🎥</span>
-              <span>Join Video Meeting</span>
-            </a>
-          `
-              : ''
-          }
-        </div>
-      `
-          : ''
-      }
+        <span style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-left: 2px;">Reply draft:</span>
 
-      <!-- Suggested Reply Chips -->
-      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 6px; border-top: 1px solid ${
-        isDark ? '#333537' : '#e0e2ec'
-      };">
-        <span style="font-size: 11px; font-weight: 600; color: ${isDark ? '#8e918f' : '#747775'};">Suggested Reply:</span>
-
-        <button class="m3-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 4px 10px; border-radius: 16px; border: 1px solid ${
-          isDark ? '#444746' : '#747775'
-        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#444746'}; font-size: 12px; font-weight: 500;">
+        <button class="m3-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${
+          isDark ? '#444746' : '#cbd5e1'
+        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#334155'}; font-size: 10.5px; font-weight: 500;">
           ✍️ Confirm Attendance
         </button>
 
-        <button class="m3-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 4px 10px; border-radius: 16px; border: 1px solid ${
-          isDark ? '#444746' : '#747775'
-        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#444746'}; font-size: 12px; font-weight: 500;">
+        <button class="m3-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${
+          isDark ? '#444746' : '#cbd5e1'
+        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#334155'}; font-size: 10.5px; font-weight: 500;">
           ⏳ Request Extension
         </button>
 
-        <button class="m3-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 4px 10px; border-radius: 16px; border: 1px solid ${
-          isDark ? '#444746' : '#747775'
-        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#444746'}; font-size: 12px; font-weight: 500;">
-          ❓ Clarify Doubt
+        <button class="m3-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${
+          isDark ? '#444746' : '#cbd5e1'
+        }; background: transparent; color: ${isDark ? '#e3e3e3' : '#334155'}; font-size: 10.5px; font-weight: 500;">
+          ❓ Ask Clarification
         </button>
       </div>
     </div>
   `;
 
-  // Collapse handler
-  const collapseBtn = card.querySelector('#m3-card-collapse-btn') as HTMLElement;
-  const contentDiv = card.querySelector('#m3-card-content') as HTMLElement;
-  if (collapseBtn && contentDiv) {
-    collapseBtn.onclick = () => {
-      const isHidden = contentDiv.style.display === 'none';
-      contentDiv.style.display = isHidden ? 'flex' : 'none';
-      collapseBtn.innerText = isHidden ? '−' : '+';
-    };
-  }
+  // Toggle expand/collapse
+  const drawer = card.querySelector('#m3-brief-drawer') as HTMLElement;
+  const toggleBtn = card.querySelector('#m3-brief-expand-btn') as HTMLElement;
+  const toggleLine = card.querySelector('#m3-brief-toggle-line') as HTMLElement;
 
-  const sidePanelBtn = card.querySelector('#m3-card-sidepanel-btn') as HTMLElement;
-  if (sidePanelBtn) {
-    sidePanelBtn.onclick = () => safeSendMessage({ type: 'OPEN_SIDEPANEL' });
+  const toggleAction = () => {
+    isBriefExpanded = !isBriefExpanded;
+    drawer.style.display = isBriefExpanded ? 'flex' : 'none';
+    toggleBtn.innerText = isBriefExpanded ? 'Collapse ▴' : 'Details ▾';
+  };
+
+  toggleBtn.onclick = toggleAction;
+  toggleLine.onclick = toggleAction;
+
+  // Dismiss
+  const dismissBtn = card.querySelector('#m3-brief-dismiss-btn') as HTMLElement;
+  if (dismissBtn) {
+    dismissBtn.onclick = () => card.remove();
   }
 
   // Quick Reply handler
@@ -1044,7 +889,7 @@ function checkAndInjectEmailBrief() {
 // Injects draft directly into Gmail's native reply compose box
 async function injectDraftIntoGmailReplyBox(replyText: string, triggerBtn: HTMLElement) {
   const originalText = triggerBtn.innerText;
-  triggerBtn.innerText = 'Drafting in Gmail...';
+  triggerBtn.innerText = 'Drafting...';
 
   const replyButton =
     (document.querySelector('div[role="button"][aria-label*="Reply"]') as HTMLElement) ||
@@ -1068,18 +913,67 @@ async function injectDraftIntoGmailReplyBox(replyText: string, triggerBtn: HTMLE
       composeBox.dispatchEvent(new Event('input', { bubbles: true }));
       composeBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-      triggerBtn.innerText = '✅ Drafted in Gmail!';
+      triggerBtn.innerText = '✅ Drafted!';
       setTimeout(() => {
         triggerBtn.innerText = originalText;
       }, 2500);
     } else if (attempts > 15) {
       clearInterval(interval);
-      triggerBtn.innerText = '⚠️ Please click Reply first';
+      triggerBtn.innerText = '⚠️ Click Reply first';
       setTimeout(() => {
         triggerBtn.innerText = originalText;
       }, 2000);
     }
   }, 200);
+}
+
+// Native Google Workspace Side-Rail Icon
+function injectSideRailIcon() {
+  if (uiMode === 'off' || document.getElementById('acadmail-siderail-btn')) return;
+
+  const sideRail =
+    document.querySelector('div.aDG') ||
+    document.querySelector('div[aria-label="Side panel"]') ||
+    document.querySelector('div.bq9');
+
+  if (!sideRail) return;
+
+  const btn = document.createElement('div');
+  btn.id = 'acadmail-siderail-btn';
+  btn.title = 'AcadMail AI Copilot';
+  btn.setAttribute('role', 'button');
+  btn.setAttribute('tabindex', '0');
+
+  const isDark = isGmailDark();
+  btn.setAttribute(
+    'style',
+    `
+    width: 36px;
+    height: 36px;
+    margin: 6px auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+    color: ${isDark ? '#79c0ff' : '#1a73e8'};
+    transition: background 0.15s;
+  `
+  );
+
+  btn.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+    </svg>
+  `;
+
+  btn.onmouseenter = () => (btn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+  btn.onmouseleave = () => (btn.style.background = 'transparent');
+  btn.onclick = () => safeSendMessage({ type: 'OPEN_SIDEPANEL' });
+
+  sideRail.prepend(btn);
 }
 
 // Extract email data from Gmail DOM
@@ -1147,64 +1041,7 @@ function extractGmailData(): ExtractedEmail | null {
   return null;
 }
 
-// Fallback floating filter bar (for 'floating' mode)
-function injectFloatingFilterBar(items: InboxRowItem[]) {
-  // If floating mode is chosen, we keep the earlier floating pill bar
-  const mailContainer =
-    document.querySelector('div[gh="tm"]') ||
-    document.querySelector('div.G-atb') ||
-    document.querySelector('div.aeF') ||
-    document.querySelector('div[role="main"]');
-
-  if (!mailContainer) return;
-
-  let bar = document.getElementById('acadmail-inbox-filter-bar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'acadmail-inbox-filter-bar';
-    bar.setAttribute(
-      'style',
-      `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 8px 16px;
-      padding: 6px 14px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      box-shadow: 0 2px 8px -2px rgba(0,0,0,0.06);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 11px;
-      z-index: 50;
-    `
-    );
-    const targetAnchor = document.querySelector('div.aeF') || document.querySelector('div[gh="tm"]') || mailContainer;
-    targetAnchor.parentElement?.insertBefore(bar, targetAnchor);
-  }
-
-  bar.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 6px;">
-      <span style="font-weight: 800; font-size: 12px;">🎓 AcadMail</span>
-      <button class="float-chip" data-cat="ALL" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #0f172a; color: #fff; font-size: 10px; font-weight: 600;">All (${items.length})</button>
-      <button class="float-chip" data-cat="Academics" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; font-size: 10px; font-weight: 600;">🎓 Academics</button>
-      <button class="float-chip" data-cat="Competitions & Tournaments" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #fde68a; background: #fffbeb; color: #b45309; font-size: 10px; font-weight: 600;">🏆 Competitions</button>
-      <button class="float-chip" data-cat="Workshops" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; font-size: 10px; font-weight: 600;">🛠️ Workshops</button>
-      <button class="float-chip" data-cat="Class Rescheduling" style="cursor: pointer; padding: 4px 8px; border-radius: 9999px; border: 1px solid #fecdd3; background: #fff1f2; color: #be123c; font-size: 10px; font-weight: 600;">⏰ Rescheduled</button>
-    </div>
-  `;
-
-  bar.querySelectorAll('.float-chip').forEach((btn) => {
-    const buttonEl = btn as HTMLElement;
-    buttonEl.onclick = () => {
-      const cat = buttonEl.getAttribute('data-cat') as CategoryType | 'ALL';
-      filterGmailDom(cat);
-    };
-  });
-}
-
-// Compose Toolbar Professor Polisher
+// Inline Professor Tone Polisher in Compose Dialog
 function injectComposePolisher() {
   const composeToolbars = document.querySelectorAll('tr.btC, .gU.Up');
 
@@ -1218,26 +1055,26 @@ function injectComposePolisher() {
       `
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       margin-left: 8px;
-      padding: 6px 12px;
+      padding: 5px 10px;
       background: linear-gradient(135deg, #1e1b4b, #312e81);
       color: #e0e7ff;
       border: 1px solid rgba(129, 140, 248, 0.4);
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 600;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
       position: relative;
     `
     );
 
     polishBtn.innerHTML = `
-      <span style="font-size: 12px;">✨</span>
-      <span>Polish for Professor</span>
+      <span style="font-size: 11px;">✨</span>
+      <span>Polish</span>
     `;
 
     polishBtn.onclick = (e) => {
@@ -1266,26 +1103,26 @@ function openToneMenu(toolbar: HTMLElement, polishBtn: HTMLElement) {
     'style',
     `
     position: absolute;
-    bottom: 45px;
-    left: 10px;
+    bottom: 40px;
+    left: 8px;
     z-index: 999999;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    box-shadow: 0 12px 30px -5px rgba(0,0,0,0.18);
-    padding: 8px;
-    width: 250px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.18);
+    padding: 6px;
+    width: 240px;
+    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
   `
   );
 
   menu.innerHTML = `
-    <div style="padding: 4px 8px 6px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Select Academic Polish Tone</div>
-    <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 6px;">
-      <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">🎓 Respectful & Formal</button>
-      <button class="acad-tone-opt" data-tone="extension" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">⏳ Request Extension</button>
-      <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">❓ Clarify Doubt</button>
-      <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 7px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">📝 Request LoR / Reference</button>
+    <div style="padding: 4px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Academic Tone</div>
+    <div style="display: flex; flex-direction: column; gap: 3px; padding-top: 4px;">
+      <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">🎓 Respectful & Formal</button>
+      <button class="acad-tone-opt" data-tone="extension" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">⏳ Request Extension</button>
+      <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">❓ Clarify Doubt</button>
+      <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">📝 Request LoR / Reference</button>
     </div>
   `;
 
@@ -1427,9 +1264,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
       sendResponse({ items });
     } else if (message.type === 'FILTER_GMAIL_DOM') {
       filterGmailDom(message.category);
-      sendResponse({ success: true });
-    } else if (message.type === 'CLICK_ROW') {
-      clickRowByIndex(message.index);
       sendResponse({ success: true });
     } else if (message.type === 'SET_UI_MODE') {
       uiMode = message.mode;
