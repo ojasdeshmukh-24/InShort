@@ -1,0 +1,1 @@
+chrome.sidePanel.setPanelBehavior({openPanelOnActionClick:!0}).catch(e=>console.error("SidePanel config error:",e));chrome.runtime.onMessage.addListener((e,o,i)=>{var n;e.type==="OPEN_SIDEPANEL"&&(n=o.tab)!=null&&n.windowId&&chrome.sidePanel.open({windowId:o.tab.windowId})});console.log("[AcadMail AI] Background Service Worker initialized.");
