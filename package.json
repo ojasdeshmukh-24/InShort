@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "package": "npm run build && (cd dist && zip -FSr ../acadmail-ai.zip .)"
+    "package": "npm run build && (cd dist && zip -FSr ../acadmail-ai.zip .)",
+    "mobile": "vite --host",
+    "preview": "vite preview --host"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

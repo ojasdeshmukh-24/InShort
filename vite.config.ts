@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         sidepanel: resolve(__dirname, 'sidepanel.html'),
         popup: resolve(__dirname, 'popup.html'),
+        mobile: resolve(__dirname, 'mobile.html'),
         content: resolve(__dirname, 'src/content/index.ts'),
         background: resolve(__dirname, 'src/background/index.ts'),
       },
