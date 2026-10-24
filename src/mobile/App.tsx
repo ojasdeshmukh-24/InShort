@@ -612,7 +612,13 @@ export default function MobileApp() {
   };
 
   const handleJumpToEmailFromReference = (ref: ChatEmailReference) => {
-    const target = emails.find((e) => e.id === ref.id);
+    const target = emails.find(
+      (e) =>
+        e.id === ref.id ||
+        e.subject === ref.subject ||
+        e.subject.toLowerCase().includes(ref.subject.toLowerCase()) ||
+        ref.subject.toLowerCase().includes(e.subject.toLowerCase())
+    );
     if (target) {
       handleInspectEmail(target);
     }
@@ -1258,30 +1264,68 @@ export default function MobileApp() {
 
                       <CopilotMessageRenderer text={msg.text} />
 
-                      {/* Referencing Emails Card */}
-                      {msg.references && msg.references.length > 0 && (
-                        <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1">
-                          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                            Referenced Emails ({msg.references.length}):
-                          </span>
-                          <div className="space-y-1">
-                            {msg.references.map((ref) => (
-                              <button
-                                key={ref.id}
-                                onClick={() => handleJumpToEmailFromReference(ref)}
-                                className="w-full text-left p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition group cursor-pointer"
-                              >
-                                <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                  {ref.subject}
+                      {/* Referencing Emails Card with Explicit Open Email Button */}
+                      {(() => {
+                        const effectiveReferences = (msg.references && msg.references.length > 0)
+                          ? msg.references
+                          : (() => {
+                              if (msg.role !== 'assistant') return [];
+                              const lower = msg.text.toLowerCase();
+                              const matched = emails.filter(
+                                (e) => e.subject.length > 8 && lower.includes(e.subject.toLowerCase().slice(0, 25))
+                              );
+                              return matched.slice(0, 3).map((e) => ({
+                                id: e.id,
+                                subject: e.subject,
+                                sender: e.senderName,
+                                date: e.dateStr,
+                              }));
+                            })();
+
+                        if (effectiveReferences.length === 0) return null;
+
+                        return (
+                          <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1.5">
+                            <div className="flex items-center justify-between px-0.5">
+                              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                Source Email{effectiveReferences.length > 1 ? `s (${effectiveReferences.length})` : ''}
+                              </span>
+                              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">
+                                1-Tap Open
+                              </span>
+                            </div>
+                            <div className="space-y-1.5">
+                              {effectiveReferences.map((ref) => (
+                                <div
+                                  key={ref.id}
+                                  onClick={() => handleJumpToEmailFromReference(ref)}
+                                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition group cursor-pointer"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                      {ref.subject}
+                                    </div>
+                                    <div className="text-[9.5px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                      {ref.sender} • {ref.date}
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleJumpToEmailFromReference(ref);
+                                    }}
+                                    className="shrink-0 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                                  >
+                                    <span>Open Email</span>
+                                    <span>→</span>
+                                  </button>
                                 </div>
-                                <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                                  {ref.sender} • {ref.date}
-                                </div>
-                              </button>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
                   <span className="text-[8px] text-slate-400 mt-0.5 px-1">

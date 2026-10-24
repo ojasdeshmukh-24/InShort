@@ -822,14 +822,44 @@ export default function App() {
   };
 
   const handleJumpToEmailFromReference = async (ref: ChatEmailReference) => {
-    if (ref.rowIndex !== undefined) {
-      const tab = await getGmailTab();
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: 'CLICK_ROW', index: ref.rowIndex });
-      }
+    // 1. Try finding in inboxItems
+    const matchedItem = inboxItems.find(
+      (it) =>
+        it.id === ref.id ||
+        it.subject === ref.subject ||
+        it.subject.toLowerCase().includes(ref.subject.toLowerCase()) ||
+        ref.subject.toLowerCase().includes(it.subject.toLowerCase())
+    );
+
+    const targetIndex = ref.rowIndex !== undefined ? ref.rowIndex : matchedItem?.index;
+
+    // 2. Pre-set email state so user gets immediate display
+    if (matchedItem) {
+      setEmail({
+        id: matchedItem.id,
+        subject: matchedItem.subject,
+        senderName: matchedItem.sender,
+        senderEmail: '',
+        recipient: '',
+        dateStr: matchedItem.date,
+        bodyText: matchedItem.snippet,
+        url: '',
+      });
     }
+
+    // 3. Command Gmail to click and open that thread
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'CLICK_ROW',
+        index: targetIndex,
+        subject: ref.subject,
+      });
+    }
+
     setActiveTab('detail');
-    setTimeout(() => fetchEmailFromActiveTab(), 600);
+    setTimeout(() => fetchEmailFromActiveTab(), 500);
+    setTimeout(() => fetchEmailFromActiveTab(), 1100);
   };
 
   const fetchEmailFromActiveTab = async (retryCount = 0) => {
@@ -2260,38 +2290,78 @@ export default function App() {
                         {/* Rich Parsed Message Content */}
                         <CopilotMessageRenderer text={msg.text} />
 
-                        {/* Grounded Email References */}
-                        {msg.references && msg.references.length > 0 && (
-                          <div className="mt-3 pt-2.5 border-t border-[#e0e2ec] dark:border-[#2c2d30] space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10.5px] font-semibold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider block">
-                                Grounded Source Emails ({msg.references.length})
-                              </span>
-                              <span className="text-[10px] text-[#0b57d0] dark:text-[#a8c7fa]">
-                                Click to open
-                              </span>
-                            </div>
-                            <div className="space-y-1.5">
-                              {msg.references.map((ref) => (
-                                <button
-                                  key={ref.id}
-                                  onClick={() => handleJumpToEmailFromReference(ref)}
-                                  className="w-full text-left p-2.5 rounded-xl bg-[#f8fafd] dark:bg-[#15171c] hover:bg-[#edf2fa] dark:hover:bg-[#20232a] border border-[#e0e2ec] dark:border-[#2c2d30] transition group cursor-pointer"
-                                  title="Click to view and jump to this email in Gmail"
-                                >
-                                  <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa]">
-                                    {ref.subject}
+                        {/* Grounded Email References with Explicit Open Email Option */}
+                        {(() => {
+                          const effectiveReferences = (msg.references && msg.references.length > 0)
+                            ? msg.references
+                            : (() => {
+                                if (msg.role !== 'assistant') return [];
+                                const lower = msg.text.toLowerCase();
+                                const matched = inboxItems.filter(
+                                  (it) => it.subject.length > 8 && lower.includes(it.subject.toLowerCase().slice(0, 25))
+                                );
+                                return matched.slice(0, 3).map((it) => ({
+                                  id: it.id,
+                                  subject: it.subject,
+                                  sender: it.sender,
+                                  date: it.date,
+                                  category: it.category,
+                                  rowIndex: it.index,
+                                }));
+                              })();
+
+                          if (effectiveReferences.length === 0) return null;
+
+                          return (
+                            <div className="mt-3 pt-2.5 border-t border-[#e0e2ec] dark:border-[#2c2d30] space-y-2">
+                              <div className="flex items-center justify-between px-0.5">
+                                <span className="text-[10.5px] font-bold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider block">
+                                  Source Email{effectiveReferences.length > 1 ? `s (${effectiveReferences.length})` : ''}
+                                </span>
+                                <span className="text-[10.5px] text-[#0b57d0] dark:text-[#a8c7fa] font-medium">
+                                  Click to view in Gmail
+                                </span>
+                              </div>
+                              <div className="space-y-1.5">
+                                {effectiveReferences.map((ref) => (
+                                  <div
+                                    key={ref.id}
+                                    onClick={() => handleJumpToEmailFromReference(ref)}
+                                    className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-[#f8fafd] dark:bg-[#15171c] hover:bg-[#edf2fa] dark:hover:bg-[#20232a] border border-[#e0e2ec] dark:border-[#2c2d30] transition group cursor-pointer"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa]">
+                                        {ref.subject}
+                                      </div>
+                                      <div className="text-[11px] text-[#5f6368] dark:text-[#8e918f] truncate flex items-center gap-1.5 mt-0.5">
+                                        <span>{ref.sender}</span>
+                                        {ref.date && (
+                                          <>
+                                            <span>•</span>
+                                            <span>{ref.date}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleJumpToEmailFromReference(ref);
+                                      }}
+                                      className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#c2e7ff] dark:bg-[#004a77] hover:bg-[#b0dcfa] dark:hover:bg-[#005c93] text-[#001d35] dark:text-[#c2e7ff] text-[11.5px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                      title="Open this email in Gmail"
+                                    >
+                                      <span>Open Email</span>
+                                      <span className="text-[12px] leading-none">→</span>
+                                    </button>
                                   </div>
-                                  <div className="text-[11px] text-[#5f6368] dark:text-[#8e918f] truncate flex items-center gap-1.5 mt-0.5">
-                                    <span>{ref.sender}</span>
-                                    <span>•</span>
-                                    <span>{ref.date}</span>
-                                  </div>
-                                </button>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     )}
                     <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f] mt-0.5 px-1 font-normal">

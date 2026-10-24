@@ -1882,6 +1882,41 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
     } else if (message.type === 'FILTER_GMAIL_DOM') {
       filterGmailDom(message.category);
       sendResponse({ success: true });
+    } else if (message.type === 'CLICK_ROW') {
+      const rows = document.querySelectorAll<HTMLElement>('tr.zA');
+      let clicked = false;
+
+      // 1. Click by index if valid
+      if (typeof message.index === 'number' && rows[message.index]) {
+        lastClickedRow = rows[message.index];
+        rows[message.index].click();
+        clicked = true;
+      }
+
+      // 2. Fallback: match by subject keywords if index was not found
+      if (!clicked && message.subject) {
+        const cleanSub = message.subject
+          .toLowerCase()
+          .replace(/\[.*?\]/g, '')
+          .replace(/[^a-z0-9\s]/g, '')
+          .trim()
+          .slice(0, 25);
+
+        for (let i = 0; i < rows.length; i++) {
+          const rowText = rows[i].textContent?.toLowerCase() || '';
+          if (cleanSub && rowText.includes(cleanSub)) {
+            lastClickedRow = rows[i];
+            rows[i].click();
+            clicked = true;
+            break;
+          }
+        }
+      }
+
+      if (clicked) {
+        setTimeout(checkAndInjectEmailBrief, 400);
+      }
+      sendResponse({ success: clicked });
     } else if (message.type === 'SET_UI_MODE') {
       uiMode = message.mode;
       applyUiMode();
