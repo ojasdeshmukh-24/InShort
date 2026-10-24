@@ -131,13 +131,8 @@ const ACADEMICS_STRONG = [
   'teaching day',
 ];
 const ACADEMICS_MEDIUM = [
-  'canvas',
-  'moodle',
   'classroom',
-  'prof.',
-  'professor',
   'lecture',
-  'faculty',
   'tutorial',
   'office hours',
   'ug-i',
@@ -147,7 +142,7 @@ const ACADEMICS_MEDIUM = [
   'submission',
   'grades',
 ];
-const ACADEMICS_SENDER = ['acad', 'faculty', 'professor', 'instructor', 'doaa', 'dean'];
+const ACADEMICS_SENDER = ['acad', 'instructor'];
 
 const PHD_VIVA_KEYWORDS = [
   'viva',
