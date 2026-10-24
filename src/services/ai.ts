@@ -516,7 +516,7 @@ export function answerWithLocalHeuristic(
         details = sentences[0] || 'Please review assignment requirements on the course portal.';
       }
 
-      let text = `📌 **Next Upcoming Assignment:**\n\n`;
+      let text = `**Upcoming Assignment:**\n\n`;
       text += `• **Title:** ${primary.subject}\n`;
       text += `• **Instructor:** ${primary.sender}\n`;
       text += `• **Deadline:** **${deadline}**\n`;
@@ -537,7 +537,7 @@ export function answerWithLocalHeuristic(
     }
 
     return {
-      text: `🎉 **All caught up!** I scanned your recent emails and found no upcoming assignment deadlines or homework submissions.`,
+      text: `**All caught up:** No upcoming assignment deadlines or homework submissions were found in your recent scanned emails.`,
       references: [],
     };
   }
@@ -569,7 +569,7 @@ export function answerWithLocalHeuristic(
     });
 
     if (compMatches.length > 0) {
-      let text = `🏆 **Found ${compMatches.length} Campus Competition(s) & Hackathon(s):**\n\n`;
+      let text = `**Campus Competitions & Hackathons (${compMatches.length} found):**\n\n`;
       compMatches.slice(0, 3).forEach((item, idx) => {
         const deadline = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || 'Check portal';
         text += `**${idx + 1}. ${item.subject}**\n`;
@@ -591,7 +591,7 @@ export function answerWithLocalHeuristic(
     }
 
     return {
-      text: `No active hackathons or competitions were found in your recent scanned emails. Check back after your next circular broadcast!`,
+      text: `No active hackathons or competitions were found in your recent scanned emails.`,
       references: [],
     };
   }
@@ -619,7 +619,7 @@ export function answerWithLocalHeuristic(
     });
 
     if (cancelMatches.length > 0) {
-      let text = `⚠️ **Yes, class schedule update detected:**\n\n`;
+      let text = `**Class Schedule Notice:**\n\n`;
       cancelMatches.slice(0, 3).forEach((item) => {
         text += `• **${item.subject}**\n`;
         text += `  - **From:** ${item.sender}\n`;
@@ -640,7 +640,7 @@ export function answerWithLocalHeuristic(
     }
 
     return {
-      text: `✅ **All clear!** No professor or academic department has cancelled or rescheduled any classes in your recent emails.`,
+      text: `**All clear:** No professor or academic department has cancelled or rescheduled any classes in your recent emails.`,
       references: [],
     };
   }
@@ -674,7 +674,7 @@ export function answerWithLocalHeuristic(
     });
 
     if (clubMatches.length > 0) {
-      let text = `🎯 **Upcoming Club Recruitments & Selection Schedules:**\n\n`;
+      let text = `**Upcoming Club Recruitments & Selection Schedules:**\n\n`;
       clubMatches.slice(0, 3).forEach((item, idx) => {
         text += `**${idx + 1}. ${item.subject}**\n`;
         text += `• **Club / Body:** ${item.sender}\n`;

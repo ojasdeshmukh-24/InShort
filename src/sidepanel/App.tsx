@@ -120,7 +120,7 @@ export default function App() {
     {
       id: 'msg-welcome',
       role: 'assistant',
-      text: "Hi! I'm your **AcadMail AI Copilot** 🎓\n\nI can answer questions about your deadlines, classes, competitions, and club announcements grounded in your university emails. Try tapping one of the quick questions below or type your own!",
+      text: "Hi! I'm your **AcadMail AI Copilot**.\n\nI can answer questions about your deadlines, classes, competitions, and campus announcements grounded in your university emails. Try tapping one of the quick questions below or type your own!",
       timestamp: 'Just now',
     },
   ]);
@@ -1020,8 +1020,8 @@ export default function App() {
                           : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                       }`}
                     >
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <span>✨</span>
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <Layers className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                         <span>Blended M3</span>
                       </div>
                       <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Native Google UI</p>
@@ -1036,8 +1036,8 @@ export default function App() {
                           : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                       }`}
                     >
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <span>⚡</span>
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <Zap className="w-3 h-3 text-amber-500" />
                         <span>Floating Bar</span>
                       </div>
                       <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Capsule toolbar</p>
@@ -1052,8 +1052,8 @@ export default function App() {
                           : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                       }`}
                     >
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <span>🛡️</span>
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <ShieldCheck className="w-3 h-3 text-slate-500" />
                         <span>Revert (Off)</span>
                       </div>
                       <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Side panel only</p>
@@ -1158,249 +1158,110 @@ export default function App() {
           {/* VIEW 1: SMART BUCKETS INBOX ORGANIZER */}
           {/* ========================================================================= */}
           {activeTab === 'buckets' && (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    onClick={() => handleCategoryFilterChange('Academics')}
-                    className={`p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
-                      selectedCategory === 'Academics'
-                        ? getCategoryTheme('Academics').activeBtn
-                        : 'bg-white dark:bg-[#111827] hover:border-blue-200 dark:hover:border-blue-800 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <div
-                        className={`p-1.5 rounded-lg ${
-                          selectedCategory === 'Academics'
-                            ? 'bg-white/20 text-white'
-                            : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                        }`}
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-bold truncate text-[11px]">Academics</span>
-                    </div>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                        selectedCategory === 'Academics'
-                          ? 'bg-white/20 text-white'
-                          : getCategoryTheme('Academics').countBadge
-                      }`}
-                    >
-                      {counts.academics}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => handleCategoryFilterChange('Competitions & Tournaments')}
-                    className={`p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
-                      selectedCategory === 'Competitions & Tournaments'
-                        ? getCategoryTheme('Competitions & Tournaments').activeBtn
-                        : 'bg-white dark:bg-[#111827] hover:border-amber-200 dark:hover:border-amber-800 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <div
-                        className={`p-1.5 rounded-lg ${
-                          selectedCategory === 'Competitions & Tournaments'
-                            ? 'bg-white/20 text-white'
-                            : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
-                        }`}
-                      >
-                        <Trophy className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-bold truncate text-[11px]">Competitions</span>
-                    </div>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                        selectedCategory === 'Competitions & Tournaments'
-                          ? 'bg-white/20 text-white'
-                          : getCategoryTheme('Competitions & Tournaments').countBadge
-                      }`}
-                    >
-                      {counts.competitions}
-                    </span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    onClick={() => handleCategoryFilterChange('Workshops')}
-                    className={`p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
-                      selectedCategory === 'Workshops'
-                        ? getCategoryTheme('Workshops').activeBtn
-                        : 'bg-white dark:bg-[#111827] hover:border-emerald-200 dark:hover:border-emerald-800 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <div
-                        className={`p-1.5 rounded-lg ${
-                          selectedCategory === 'Workshops'
-                            ? 'bg-white/20 text-white'
-                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
-                        }`}
-                      >
-                        <Briefcase className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-bold truncate text-[11px]">Workshops & Talks</span>
-                    </div>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                        selectedCategory === 'Workshops'
-                          ? 'bg-white/20 text-white'
-                          : getCategoryTheme('Workshops').countBadge
-                      }`}
-                    >
-                      {counts.workshops}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => handleCategoryFilterChange('Class Rescheduling')}
-                    className={`p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
-                      selectedCategory === 'Class Rescheduling'
-                        ? getCategoryTheme('Class Rescheduling').activeBtn
-                        : 'bg-white dark:bg-[#111827] hover:border-rose-200 dark:hover:border-rose-800 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <div
-                        className={`p-1.5 rounded-lg ${
-                          selectedCategory === 'Class Rescheduling'
-                            ? 'bg-white/20 text-white'
-                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
-                        }`}
-                      >
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-bold truncate text-[11px]">Reschedules</span>
-                    </div>
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                        selectedCategory === 'Class Rescheduling'
-                          ? 'bg-white/20 text-white'
-                          : getCategoryTheme('Class Rescheduling').countBadge
-                      }`}
-                    >
-                      {counts.rescheduling}
-                    </span>
-                  </button>
-                </div>
-
-                {/* General & PhD Notices */}
+            <div className="space-y-2.5">
+              {/* Category Filter Ribbon */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-0.5">
                 <button
-                  onClick={() => handleCategoryFilterChange('General')}
-                  className={`w-full p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
-                    selectedCategory === 'General'
-                      ? getCategoryTheme('General').activeBtn
-                      : 'bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-700 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
+                  onClick={() => handleCategoryFilterChange('ALL')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 ${
+                    selectedCategory === 'ALL'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold'
+                      : 'bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    <div
-                      className={`p-1.5 rounded-lg ${
-                        selectedCategory === 'General'
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <ScrollText className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="truncate">
-                      <div className="font-bold truncate text-[11px] leading-tight text-slate-900 dark:text-white">
-                        General & Campus Announcements
-                      </div>
-                      <div
-                        className={`text-[9px] truncate ${
-                          selectedCategory === 'General'
-                            ? 'text-slate-200'
-                            : 'text-slate-400 dark:text-slate-500'
-                        }`}
-                      >
-                        Includes PhD defenses, viva-voce notices, circulars
-                      </div>
-                    </div>
-                  </div>
+                  <span>All</span>
                   <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      selectedCategory === 'General'
-                        ? 'bg-white/20 text-white'
-                        : getCategoryTheme('General').countBadge
+                    className={`font-mono text-[10px] px-1 py-0.2 rounded ${
+                      selectedCategory === 'ALL'
+                        ? 'bg-slate-800 text-slate-200 dark:bg-slate-200 dark:text-slate-800'
+                        : 'text-slate-400 dark:text-slate-500'
                     }`}
                   >
-                    {counts.general}
+                    {counts.all}
                   </span>
                 </button>
 
-                {/* Dynamic User-Defined Custom Filters */}
-                {customFilters.length > 0 && (
-                  <div className="space-y-1.5 pt-1.5">
-                    <div className="flex items-center justify-between px-0.5">
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                        <Tag className="w-3 h-3 text-purple-500" />
-                        <span>Custom Academic Filters</span>
-                      </span>
-                      <button
-                        onClick={() => setShowAddFilterModal(true)}
-                        className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline font-semibold flex items-center gap-0.5"
+                {[
+                  { id: 'Academics', label: 'Academics', count: counts.academics, icon: BookOpen },
+                  { id: 'Competitions & Tournaments', label: 'Competitions', count: counts.competitions, icon: Trophy },
+                  { id: 'Workshops', label: 'Workshops', count: counts.workshops, icon: Briefcase },
+                  { id: 'Class Rescheduling', label: 'Reschedules', count: counts.rescheduling, icon: AlertTriangle },
+                  { id: 'General', label: 'General', count: counts.general, icon: ScrollText },
+                ].map((cat) => {
+                  const isSelected = selectedCategory === cat.id;
+                  const Icon = cat.icon;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryFilterChange(cat.id as CategoryType)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold'
+                          : 'bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <Icon className={`w-3 h-3 ${isSelected ? 'text-white dark:text-slate-900' : 'text-slate-400'}`} />
+                      <span>{cat.label}</span>
+                      <span
+                        className={`font-mono text-[10px] px-1 py-0.2 rounded ${
+                          isSelected
+                            ? 'bg-slate-800 text-slate-200 dark:bg-slate-200 dark:text-slate-800'
+                            : 'text-slate-400 dark:text-slate-500'
+                        }`}
                       >
-                        <Plus className="w-3 h-3" /> Add Filter
-                      </button>
-                    </div>
+                        {cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
 
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {customFilters.map((filter) => {
-                        const theme = getCategoryTheme(filter.name);
-                        const isSelected = selectedCategory === filter.name;
+                {/* Custom Filters */}
+                {customFilters.map((filter) => {
+                  const isSelected = selectedCategory === filter.name;
+                  return (
+                    <button
+                      key={filter.id}
+                      onClick={() => handleCategoryFilterChange(filter.name)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-purple-600 text-white shadow-2xs font-semibold'
+                          : 'bg-white dark:bg-[#111827] text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/40'
+                      }`}
+                    >
+                      <Tag className="w-3 h-3" />
+                      <span>{filter.name}</span>
+                      <span
+                        className={`font-mono text-[10px] px-1 py-0.2 rounded ${
+                          isSelected ? 'bg-purple-700 text-purple-100' : 'text-purple-500'
+                        }`}
+                      >
+                        {counts[filter.name] || 0}
+                      </span>
+                    </button>
+                  );
+                })}
 
-                        return (
-                          <button
-                            key={filter.id}
-                            onClick={() => handleCategoryFilterChange(filter.name)}
-                            className={`p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
-                              isSelected
-                                ? theme.activeBtn
-                                : 'bg-white dark:bg-[#111827] hover:border-purple-300 dark:hover:border-purple-800 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <div
-                                className={`p-1.5 rounded-lg ${
-                                  isSelected
-                                    ? 'bg-white/20 text-white'
-                                    : 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400'
-                                }`}
-                              >
-                                <Tag className="w-3.5 h-3.5" />
-                              </div>
-                              <span className="font-bold truncate text-[11px]">{filter.name}</span>
-                            </div>
-                            <span
-                              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                                isSelected ? 'bg-white/20 text-white' : theme.countBadge
-                              }`}
-                            >
-                              {counts[filter.name] || 0}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* Add Filter Button */}
+                <button
+                  onClick={() => setShowAddFilterModal(true)}
+                  title="Add custom academic filter"
+                  className="px-2 py-1 rounded-lg text-[11px] font-medium text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition shrink-0 flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Filter</span>
+                </button>
               </div>
 
-              {/* Subheader Toolbar */}
-              <div className="flex items-center gap-1.5 pt-1">
+              {/* Search & Actions Toolbar */}
+              <div className="flex items-center gap-1.5">
                 <div className="relative flex-1">
-                  <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-2.5" />
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`Search in ${selectedCategory === 'ALL' ? 'all' : selectedCategory}...`}
-                    className="w-full pl-7 pr-7 py-1.5 text-xs bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-2xs"
+                    placeholder={`Search in ${selectedCategory === 'ALL' ? 'all emails' : selectedCategory}...`}
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 shadow-2xs"
                   />
                   {searchQuery && (
                     <button
@@ -1412,102 +1273,106 @@ export default function App() {
                   )}
                 </div>
 
-                {selectedCategory !== 'ALL' && (
-                  <button
-                    onClick={() => handleCategoryFilterChange('ALL')}
-                    className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-2xs"
-                  >
-                    All ({counts.all})
-                  </button>
-                )}
-
                 <button
                   onClick={() => handleToggleSyncDom(!syncGmailDom)}
                   title="Dim non-matching rows on Gmail"
-                  className={`p-1.5 px-2 rounded-xl border text-[10px] font-semibold flex items-center gap-1 transition shadow-2xs ${
+                  className={`py-1.5 px-2 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition shrink-0 ${
                     syncGmailDom
-                      ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
-                      : 'bg-white dark:bg-[#111827] border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-transparent shadow-2xs'
+                      : 'bg-white dark:bg-[#111827] border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
                   <Eye className="w-3 h-3" />
                   <span>Dim Gmail</span>
                 </button>
+
+                <button
+                  onClick={() => scanInbox()}
+                  disabled={isScanningInbox}
+                  title="Refresh & scan visible inbox rows"
+                  className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#111827] text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isScanningInbox ? 'animate-spin text-blue-600' : ''}`} />
+                </button>
               </div>
 
-              {/* Email Cards Stream */}
+              {/* Email List */}
               {filteredInbox.length === 0 ? (
-                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 text-center space-y-2.5 shadow-2xs">
-                  <div className="w-10 h-10 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <Mail className="w-5 h-5" />
+                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-3 shadow-2xs">
+                  <div className="w-9 h-9 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center">
+                    <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
                       {inboxItems.length === 0
-                        ? 'No visible emails detected in inbox'
-                        : `No emails match "${selectedCategory}"`}
+                        ? 'No visible emails detected'
+                        : `No emails found in "${selectedCategory}"`}
                     </h4>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      Click below to scan visible emails from your inbox.
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-[260px] mx-auto">
+                      Scan your visible Gmail inbox rows to categorize them automatically.
                     </p>
                   </div>
                   <button
                     onClick={() => scanInbox()}
                     disabled={isScanningInbox}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition shadow-xs flex items-center justify-center gap-1.5 mx-auto"
+                    className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium text-xs rounded-lg transition shadow-xs inline-flex items-center gap-1.5"
                   >
                     <RefreshCw className={`w-3 h-3 ${isScanningInbox ? 'animate-spin' : ''}`} />
-                    <span>⚡ Scan Visible Inbox</span>
+                    <span>Scan Visible Inbox</span>
                   </button>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#111827] divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden shadow-2xs">
                   {filteredInbox.map((item) => {
                     const theme = getCategoryTheme(item.category);
-                    const initials = item.sender.slice(0, 2).toUpperCase();
-
                     return (
                       <div
                         key={item.id}
                         onClick={() => handleSelectInboxRow(item)}
-                        className="p-3 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xs rounded-2xl cursor-pointer transition space-y-1.5 group"
+                        className="p-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group flex flex-col gap-1"
                       >
-                        <div className="flex items-center justify-between gap-1.5">
-                          <div className="flex items-center gap-1.5 truncate flex-1 min-w-0">
-                            <div className="w-5 h-5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-extrabold text-[9px] flex items-center justify-center shrink-0">
-                              {initials}
-                            </div>
-                            <span className="font-bold text-slate-800 dark:text-slate-200 text-[11px] truncate">
-                              {item.sender}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium shrink-0">
+                        {/* Header: Sender & Timestamp */}
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-semibold text-slate-900 dark:text-slate-100 text-xs truncate">
+                            {item.sender}
+                          </span>
+                          <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
                             {item.date}
                           </span>
                         </div>
 
-                        <div className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">
+                        {/* Subject */}
+                        <div className="font-medium text-xs text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1 leading-snug">
                           {item.subject}
                         </div>
 
+                        {/* Snippet preview */}
                         {item.snippet && (
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                             {item.snippet}
                           </p>
                         )}
 
-                        <div className="flex items-center justify-between pt-1">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold border ${theme.chip}`}
-                          >
-                            <span className={`w-1 h-1 rounded-full ${theme.dot}`} />
-                            {item.courseCode
-                              ? `${item.courseCode} • ${item.category}`
-                              : item.category}
-                          </span>
+                        {/* Badges / Micro-tags */}
+                        <div className="flex items-center justify-between pt-1 gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${theme.chip}`}
+                            >
+                              <span className={`w-1 h-1 rounded-full ${theme.dot}`} />
+                              <span>{item.category}</span>
+                            </span>
 
-                          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold opacity-0 group-hover:opacity-100 transition flex items-center gap-0.5">
-                            View AI Detail <ChevronRight className="w-3 h-3" />
+                            {item.courseCode && (
+                              <span className="font-mono px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                                {item.courseCode}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] font-medium text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
+                            <span>Open</span>
+                            <ChevronRight className="w-3 h-3" />
                           </span>
                         </div>
                       </div>
@@ -1693,7 +1558,7 @@ export default function App() {
                         : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
                     }`}
                   >
-                    {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
+                    {copilotMode === 'instant' ? 'Instant Engine (0s)' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}
                   </button>
                   <button
                     onClick={() => {
@@ -1770,6 +1635,8 @@ export default function App() {
                       <div className="whitespace-pre-line leading-relaxed space-y-1 text-[11px]">
                         {msg.text.split('\n').map((line, i) => {
                           if (
+                            line.startsWith('#') ||
+                            line.startsWith('**') ||
                             line.startsWith('📌 ') ||
                             line.startsWith('🏆 ') ||
                             line.startsWith('⚠️ ') ||
@@ -1779,7 +1646,7 @@ export default function App() {
                           ) {
                             return (
                               <div key={i} className="font-bold text-slate-900 dark:text-white pt-0.5">
-                                {line}
+                                {line.replace(/^#+\s*/, '')}
                               </div>
                             );
                           }
@@ -2000,13 +1867,15 @@ export default function App() {
 
                       {analysis.detectedCourseCode && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 text-[10px]">
-                          📚 {analysis.detectedCourseCode}
+                          <BookOpen className="w-2.5 h-2.5" />
+                          <span className="font-mono">{analysis.detectedCourseCode}</span>
                         </span>
                       )}
 
                       {analysis.urgency === 'high' && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[10px]">
-                          🔥 Urgent
+                          <Flame className="w-2.5 h-2.5" />
+                          <span>Urgent</span>
                         </span>
                       )}
 

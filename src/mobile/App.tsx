@@ -126,7 +126,7 @@ export default function MobileApp() {
     {
       id: 'msg-welcome',
       role: 'assistant',
-      text: "Hey! I'm your **AcadMail AI Copilot** 🎓\n\nAsk me anything about your university emails — assignments, class shifts, hackathons, or club recruitments! Or pick one of the quick prompts below.",
+      text: "Hey! I'm your **AcadMail AI Copilot**.\n\nAsk me anything about your university emails — assignments, class shifts, hackathons, or campus announcements! Or pick one of the quick prompts below.",
       timestamp: 'Just now',
     },
   ]);
@@ -912,7 +912,7 @@ export default function MobileApp() {
                         : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
                     }`}
                   >
-                    {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
+                    {copilotMode === 'instant' ? 'Instant Engine (0s)' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}
                   </button>
                   <button
                     onClick={() => {
@@ -990,6 +990,8 @@ export default function MobileApp() {
                     <div className="whitespace-pre-line leading-relaxed space-y-1 text-xs">
                       {msg.text.split('\n').map((line, i) => {
                         if (
+                          line.startsWith('#') ||
+                          line.startsWith('**') ||
                           line.startsWith('📌 ') ||
                           line.startsWith('🏆 ') ||
                           line.startsWith('⚠️ ') ||
@@ -999,7 +1001,7 @@ export default function MobileApp() {
                         ) {
                           return (
                             <div key={i} className="font-bold text-slate-900 dark:text-white pt-1">
-                              {line}
+                              {line.replace(/^#+\s*/, '')}
                             </div>
                           );
                         }
@@ -1132,7 +1134,7 @@ export default function MobileApp() {
                         : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    🎓 Respectful & Formal
+                    Respectful & Formal
                   </button>
 
                   <button
@@ -1143,7 +1145,7 @@ export default function MobileApp() {
                         : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    ⏳ Request Extension
+                    Request Extension
                   </button>
 
                   <button
@@ -1154,7 +1156,7 @@ export default function MobileApp() {
                         : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    ❓ Clarify Doubt
+                    Clarify Doubt
                   </button>
 
                   <button
@@ -1165,7 +1167,7 @@ export default function MobileApp() {
                         : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    📝 LoR Request
+                    LoR Request
                   </button>
                 </div>
               </div>
@@ -1518,8 +1520,9 @@ export default function MobileApp() {
                             </span>
                           </div>
                           {act.deadline && (
-                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md shrink-0">
-                              ⏰ {act.deadline}
+                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-amber-500" />
+                              <span>{act.deadline}</span>
                             </span>
                           )}
                         </div>
@@ -1559,7 +1562,7 @@ export default function MobileApp() {
                       }}
                       className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-left text-[11px] font-bold text-slate-800 dark:text-slate-200 hover:border-blue-400"
                     >
-                      <span>✍️ Confirm Attendance</span>
+                      <span>Confirm Attendance</span>
                       <span className="text-[9px] text-slate-400 block font-normal mt-0.5">Send via Gmail App</span>
                     </button>
 
@@ -1570,7 +1573,7 @@ export default function MobileApp() {
                       }}
                       className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-left text-[11px] font-bold text-slate-800 dark:text-slate-200 hover:border-blue-400"
                     >
-                      <span>⏳ Request Extension</span>
+                      <span>Request Extension</span>
                       <span className="text-[9px] text-slate-400 block font-normal mt-0.5">Send via Gmail App</span>
                     </button>
                   </div>

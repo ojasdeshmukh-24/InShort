@@ -279,28 +279,22 @@ function injectRowBadge(
   badge.className = 'acadmail-row-badge';
 
   let badgeColor = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
-  let icon = '🎓';
   let labelText = courseCode || 'Academics';
 
   if (category === 'Competitions & Tournaments') {
     badgeColor = 'background: #fffbeb; color: #b45309; border: 1px solid #fde68a;';
-    icon = '🏆';
     labelText = 'Contest / Sports';
   } else if (category === 'Workshops') {
     badgeColor = 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;';
-    icon = '🛠️';
     labelText = 'Workshop / Talk';
   } else if (category === 'Class Rescheduling') {
     badgeColor = 'background: #fff1f2; color: #be123c; border: 1px solid #fecdd3;';
-    icon = '⏰';
     labelText = 'Rescheduled';
   } else if (isPhd) {
     badgeColor = 'background: #f8fafc; color: #475569; border: 1px solid #cbd5e1;';
-    icon = '📜';
     labelText = 'PhD / Viva';
   } else if (category === 'General') {
     badgeColor = 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;';
-    icon = '📢';
     labelText = 'General';
   }
 
@@ -323,7 +317,7 @@ function injectRowBadge(
   `
   );
 
-  badge.innerText = `${icon} ${labelText}`;
+  badge.innerText = labelText;
   subjectContainer.prepend(badge);
 }
 
@@ -473,7 +467,7 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
     <!-- Left: Brand + Category Pills -->
     <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 1px;">
       <div style="display: flex; align-items: center; gap: 5px; font-weight: 800; color: #1e293b; padding-right: 8px; border-right: 1px solid #e2e8f0; white-space: nowrap;">
-        <span style="font-size: 14px;">🎓</span>
+        <span style="font-weight: 800; font-family: monospace; font-size: 11px;">AM</span>
         <span style="letter-spacing: -0.02em;">AcadMail</span>
       </div>
 
@@ -492,7 +486,7 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
           ? 'background: #2563eb; color: #ffffff;'
           : 'background: #eff6ff; color: #1d4ed8;'
       }">
-        🎓 Academics (${acadCount})
+        Academics (${acadCount})
       </button>
 
       <button class="acad-pill-btn" data-cat="Competitions & Tournaments" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
@@ -502,7 +496,7 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
           ? 'background: #d97706; color: #ffffff;'
           : 'background: #fffbeb; color: #b45309;'
       }">
-        🏆 Competitions (${compCount})
+        Competitions (${compCount})
       </button>
 
       <button class="acad-pill-btn" data-cat="Workshops" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
@@ -512,7 +506,7 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
           ? 'background: #059669; color: #ffffff;'
           : 'background: #ecfdf5; color: #047857;'
       }">
-        🛠️ Workshops & Talks (${workCount})
+        Workshops & Talks (${workCount})
       </button>
 
       <button class="acad-pill-btn" data-cat="Class Rescheduling" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
@@ -522,7 +516,7 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
           ? 'background: #e11d48; color: #ffffff;'
           : 'background: #fff1f2; color: #be123c;'
       }">
-        ⏰ Rescheduled (${reschedCount})
+        Rescheduled (${reschedCount})
       </button>
 
       <button class="acad-pill-btn" data-cat="General" style="cursor: pointer; padding: 4px 10px; border-radius: 9999px; border: 1px solid ${
@@ -532,7 +526,7 @@ function injectInboxFilterBar(items: InboxRowItem[]) {
           ? 'background: #475569; color: #ffffff;'
           : 'background: #f8fafc; color: #64748b;'
       }">
-        📜 PhD & General (${genCount})
+        PhD & General (${genCount})
       </button>
     </div>
 
@@ -836,15 +830,15 @@ function checkAndInjectEmailBrief() {
         <span style="font-size: 10px; font-weight: 700; color: #64748b;">1-Click Reply Draft:</span>
 
         <button class="acad-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 3px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; font-size: 10px; font-weight: 600; transition: all 0.15s;">
-          ✍️ Confirm Attendance
+          Confirm Attendance
         </button>
 
         <button class="acad-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 3px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; font-size: 10px; font-weight: 600; transition: all 0.15s;">
-          ⏳ Request Extension
+          Request Extension
         </button>
 
         <button class="acad-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 3px 9px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; font-size: 10px; font-weight: 600; transition: all 0.15s;">
-          ❓ Ask Clarification
+          Ask Clarification
         </button>
       </div>
     </div>

@@ -407,45 +407,38 @@ function injectRowBadge(
   let badgeColor = isDark
     ? 'background: rgba(56, 139, 253, 0.15); color: #79c0ff; border: 1px solid rgba(56, 139, 253, 0.3);'
     : 'background: #edf5fd; color: #1a73e8; border: 1px solid #d2e3fc;';
-  let icon = '🎓';
   let labelText = courseCode || 'Acads';
 
   if (category === 'Competitions & Tournaments') {
     badgeColor = isDark
       ? 'background: rgba(210, 153, 34, 0.15); color: #e3b341; border: 1px solid rgba(210, 153, 34, 0.3);'
       : 'background: #fef7e0; color: #b06000; border: 1px solid #fce8b2;';
-    icon = '🏆';
     labelText = 'Contest';
   } else if (category === 'Workshops') {
     badgeColor = isDark
       ? 'background: rgba(46, 160, 67, 0.15); color: #7ee787; border: 1px solid rgba(46, 160, 67, 0.3);'
       : 'background: #e6f4ea; color: #137333; border: 1px solid #ceead6;';
-    icon = '🛠️';
     labelText = 'Workshop';
   } else if (category === 'Class Rescheduling') {
     badgeColor = isDark
       ? 'background: rgba(248, 81, 73, 0.15); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.3);'
       : 'background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;';
-    icon = '⏰';
     labelText = 'Rescheduled';
   } else if (isPhd) {
     badgeColor = isDark
       ? 'background: rgba(142, 145, 143, 0.15); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.3);'
       : 'background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0;';
-    icon = '📜';
     labelText = 'PhD / Viva';
   } else if (category === 'General') {
     badgeColor = isDark
       ? 'background: rgba(142, 145, 143, 0.12); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.2);'
       : 'background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0;';
-    icon = '📢';
     labelText = 'General';
   } else {
     // Custom user filter
     badgeColor = isDark
       ? 'background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);'
       : 'background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;';
-    icon = '🏷️';
     labelText = category;
   }
 
@@ -454,8 +447,8 @@ function injectRowBadge(
     `
     display: inline-flex;
     align-items: center;
-    gap: 2.5px;
-    padding: 0 5px;
+    gap: 3px;
+    padding: 0 6px;
     height: 16px;
     margin-right: 6px;
     border-radius: 4px;
@@ -468,7 +461,7 @@ function injectRowBadge(
   `
   );
 
-  badge.innerText = `${icon} ${labelText}`;
+  badge.innerText = labelText;
   badge.title = courseCode ? `Filter Gmail for ${courseCode} (Right-click to change label)` : `Category: ${category} (Click to change)`;
 
   badge.onclick = (e) => {
@@ -740,7 +733,7 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
       }; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-weight: 700; font-size: 12px; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${
     isDark ? 'rgba(56, 139, 253, 0.25)' : 'rgba(26, 115, 232, 0.2)'
   };">
-        <span style="font-size: 13px; line-height: 1;">🎓</span>
+        <span style="font-weight: 800; font-family: monospace; font-size: 11px; letter-spacing: -0.5px;">AM</span>
         <span>AcadMail</span>
       </div>
 
@@ -752,35 +745,30 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
 
       <!-- 2. Academics -->
       <button class="m3-chip" data-cat="Academics" style="${getPillStyle('Academics')}">
-        <span style="font-size: 13px; line-height: 1;">🎓</span>
         <span>Academics</span>
         ${renderCountBadge('Academics', acadCount)}
       </button>
 
       <!-- 3. Competitions -->
       <button class="m3-chip" data-cat="Competitions & Tournaments" style="${getPillStyle('Competitions & Tournaments')}">
-        <span style="font-size: 13px; line-height: 1;">🏆</span>
         <span>Contests</span>
         ${renderCountBadge('Competitions & Tournaments', compCount)}
       </button>
 
       <!-- 4. Workshops -->
       <button class="m3-chip" data-cat="Workshops" style="${getPillStyle('Workshops')}">
-        <span style="font-size: 13px; line-height: 1;">🛠️</span>
         <span>Workshops</span>
         ${renderCountBadge('Workshops', workCount)}
       </button>
 
       <!-- 5. Reschedules -->
       <button class="m3-chip" data-cat="Class Rescheduling" style="${getPillStyle('Class Rescheduling')}">
-        <span style="font-size: 13px; line-height: 1;">⏰</span>
         <span>Rescheduled</span>
         ${renderCountBadge('Class Rescheduling', reschedCount)}
       </button>
 
       <!-- 6. General -->
       <button class="m3-chip" data-cat="General" style="${getPillStyle('General')}">
-        <span style="font-size: 13px; line-height: 1;">📢</span>
         <span>General & PhD</span>
         ${renderCountBadge('General', genCount)}
       </button>
@@ -791,7 +779,6 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
           const cfCount = items.filter((it) => it.category === cf.name).length;
           return `
           <button class="m3-chip" data-cat="${cf.name}" style="${getPillStyle(cf.name)}">
-            <span style="font-size: 12px; line-height: 1;">🏷️</span>
             <span>${cf.name}</span>
             ${renderCountBadge(cf.name, cfCount)}
           </button>
@@ -821,8 +808,8 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
           }; background: ${isDark ? 'rgba(210,153,34,0.15)' : '#fffbeb'}; color: ${
               isDark ? '#e3b341' : '#b45309'
             }; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
-            <span style="font-size: 12px; line-height: 1;">📅</span>
-            <span>${deadlineList.length} Due</span>
+            <span style="font-weight: 700; font-family: monospace; font-size: 11px;">DUE</span>
+            <span>${deadlineList.length}</span>
           </button>
 
           <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 310px; background: ${
@@ -1261,19 +1248,19 @@ function checkAndInjectEmailBrief() {
         <button class="m3-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${
           isDark ? '#444746' : '#cbd5e1'
         }; background: transparent; color: ${isDark ? '#e3e3e3' : '#334155'}; font-size: 10.5px; font-weight: 500;">
-          ✍️ Confirm Attendance
+          Confirm Attendance
         </button>
 
         <button class="m3-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${
           isDark ? '#444746' : '#cbd5e1'
         }; background: transparent; color: ${isDark ? '#e3e3e3' : '#334155'}; font-size: 10.5px; font-weight: 500;">
-          ⏳ Request Extension
+          Request Extension
         </button>
 
         <button class="m3-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${
           isDark ? '#444746' : '#cbd5e1'
         }; background: transparent; color: ${isDark ? '#e3e3e3' : '#334155'}; font-size: 10.5px; font-weight: 500;">
-          ❓ Ask Clarification
+          Ask Clarification
         </button>
       </div>
     </div>
@@ -1562,10 +1549,10 @@ function openToneMenu(toolbar: HTMLElement, polishBtn: HTMLElement) {
   menu.innerHTML = `
     <div style="padding: 4px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Academic Tone</div>
     <div style="display: flex; flex-direction: column; gap: 3px; padding-top: 4px;">
-      <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">🎓 Respectful & Formal</button>
-      <button class="acad-tone-opt" data-tone="extension" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">⏳ Request Extension</button>
-      <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">❓ Clarify Doubt</button>
-      <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">📝 Request LoR / Reference</button>
+      <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Respectful & Formal</button>
+      <button class="acad-tone-opt" data-tone="extension" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Request Extension</button>
+      <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Clarify Doubt</button>
+      <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Request LoR / Reference</button>
     </div>
   `;
 
@@ -1598,7 +1585,7 @@ async function executePolish(
   if (!editableBody) return;
 
   const originalBtnHTML = polishBtn.innerHTML;
-  polishBtn.innerHTML = `<span>⏳</span><span>Polishing...</span>`;
+  polishBtn.innerHTML = `<span>Polishing...</span>`;
 
   try {
     const settings = await new Promise<any>((resolve) => {
@@ -1619,12 +1606,12 @@ async function executePolish(
     editableBody.innerText = polished;
     editableBody.dispatchEvent(new Event('input', { bubbles: true }));
 
-    polishBtn.innerHTML = `<span>✅</span><span>Polished!</span>`;
+    polishBtn.innerHTML = `<span>Polished!</span>`;
     setTimeout(() => {
       polishBtn.innerHTML = originalBtnHTML;
     }, 2000);
   } catch (err: any) {
-    polishBtn.innerHTML = `<span>⚠️ Error</span>`;
+    polishBtn.innerHTML = `<span>Error</span>`;
     setTimeout(() => {
       polishBtn.innerHTML = originalBtnHTML;
     }, 2000);
