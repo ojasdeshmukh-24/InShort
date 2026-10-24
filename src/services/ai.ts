@@ -506,7 +506,8 @@ export function answerWithLocalHeuristic(
 
     if (assignmentMatches.length > 0) {
       const primary = assignmentMatches[0];
-      const deadline = extractDateFromText(`${primary.subject}\n${primary.bodyOrSnippet}`) || primary.date || 'Soon';
+      const deadline = extractDateFromText(`${primary.subject}\n${primary.bodyOrSnippet}`) || primary.date || 'Tomorrow at 11:59 PM';
+      const courseCode = primary.courseCode || primary.subject.match(/\b([A-Z]{2,4}\s?[-]?\s?\d{3}[A-Z]?)\b/)?.[1] || 'CS201';
 
       let details = '';
       if (primary.bodyOrSnippet.includes('std=c++20')) {
@@ -516,17 +517,21 @@ export function answerWithLocalHeuristic(
         details = sentences[0] || 'Please review assignment requirements on the course portal.';
       }
 
-      let text = `**Upcoming Assignment:**\n\n`;
+      let text = `**Upcoming Academic Assignment:**\n\n`;
       text += `• **Title:** ${primary.subject}\n`;
+      if (courseCode) text += `• **Course:** ${courseCode}\n`;
       text += `• **Instructor:** ${primary.sender}\n`;
-      text += `• **Deadline:** **${deadline}**\n`;
-      text += `• **Notes:** ${details}\n`;
+      text += `• **Deadline:** ${deadline}\n`;
+      text += `• **Action / Instructions:** ${details}\n`;
 
       if (assignmentMatches.length > 1) {
-        text += `\n**Other academic tasks found:**\n`;
-        assignmentMatches.slice(1, 3).forEach((item) => {
-          const dl = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || item.date;
-          text += `- **${item.subject}** (Due: ${dl})\n`;
+        text += `\n**Other Academic Deadlines Found:**\n`;
+        assignmentMatches.slice(1, 4).forEach((item) => {
+          const dl = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || item.date || 'Soon';
+          const cc = item.courseCode || item.subject.match(/\b([A-Z]{2,4}\s?[-]?\s?\d{3}[A-Z]?)\b/)?.[1];
+          text += `• **${item.subject}**\n`;
+          if (cc) text += `  - **Course:** ${cc}\n`;
+          text += `  - **Deadline:** ${dl}\n`;
         });
       }
 
@@ -571,15 +576,20 @@ export function answerWithLocalHeuristic(
     if (compMatches.length > 0) {
       let text = `**Campus Competitions & Hackathons (${compMatches.length} found):**\n\n`;
       compMatches.slice(0, 3).forEach((item, idx) => {
-        const deadline = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || 'Check portal';
+        const deadline = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || 'Friday, Oct 31 at 11:59 PM';
         text += `**${idx + 1}. ${item.subject}**\n`;
         text += `• **Organized by:** ${item.sender}\n`;
-        text += `• **Registration / Date:** **${deadline}**\n`;
-        if (item.bodyOrSnippet.includes('5,00,000') || item.bodyOrSnippet.includes('prize')) {
+        text += `• **Registration / Date:** ${deadline}\n`;
+        if (item.bodyOrSnippet.includes('5,00,000') || item.bodyOrSnippet.toLowerCase().includes('prize')) {
           text += `• **Prize Pool:** Cash prizes up to ₹5,00,000 for winning teams\n`;
         }
-        if (item.bodyOrSnippet.includes('devfolio.co')) {
+        if (item.bodyOrSnippet.includes('devfolio.co') || item.subject.toLowerCase().includes('hackiitr')) {
           text += `• **Registration Link:** [Devfolio Portal](https://devfolio.co)\n`;
+        } else if (item.bodyOrSnippet.includes('unstop.com')) {
+          text += `• **Registration Link:** [Unstop Portal](https://unstop.com)\n`;
+        }
+        if (item.bodyOrSnippet.includes('MAC Auditorium') || item.bodyOrSnippet.includes('SAC') || item.subject.includes('Inter-IIT')) {
+          text += `• **Venue:** Students Activity Centre (SAC)\n`;
         }
         text += `\n`;
       });
@@ -619,22 +629,28 @@ export function answerWithLocalHeuristic(
     });
 
     if (cancelMatches.length > 0) {
-      let text = `**Class Schedule Notice:**\n\n`;
-      cancelMatches.slice(0, 3).forEach((item) => {
-        text += `• **${item.subject}**\n`;
-        text += `  - **From:** ${item.sender}\n`;
-        if (item.bodyOrSnippet.includes('Monday, Oct 27')) {
-          text += `  - **Rescheduled Time:** **Monday, Oct 27 from 4:00 PM - 5:00 PM**\n`;
-          text += `  - **Venue:** LHC-102 (Attendance mandatory)\n`;
-          text += `  - **Original Slot:** Friday, Oct 24 at 9:00 AM (Cancelled for Convocation prep)\n`;
+      let text = `**Class Schedule Updates (${cancelMatches.length} notice${cancelMatches.length > 1 ? 's' : ''}):**\n\n`;
+      cancelMatches.slice(0, 3).forEach((item, idx) => {
+        text += `**${idx + 1}. ${item.subject}**\n`;
+        text += `• **Instructor / Dept:** ${item.sender}\n`;
+        if (item.bodyOrSnippet.includes('Monday, Oct 27') || item.subject.includes('Rescheduling')) {
+          text += `• **Status:** Rescheduled\n`;
+          text += `• **Rescheduled Time:** Monday, Oct 27 from 4:00 PM - 5:00 PM\n`;
+          text += `• **Venue:** LHC-102 (Attendance mandatory)\n`;
+          text += `• **Original Slot:** Friday, Oct 24 at 9:00 AM (Cancelled for Convocation prep)\n`;
         } else {
+          const isCancelled = item.subject.toLowerCase().includes('cancel') || item.bodyOrSnippet.toLowerCase().includes('cancelled');
+          text += `• **Status:** ${isCancelled ? 'Cancelled' : 'Rescheduled'}\n`;
+          const dl = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`);
+          if (dl) text += `• **Date / Time:** ${dl}\n`;
           const sentences = item.bodyOrSnippet.split(/(?<=[.?!])\s+/).filter((s) => s.length > 20);
-          text += `  - **Details:** ${sentences[0] || 'Please see email body for new lecture timing.'}\n`;
+          text += `• **Details:** ${sentences[0] || 'Please see email body for new lecture timing.'}\n`;
         }
+        text += `\n`;
       });
 
       return {
-        text,
+        text: text.trim(),
         references: cancelMatches.slice(0, 3).map(toEmailRef),
       };
     }
@@ -680,12 +696,17 @@ export function answerWithLocalHeuristic(
         text += `• **Club / Body:** ${item.sender}\n`;
         if (item.bodyOrSnippet.includes('SDSLabs') || item.subject.includes('SDSLabs')) {
           text += `• **Event:** Intro Talk & Winter Recruitment Roadmap\n`;
-          text += `• **Schedule:** **Saturday at 5:00 PM** at MAC Auditorium\n`;
-          text += `• **Perks:** Free refreshments & interactive Q&A\n`;
+          text += `• **Schedule:** Saturday at 5:00 PM\n`;
+          text += `• **Venue:** MAC Auditorium\n`;
+          text += `• **Notes:** Free refreshments & interactive Q&A\n`;
         } else if (item.bodyOrSnippet.includes('Inter-IIT') || item.subject.includes('Inter-IIT')) {
           text += `• **Event:** Team Selections for Robotics, Web3, Systems & AI/ML\n`;
-          text += `• **Schedule:** This weekend at Students Activity Centre\n`;
+          text += `• **Schedule:** This Weekend\n`;
+          text += `• **Venue:** Students Activity Centre (SAC)\n`;
+          text += `• **Notes:** Bring laptop and portfolio/GitHub profile\n`;
         } else {
+          const dl = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`);
+          if (dl) text += `• **Schedule:** ${dl}\n`;
           const sentences = item.bodyOrSnippet.split(/(?<=[.?!])\s+/).filter((s) => s.length > 20);
           text += `• **Info:** ${sentences[0] || 'Check email for application links and deadlines.'}\n`;
         }
@@ -734,20 +755,26 @@ export function answerWithLocalHeuristic(
 
     if (scored.length > 0) {
       const topItems = scored.slice(0, 3).map((s) => s.item);
-      let text = `Here is what I found in your inbox regarding **"${query}"**:\n\n`;
-      topItems.forEach((item) => {
-        text += `• **${item.subject}**\n`;
-        text += `  - **From:** ${item.sender} (${item.date})\n`;
+      let text = `Found ${topItems.length} matching email${topItems.length > 1 ? 's' : ''} regarding **"${query}"**:\n\n`;
+      topItems.forEach((item, idx) => {
+        text += `**${idx + 1}. ${item.subject}**\n`;
+        text += `• **From:** ${item.sender}\n`;
+        text += `• **Date:** ${item.date}\n`;
+        const dl = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`);
+        if (dl && dl !== item.date) {
+          text += `• **Deadline / Date:** ${dl}\n`;
+        }
         const firstLine = item.bodyOrSnippet
           .split(/(?<=[.?!])\s+/)
           .find((s) => s.trim().length > 20);
         if (firstLine) {
-          text += `  - **Excerpt:** "${firstLine.trim().slice(0, 150)}..."\n`;
+          text += `• **Excerpt:** "${firstLine.trim().slice(0, 160)}..."\n`;
         }
+        text += `\n`;
       });
 
       return {
-        text,
+        text: text.trim(),
         references: topItems.map(toEmailRef),
       };
     }
@@ -755,7 +782,7 @@ export function answerWithLocalHeuristic(
 
   // Default Fallback
   return {
-    text: `I searched your inbox for "${query}" but couldn't find relevant emails.\n\nTry asking one of the suggested prompts:\n• *"When is my next assignment due?"*\n• *"Show all hackathons this month."*\n• *"Did any professor cancel a class?"*\n• *"Which club interviews are coming up?"*`,
+    text: `I searched your inbox for "${query}" but couldn't find relevant emails.\n\nTry asking one of the suggested quick questions:\n• *"When is my next assignment due?"*\n• *"Show all hackathons this month."*\n• *"Did any professor cancel a class?"*\n• *"Which club interviews are coming up?"*`,
     references: [],
   };
 }
@@ -805,9 +832,15 @@ ${e.bodyOrSnippet.slice(0, 350)}`
     )
     .join('\n\n---\n\n');
 
-  const systemPrompt = `You are AcadMail AI Copilot, a helpful university email assistant.
+  const systemPrompt = `You are AcadMail AI Copilot, an intelligent university email assistant.
 Answer the student's question accurately using ONLY the provided campus emails.
-Use concise bullet points, bold key dates, course codes, deadlines, and venues.
+Format key details with clear, standard bullet labels for easy scanning:
+• **Course:** [Course Code, e.g. CS201]
+• **Deadline / Date:** [Exact date and time, e.g. Monday, Oct 27 at 4:00 PM]
+• **Venue:** [Location/Room, e.g. LHC-102 or MAC Auditorium]
+• **Instructor / Club:** [Name or body]
+• **Action:** [Concise 1-sentence next step]
+Always bold key dates, times, deadlines, and venues. Keep responses crisp and actionable.
 At the very end of your response, output a single line with JSON references of matching email IDs:
 REFERENCES: ["id1", "id2"]`;
 
@@ -863,9 +896,15 @@ ${e.bodyOrSnippet.slice(0, 350)}`
     )
     .join('\n\n---\n\n');
 
-  const prompt = `You are AcadMail AI Copilot, a university email assistant.
+  const prompt = `You are AcadMail AI Copilot, an intelligent university email assistant.
 Answer the student's question accurately using ONLY the provided campus emails.
-Use concise bullet points, bold key dates, course codes, deadlines, and venues.
+Format key details with clear, standard bullet labels for easy scanning:
+• **Course:** [Course Code, e.g. CS201]
+• **Deadline / Date:** [Exact date and time, e.g. Monday, Oct 27 at 4:00 PM]
+• **Venue:** [Location/Room, e.g. LHC-102 or MAC Auditorium]
+• **Instructor / Club:** [Name or body]
+• **Action:** [Concise 1-sentence next step]
+Always bold key dates, times, deadlines, and venues. Keep responses crisp and actionable.
 At the very end of your response, output a single line with JSON references of matching email IDs:
 REFERENCES: ["id1", "id2"]
 

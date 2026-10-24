@@ -41,7 +41,9 @@ import {
   ChevronUp,
   Edit3,
   Bot,
-  MessageSquare
+  MessageSquare,
+  MapPin,
+  User
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -66,6 +68,241 @@ import {
   addCustomFilter,
   deleteCustomFilter
 } from '../services/storage';
+
+type CopilotInlineToken =
+  | { type: 'text'; val: string }
+  | { type: 'datetime'; val: string }
+  | { type: 'venue'; val: string }
+  | { type: 'course'; val: string }
+  | { type: 'link'; label: string; url: string }
+  | { type: 'code'; val: string }
+  | { type: 'bold'; val: string };
+
+function parseCopilotInlineTokens(input: string): CopilotInlineToken[] {
+  const tokens: CopilotInlineToken[] = [];
+  const regex = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\))|(`[^`]+`)|(\*\*[^*]+\*\*)|(\b(?:(?:Mon|Monday|Tue|Tuesday|Wed|Wednesday|Thu|Thursday|Fri|Friday|Sat|Saturday|Sun|Sunday|Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|September|Oct|October|Nov|November|Dec|December)[a-z]*(?:,\s+[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?)?(?:\s+(?:from|at|by)\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)(?:\s*-\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))?)?|Tomorrow(?:\s+(?:at|by)\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?|Today(?:\s+(?:at|by)\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?|This Weekend|\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)(?:\s*-\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))?)\b)|(\b(?:LHC-\d{2,3}|MAC Auditorium|Students Activity Centre(?:\s*\(SAC\))?|SAC|Hall\s+\d+|APJ Hall)\b)|(\b[A-Z]{2,4}\s?[-]?\s?\d{3}[A-Z]?\b)/gi;
+
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(input)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: 'text', val: input.slice(lastIndex, match.index) });
+    }
+    const [, link, code, bold, dateTime, venue, course] = match;
+    if (link) {
+      const lm = link.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
+      if (lm) tokens.push({ type: 'link', label: lm[1], url: lm[2] });
+    } else if (code) {
+      tokens.push({ type: 'code', val: code.slice(1, -1) });
+    } else if (bold) {
+      const inner = bold.slice(2, -2);
+      const subTokens = parseCopilotInlineTokens(inner);
+      if (subTokens.length === 1 && subTokens[0].type !== 'text') {
+        tokens.push(subTokens[0]);
+      } else {
+        tokens.push({ type: 'bold', val: inner });
+      }
+    } else if (dateTime) {
+      tokens.push({ type: 'datetime', val: dateTime });
+    } else if (venue) {
+      tokens.push({ type: 'venue', val: venue });
+    } else if (course) {
+      tokens.push({ type: 'course', val: course });
+    }
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < input.length) {
+    tokens.push({ type: 'text', val: input.slice(lastIndex) });
+  }
+  return tokens;
+}
+
+function getCopilotKeyIcon(keyName: string) {
+  const k = keyName.toLowerCase();
+  if (k.includes('deadline') || k.includes('due')) {
+    return <Clock className="w-3.5 h-3.5 text-[#d93025] dark:text-[#f28b82] shrink-0" />;
+  }
+  if (k.includes('venue') || k.includes('location') || k.includes('room')) {
+    return <MapPin className="w-3.5 h-3.5 text-[#e37400] dark:text-[#fdd663] shrink-0" />;
+  }
+  if (k.includes('date') || k.includes('time') || k.includes('schedule') || k.includes('slot')) {
+    return <Calendar className="w-3.5 h-3.5 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />;
+  }
+  if (k.includes('course')) {
+    return <BookOpen className="w-3.5 h-3.5 text-[#188038] dark:text-[#81c995] shrink-0" />;
+  }
+  if (k.includes('instructor') || k.includes('from') || k.includes('club') || k.includes('organizer') || k.includes('organized')) {
+    return <User className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#9aa0a6] shrink-0" />;
+  }
+  if (k.includes('prize')) {
+    return <Trophy className="w-3.5 h-3.5 text-[#f29900] dark:text-[#fdd663] shrink-0" />;
+  }
+  if (k.includes('link') || k.includes('url')) {
+    return <ExternalLink className="w-3.5 h-3.5 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />;
+  }
+  if (k.includes('status')) {
+    return <CheckCircle2 className="w-3.5 h-3.5 text-[#188038] dark:text-[#81c995] shrink-0" />;
+  }
+  return <Tag className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#9aa0a6] shrink-0" />;
+}
+
+function renderCopilotInlineTokens(tokens: CopilotInlineToken[]) {
+  return tokens.map((token, idx) => {
+    switch (token.type) {
+      case 'datetime':
+        return (
+          <span
+            key={idx}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11.5px] font-medium bg-[#e8f0fe] dark:bg-[#042d54] text-[#174ea6] dark:text-[#a8c7fa] border border-[#d2e3fc]/80 dark:border-[#004a77] my-0.5 align-middle select-all shadow-2xs"
+            title="Date & Time"
+          >
+            <Clock className="w-3 h-3 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />
+            <span>{token.val}</span>
+          </span>
+        );
+      case 'venue':
+        return (
+          <span
+            key={idx}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11.5px] font-medium bg-[#f1f3f4] dark:bg-[#28292c] text-[#3c4043] dark:text-[#e3e3e3] border border-[#dadce0] dark:border-[#3c4043] my-0.5 align-middle select-all shadow-2xs"
+            title="Location / Venue"
+          >
+            <MapPin className="w-3 h-3 text-[#e37400] dark:text-[#fdd663] shrink-0" />
+            <span>{token.val}</span>
+          </span>
+        );
+      case 'course':
+        return (
+          <span
+            key={idx}
+            className="inline-flex items-center px-1.5 py-0.2 rounded font-mono text-[11px] font-semibold bg-[#edf2fa] dark:bg-[#1a2333] text-[#0b57d0] dark:text-[#7fcfff] border border-[#d3e3fd]/70 dark:border-[#1a3860] my-0.5 align-middle select-all"
+            title="Course Code"
+          >
+            {token.val}
+          </span>
+        );
+      case 'link':
+        return (
+          <a
+            key={idx}
+            href={token.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[#0b57d0] dark:text-[#a8c7fa] hover:underline font-semibold my-0.5 align-middle cursor-pointer"
+          >
+            <span>{token.label}</span>
+            <ExternalLink className="w-3 h-3 opacity-80 shrink-0" />
+          </a>
+        );
+      case 'code':
+        return (
+          <code
+            key={idx}
+            className="px-1.5 py-0.5 rounded text-[11.5px] font-mono bg-[#f1f3f4] dark:bg-[#28292c] text-[#c5221f] dark:text-[#f28b82] border border-[#dadce0]/60 dark:border-[#3c4043] my-0.5 align-middle"
+          >
+            {token.val}
+          </code>
+        );
+      case 'bold':
+        return (
+          <strong key={idx} className="font-semibold text-[#1f1f1f] dark:text-white">
+            {token.val}
+          </strong>
+        );
+      case 'text':
+      default:
+        return <span key={idx}>{token.val}</span>;
+    }
+  });
+}
+
+function CopilotMessageRenderer({ text }: { text: string }) {
+  const lines = text.split('\n');
+  const kvRegex = /^(?:[•\-\*]\s+|\s+-\s+)?\*\*([A-Za-z0-9\s/_\-–]+?):\*\*\s*(.*)$/;
+  const headerRegex = /^(?:#+\s*|\*\*)([^*]+)(?:\*\*|:)?$/;
+  const numHeaderRegex = /^\*\*(\d+\.\s+[^*]+)\*\*$/;
+  const bulletRegex = /^(?:[•\-\*]\s+)(.*)$/;
+
+  return (
+    <div className="space-y-1.5 text-[13px] leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        // 1. Key-Value structured row
+        const kvMatch = line.match(kvRegex);
+        if (kvMatch && kvMatch[2].trim().length > 0) {
+          const keyName = kvMatch[1].trim();
+          const valText = kvMatch[2].trim();
+          return (
+            <div
+              key={idx}
+              className="flex items-start gap-2 py-0.5 pl-1 rounded-md hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-1.5 text-[#444746] dark:text-[#9aa0a6] text-xs font-semibold shrink-0 pt-0.5 min-w-[90px] max-w-[130px]">
+                {getCopilotKeyIcon(keyName)}
+                <span className="truncate">{keyName}:</span>
+              </div>
+              <div className="flex-1 text-[#1f1f1f] dark:text-[#e3e3e3] font-normal break-words">
+                {renderCopilotInlineTokens(parseCopilotInlineTokens(valText))}
+              </div>
+            </div>
+          );
+        }
+
+        // 2. Numbered Item Header (e.g. **1. HackIITR 2026**)
+        const numMatch = line.match(numHeaderRegex);
+        if (numMatch) {
+          return (
+            <div
+              key={idx}
+              className="font-bold text-[#1f1f1f] dark:text-white text-[13px] pt-2 pb-0.5 flex items-center gap-1.5 border-b border-[#e0e2ec]/60 dark:border-[#2c2d30]/60"
+            >
+              <span>{numMatch[1]}</span>
+            </div>
+          );
+        }
+
+        // 3. Section Header
+        const hMatch = line.match(headerRegex);
+        if (hMatch && !line.startsWith('•') && !line.startsWith('-')) {
+          const title = hMatch[1].replace(/[:*]/g, '').trim();
+          return (
+            <div
+              key={idx}
+              className="font-bold text-[#1f1f1f] dark:text-white text-[13px] pt-1.5 pb-1 flex items-center gap-1.5 border-b border-[#e0e2ec]/80 dark:border-[#2c2d30]/80"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa] shrink-0" />
+              <span>{title}</span>
+            </div>
+          );
+        }
+
+        // 4. Bullet Item (not key-value)
+        const bMatch = line.match(bulletRegex);
+        if (bMatch) {
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-1 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] mt-2 shrink-0" />
+              <div className="flex-1 text-[#3c4043] dark:text-[#c4c7c5]">
+                {renderCopilotInlineTokens(parseCopilotInlineTokens(bMatch[1]))}
+              </div>
+            </div>
+          );
+        }
+
+        // 5. Default text line
+        return (
+          <div key={idx} className="text-[#1f1f1f] dark:text-[#e3e3e3]">
+            {renderCopilotInlineTokens(parseCopilotInlineTokens(line))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'buckets' | 'deadlines' | 'chat' | 'detail'>('buckets');
@@ -1961,29 +2198,35 @@ export default function App() {
           {activeTab === 'chat' && (
             <div className="flex flex-col h-[calc(100vh-125px)] animate-in fade-in duration-200">
               {/* Copilot Header */}
-              <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl mb-2.5 shrink-0 shadow-2xs">
+              <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl mb-2 shrink-0 shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[13.5px] font-bold text-[#1f1f1f] dark:text-[#e3e3e3] tracking-tight">
-                      Inbox Copilot
-                    </span>
-                    <span className="text-xs text-[#5f6368] dark:text-[#8e918f]">
-                      • {inboxItems.length} emails grounded
-                    </span>
+                  <div className="w-7 h-7 rounded-lg bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center shrink-0">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[13px] font-bold text-[#1f1f1f] dark:text-[#e3e3e3] tracking-tight font-serif">
+                        Inbox Copilot
+                      </span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
+                    <div className="text-[10.5px] text-[#5f6368] dark:text-[#8e918f]">
+                      {inboxItems.length} campus emails indexed
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
                     title="Click to toggle between Instant Local Engine and Cloud LLM"
-                    className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                    className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer flex items-center gap-1 shadow-2xs ${
                       copilotMode === 'instant'
                         ? 'bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] border-[#d3e3fd] dark:border-[#3c4043]'
                         : 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#001d35] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93]'
                     }`}
                   >
-                    {copilotMode === 'instant' ? 'Instant Engine' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}
+                    {copilotMode === 'instant' ? <Zap className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                    <span>{copilotMode === 'instant' ? 'Instant Engine' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1991,58 +2234,20 @@ export default function App() {
                         {
                           id: 'msg-welcome',
                           role: 'assistant',
-                          text: "Chat cleared. Ask anything about coursework, deadlines, or campus notices.",
+                          text: "Chat cleared. Ask anything about coursework, deadlines, venues, or campus notices.",
                           timestamp: 'Just now',
                         },
                       ]);
                     }}
-                    className="text-xs text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] px-2 py-0.5 rounded transition"
+                    className="text-xs text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] px-2 py-1 rounded transition cursor-pointer"
                   >
                     Clear
                   </button>
                 </div>
               </div>
 
-              {/* Quick Prompt Queries */}
-              <div className="mb-2.5 shrink-0 space-y-1">
-                <div className="flex items-center justify-between px-0.5">
-                  <span className="text-xs uppercase tracking-wider text-[#5f6368] dark:text-[#8e918f] font-semibold">
-                    Quick Queries
-                  </span>
-                  <span className="text-xs text-[#5f6368] dark:text-[#8e918f]">1-tap</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {QUICK_PROMPTS.map((qp) => {
-                    const Icon = qp.icon;
-                    return (
-                      <button
-                        key={qp.id}
-                        onClick={() => handleSendChatMessage(qp.prompt, true)}
-                        disabled={isChatThinking}
-                        className="p-2.5 rounded-xl text-left border border-[#e0e2ec] dark:border-[#2c2d30] bg-white dark:bg-[#1e1f20] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-5 h-5 rounded-md bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center shrink-0 group-hover:bg-[#0b57d0] group-hover:text-white dark:group-hover:bg-[#a8c7fa] dark:group-hover:text-[#001d35] transition-colors">
-                            <Icon className="w-3 h-3" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate">
-                              {qp.label}
-                            </div>
-                            <div className="text-[11px] text-[#5f6368] dark:text-[#8e918f] truncate">
-                              "{qp.prompt.slice(0, 24)}..."
-                            </div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] group-hover:translate-x-0.5 transition shrink-0" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Messages Scroll Area */}
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-2 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-2 scrollbar-thin">
                 {chatMessages.map((msg) => (
                   <div
                     key={msg.id}
@@ -2050,85 +2255,159 @@ export default function App() {
                       msg.role === 'user' ? 'items-end' : 'items-start'
                     }`}
                   >
-                    <div
-                      className={`max-w-[92%] rounded-xl px-3.5 py-2.5 text-xs shadow-2xs ${
-                        msg.role === 'user'
-                          ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] rounded-br-xs font-medium'
-                          : 'bg-white dark:bg-[#1e1f20] text-[#1f1f1f] dark:text-[#e3e3e3] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-bl-xs'
-                      }`}
-                    >
-                      <div className="whitespace-pre-line leading-relaxed space-y-1 text-[13px]">
-                        {msg.text.split('\n').map((line, i) => {
-                          if (
-                            line.startsWith('#') ||
-                            line.startsWith('**') ||
-                            line.startsWith('📌 ') ||
-                            line.startsWith('🏆 ') ||
-                            line.startsWith('⚠️ ') ||
-                            line.startsWith('🎯 ') ||
-                            line.startsWith('✅ ') ||
-                            line.startsWith('🎉 ')
-                          ) {
-                            return (
-                              <div key={i} className="font-semibold text-[#1f1f1f] dark:text-white pt-0.5">
-                                {line.replace(/^#+\s*/, '')}
-                              </div>
-                            );
-                          }
-                          if (line.startsWith('• ') || line.startsWith('- ')) {
-                            return (
-                              <div key={i} className="pl-1 text-[#3c4043] dark:text-[#c4c7c5]">
-                                {line}
-                              </div>
-                            );
-                          }
-                          return <div key={i}>{line}</div>;
-                        })}
+                    {msg.role === 'user' ? (
+                      <div className="max-w-[85%] rounded-2xl rounded-tr-xs px-3.5 py-2.5 text-[13px] bg-[#0b57d0] text-white dark:bg-[#a8c7fa] dark:text-[#001d35] font-normal shadow-2xs">
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
                       </div>
-
-                      {/* Grounded Email References */}
-                      {msg.references && msg.references.length > 0 && (
-                        <div className="mt-2.5 pt-2 border-t border-[#e0e2ec] dark:border-[#2c2d30] space-y-1">
-                          <span className="text-[10.5px] font-semibold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider block">
-                            Matched Emails:
-                          </span>
-                          <div className="space-y-1">
-                            {msg.references.map((ref) => (
-                              <button
-                                key={ref.id}
-                                onClick={() => handleJumpToEmailFromReference(ref)}
-                                className="w-full text-left p-2 rounded-lg bg-[#f6f8fc] dark:bg-[#111318] hover:bg-[#eaeff8] dark:hover:bg-[#28292c] border border-[#e0e2ec] dark:border-[#2c2d30] transition flex items-center justify-between gap-1.5 group cursor-pointer"
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa]">
-                                    {ref.subject}
-                                  </div>
-                                  <div className="text-[11px] text-[#5f6368] dark:text-[#8e918f] truncate">
-                                    {ref.sender} • {ref.date}
-                                  </div>
-                                </div>
-                                <ChevronRight className="w-3.5 h-3.5 text-[#5f6368] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] shrink-0" />
-                              </button>
-                            ))}
+                    ) : (
+                      <div className="max-w-[94%] rounded-2xl rounded-tl-xs p-3.5 bg-white dark:bg-[#1e1f20] text-[#1f1f1f] dark:text-[#e3e3e3] border border-[#e0e2ec] dark:border-[#2c2d30] shadow-2xs space-y-2">
+                        {/* Assistant Header Badge */}
+                        <div className="flex items-center justify-between pb-1.5 border-b border-[#e0e2ec]/60 dark:border-[#2c2d30]/60">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center">
+                              <Sparkles className="w-3 h-3" />
+                            </div>
+                            <span className="text-xs font-bold text-[#1f1f1f] dark:text-[#e3e3e3] tracking-tight">
+                              AcadMail Copilot
+                            </span>
                           </div>
+                          <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f]">
+                            {msg.timestamp}
+                          </span>
                         </div>
-                      )}
-                    </div>
+
+                        {/* Rich Parsed Message Content */}
+                        <CopilotMessageRenderer text={msg.text} />
+
+                        {/* Grounded Email References */}
+                        {msg.references && msg.references.length > 0 && (
+                          <div className="mt-3 pt-2.5 border-t border-[#e0e2ec] dark:border-[#2c2d30] space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10.5px] font-semibold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider flex items-center gap-1">
+                                <Mail className="w-3 h-3" />
+                                <span>Grounded Source Emails ({msg.references.length})</span>
+                              </span>
+                              <span className="text-[10px] text-[#0b57d0] dark:text-[#a8c7fa]">
+                                Click to open
+                              </span>
+                            </div>
+                            <div className="space-y-1.5">
+                              {msg.references.map((ref) => (
+                                <button
+                                  key={ref.id}
+                                  onClick={() => handleJumpToEmailFromReference(ref)}
+                                  className="w-full text-left p-2 rounded-xl bg-[#f8fafd] dark:bg-[#15171c] hover:bg-[#edf2fa] dark:hover:bg-[#20232a] border border-[#e0e2ec] dark:border-[#2c2d30] transition flex items-center justify-between gap-2 group cursor-pointer"
+                                  title="Click to view and jump to this email in Gmail"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa]">
+                                      {ref.subject}
+                                    </div>
+                                    <div className="text-[11px] text-[#5f6368] dark:text-[#8e918f] truncate flex items-center gap-1.5 mt-0.5">
+                                      <span>{ref.sender}</span>
+                                      <span>•</span>
+                                      <span>{ref.date}</span>
+                                    </div>
+                                  </div>
+                                  <div className="w-5 h-5 rounded-md bg-white dark:bg-[#1e1f20] border border-[#dadce0] dark:border-[#3c4043] flex items-center justify-center shrink-0 group-hover:border-[#0b57d0] dark:group-hover:border-[#a8c7fa]">
+                                    <ChevronRight className="w-3 h-3 text-[#5f6368] dark:text-[#8e918f] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] group-hover:translate-x-0.5 transition" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f] mt-0.5 px-1 font-normal">
                       {msg.timestamp}
                     </span>
                   </div>
                 ))}
 
+                {/* If chat is new, show suggested questions inside chat area */}
+                {chatMessages.length <= 1 && (
+                  <div className="pt-2 space-y-2">
+                    <div className="flex items-center justify-between px-0.5">
+                      <span className="text-xs font-bold text-[#1f1f1f] dark:text-[#e3e3e3] flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
+                        Suggested Questions
+                      </span>
+                      <span className="text-[11px] text-[#5f6368] dark:text-[#8e918f]">1-tap ask</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {QUICK_PROMPTS.map((qp) => {
+                        const Icon = qp.icon;
+                        return (
+                          <button
+                            key={qp.id}
+                            onClick={() => handleSendChatMessage(qp.prompt, true)}
+                            disabled={isChatThinking}
+                            className="p-3 rounded-xl text-left border border-[#e0e2ec] dark:border-[#2c2d30] bg-white dark:bg-[#1e1f20] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] hover:border-[#0b57d0]/40 dark:hover:border-[#a8c7fa]/40 transition-all flex flex-col justify-between gap-2 group cursor-pointer shadow-2xs"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="w-7 h-7 rounded-lg bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center shrink-0 group-hover:bg-[#0b57d0] group-hover:text-white dark:group-hover:bg-[#a8c7fa] dark:group-hover:text-[#001d35] transition-colors">
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] group-hover:translate-x-0.5 transition shrink-0" />
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#1f1f1f] dark:text-[#e3e3e3]">
+                                {qp.label}
+                              </div>
+                              <div className="text-[11px] text-[#5f6368] dark:text-[#8e918f] line-clamp-1 mt-0.5">
+                                "{qp.prompt}"
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Thinking / Scanning State */}
                 {isChatThinking && (
-                  <div className="flex items-center gap-2 p-3 bg-white dark:bg-[#1e1f20] rounded-xl border border-[#e0e2ec] dark:border-[#2c2d30] w-fit">
-                    <div className="w-2 h-2 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] animate-ping"></div>
-                    <span className="text-xs text-[#5f6368] dark:text-[#8e918f] italic">
-                      Scanning campus emails & reasoning...
-                    </span>
+                  <div className="flex items-start gap-2 max-w-[90%] animate-in fade-in duration-150">
+                    <div className="w-6 h-6 rounded-full bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                    </div>
+                    <div className="rounded-2xl rounded-tl-xs px-3.5 py-2.5 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] shadow-2xs space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] animate-bounce" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] animate-bounce [animation-delay:0.15s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] animate-bounce [animation-delay:0.3s]" />
+                        <span className="text-xs font-medium text-[#5f6368] dark:text-[#8e918f] ml-1">
+                          Scanning inbox for deadlines, venues & schedules...
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
+
+              {/* Compact Quick Queries Ribbon (when chat has messages) */}
+              {chatMessages.length > 1 && (
+                <div className="py-1.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 border-t border-[#e0e2ec]/60 dark:border-[#2c2d30]/60">
+                  <span className="text-[10.5px] font-semibold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider shrink-0 mr-0.5">
+                    Ask:
+                  </span>
+                  {QUICK_PROMPTS.map((qp) => {
+                    const Icon = qp.icon;
+                    return (
+                      <button
+                        key={qp.id}
+                        onClick={() => handleSendChatMessage(qp.prompt, true)}
+                        disabled={isChatThinking}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-[#1e1f20] hover:bg-[#eaeff8] dark:hover:bg-[#28292c] text-[#1f1f1f] dark:text-[#e3e3e3] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] border border-[#e0e2ec] dark:border-[#2c2d30] whitespace-nowrap transition-colors cursor-pointer shadow-2xs shrink-0"
+                      >
+                        <Icon className="w-3 h-3 text-[#0b57d0] dark:text-[#a8c7fa]" />
+                        <span>{qp.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Chat Input */}
               <form
@@ -2136,20 +2415,23 @@ export default function App() {
                   e.preventDefault();
                   handleSendChatMessage();
                 }}
-                className="pt-2.5 border-t border-[#e0e2ec] dark:border-[#2c2d30] flex items-center gap-1.5 shrink-0"
+                className="pt-2 border-t border-[#e0e2ec] dark:border-[#2c2d30] flex items-center gap-2 shrink-0"
               >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask a question about your emails..."
-                  disabled={isChatThinking}
-                  className="flex-1 bg-white dark:bg-[#1e1f20] border border-[#dadce0] dark:border-[#3c4043] rounded-lg px-3.5 py-2.5 text-sm text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa]"
-                />
+                <div className="flex-1 relative flex items-center">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask about assignments, class shifts, hackathons..."
+                    disabled={isChatThinking}
+                    className="w-full bg-white dark:bg-[#1e1f20] border border-[#dadce0] dark:border-[#3c4043] rounded-xl px-3.5 py-2.5 text-sm text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa] focus:ring-2 focus:ring-[#0b57d0]/15 dark:focus:ring-[#a8c7fa]/20 transition-all shadow-2xs"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={!chatInput.trim() || isChatThinking}
-                  className="p-2.5 rounded-lg bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] disabled:opacity-50 text-white dark:text-[#001d35] font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
+                  className="p-2.5 rounded-xl bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] disabled:opacity-40 disabled:cursor-not-allowed text-white dark:text-[#001d35] font-semibold transition-all flex items-center justify-center shadow-xs cursor-pointer shrink-0"
+                  title="Send Question"
                 >
                   <SendHorizontal className="w-4 h-4" />
                 </button>

@@ -35,7 +35,10 @@ import {
   Edit3,
   Trash2,
   Bot,
-  MessageSquare
+  MessageSquare,
+  MapPin,
+  User,
+  Zap
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -106,6 +109,236 @@ const INITIAL_DEMO_EMAILS: ExtractedEmail[] = [
     url: '',
   },
 ];
+
+type CopilotInlineToken =
+  | { type: 'text'; val: string }
+  | { type: 'datetime'; val: string }
+  | { type: 'venue'; val: string }
+  | { type: 'course'; val: string }
+  | { type: 'link'; label: string; url: string }
+  | { type: 'code'; val: string }
+  | { type: 'bold'; val: string };
+
+function parseCopilotInlineTokens(input: string): CopilotInlineToken[] {
+  const tokens: CopilotInlineToken[] = [];
+  const regex = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\))|(`[^`]+`)|(\*\*[^*]+\*\*)|(\b(?:(?:Mon|Monday|Tue|Tuesday|Wed|Wednesday|Thu|Thursday|Fri|Friday|Sat|Saturday|Sun|Sunday|Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|September|Oct|October|Nov|November|Dec|December)[a-z]*(?:,\s+[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?)?(?:\s+(?:from|at|by)\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)(?:\s*-\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))?)?|Tomorrow(?:\s+(?:at|by)\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?|Today(?:\s+(?:at|by)\s+\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?|This Weekend|\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)(?:\s*-\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))?)\b)|(\b(?:LHC-\d{2,3}|MAC Auditorium|Students Activity Centre(?:\s*\(SAC\))?|SAC|Hall\s+\d+|APJ Hall)\b)|(\b[A-Z]{2,4}\s?[-]?\s?\d{3}[A-Z]?\b)/gi;
+
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(input)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: 'text', val: input.slice(lastIndex, match.index) });
+    }
+    const [, link, code, bold, dateTime, venue, course] = match;
+    if (link) {
+      const lm = link.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
+      if (lm) tokens.push({ type: 'link', label: lm[1], url: lm[2] });
+    } else if (code) {
+      tokens.push({ type: 'code', val: code.slice(1, -1) });
+    } else if (bold) {
+      const inner = bold.slice(2, -2);
+      const subTokens = parseCopilotInlineTokens(inner);
+      if (subTokens.length === 1 && subTokens[0].type !== 'text') {
+        tokens.push(subTokens[0]);
+      } else {
+        tokens.push({ type: 'bold', val: inner });
+      }
+    } else if (dateTime) {
+      tokens.push({ type: 'datetime', val: dateTime });
+    } else if (venue) {
+      tokens.push({ type: 'venue', val: venue });
+    } else if (course) {
+      tokens.push({ type: 'course', val: course });
+    }
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < input.length) {
+    tokens.push({ type: 'text', val: input.slice(lastIndex) });
+  }
+  return tokens;
+}
+
+function getCopilotKeyIcon(keyName: string) {
+  const k = keyName.toLowerCase();
+  if (k.includes('deadline') || k.includes('due')) {
+    return <Clock className="w-3 h-3 text-[#d93025] dark:text-[#f28b82] shrink-0" />;
+  }
+  if (k.includes('venue') || k.includes('location') || k.includes('room')) {
+    return <MapPin className="w-3 h-3 text-[#e37400] dark:text-[#fdd663] shrink-0" />;
+  }
+  if (k.includes('date') || k.includes('time') || k.includes('schedule') || k.includes('slot')) {
+    return <Calendar className="w-3 h-3 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />;
+  }
+  if (k.includes('course')) {
+    return <BookOpen className="w-3 h-3 text-[#188038] dark:text-[#81c995] shrink-0" />;
+  }
+  if (k.includes('instructor') || k.includes('from') || k.includes('club') || k.includes('organizer') || k.includes('organized')) {
+    return <User className="w-3 h-3 text-[#5f6368] dark:text-[#9aa0a6] shrink-0" />;
+  }
+  if (k.includes('prize')) {
+    return <Trophy className="w-3 h-3 text-[#f29900] dark:text-[#fdd663] shrink-0" />;
+  }
+  if (k.includes('link') || k.includes('url')) {
+    return <ExternalLink className="w-3 h-3 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />;
+  }
+  if (k.includes('status')) {
+    return <CheckCircle2 className="w-3 h-3 text-[#188038] dark:text-[#81c995] shrink-0" />;
+  }
+  return <Tag className="w-3 h-3 text-[#5f6368] dark:text-[#9aa0a6] shrink-0" />;
+}
+
+function renderCopilotInlineTokens(tokens: CopilotInlineToken[]) {
+  return tokens.map((token, idx) => {
+    switch (token.type) {
+      case 'datetime':
+        return (
+          <span
+            key={idx}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-[#e8f0fe] dark:bg-[#042d54] text-[#174ea6] dark:text-[#a8c7fa] border border-[#d2e3fc]/80 dark:border-[#004a77] my-0.5 align-middle select-all shadow-2xs"
+            title="Date & Time"
+          >
+            <Clock className="w-2.5 h-2.5 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />
+            <span>{token.val}</span>
+          </span>
+        );
+      case 'venue':
+        return (
+          <span
+            key={idx}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-[#f1f3f4] dark:bg-[#28292c] text-[#3c4043] dark:text-[#e3e3e3] border border-[#dadce0] dark:border-[#3c4043] my-0.5 align-middle select-all shadow-2xs"
+            title="Location / Venue"
+          >
+            <MapPin className="w-2.5 h-2.5 text-[#e37400] dark:text-[#fdd663] shrink-0" />
+            <span>{token.val}</span>
+          </span>
+        );
+      case 'course':
+        return (
+          <span
+            key={idx}
+            className="inline-flex items-center px-1.5 py-0.2 rounded font-mono text-[10.5px] font-semibold bg-[#edf2fa] dark:bg-[#1a2333] text-[#0b57d0] dark:text-[#7fcfff] border border-[#d3e3fd]/70 dark:border-[#1a3860] my-0.5 align-middle select-all"
+            title="Course Code"
+          >
+            {token.val}
+          </span>
+        );
+      case 'link':
+        return (
+          <a
+            key={idx}
+            href={token.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[#0b57d0] dark:text-[#a8c7fa] hover:underline font-semibold my-0.5 align-middle cursor-pointer"
+          >
+            <span>{token.label}</span>
+            <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
+          </a>
+        );
+      case 'code':
+        return (
+          <code
+            key={idx}
+            className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-[#f1f3f4] dark:bg-[#28292c] text-[#c5221f] dark:text-[#f28b82] border border-[#dadce0]/60 dark:border-[#3c4043] my-0.5 align-middle"
+          >
+            {token.val}
+          </code>
+        );
+      case 'bold':
+        return (
+          <strong key={idx} className="font-semibold text-slate-900 dark:text-white">
+            {token.val}
+          </strong>
+        );
+      case 'text':
+      default:
+        return <span key={idx}>{token.val}</span>;
+    }
+  });
+}
+
+function CopilotMessageRenderer({ text }: { text: string }) {
+  const lines = text.split('\n');
+  const kvRegex = /^(?:[•\-\*]\s+|\s+-\s+)?\*\*([A-Za-z0-9\s/_\-–]+?):\*\*\s*(.*)$/;
+  const headerRegex = /^(?:#+\s*|\*\*)([^*]+)(?:\*\*|:)?$/;
+  const numHeaderRegex = /^\*\*(\d+\.\s+[^*]+)\*\*$/;
+  const bulletRegex = /^(?:[•\-\*]\s+)(.*)$/;
+
+  return (
+    <div className="space-y-1.5 text-xs leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        const kvMatch = line.match(kvRegex);
+        if (kvMatch && kvMatch[2].trim().length > 0) {
+          const keyName = kvMatch[1].trim();
+          const valText = kvMatch[2].trim();
+          return (
+            <div
+              key={idx}
+              className="flex items-start gap-1.5 py-0.5 pl-0.5 rounded-md hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px] font-semibold shrink-0 pt-0.5 min-w-[80px] max-w-[120px]">
+                {getCopilotKeyIcon(keyName)}
+                <span className="truncate">{keyName}:</span>
+              </div>
+              <div className="flex-1 text-slate-800 dark:text-slate-100 font-normal break-words">
+                {renderCopilotInlineTokens(parseCopilotInlineTokens(valText))}
+              </div>
+            </div>
+          );
+        }
+
+        const numMatch = line.match(numHeaderRegex);
+        if (numMatch) {
+          return (
+            <div
+              key={idx}
+              className="font-bold text-slate-900 dark:text-white text-xs pt-1.5 pb-0.5 flex items-center gap-1 border-b border-slate-200/60 dark:border-slate-800/60"
+            >
+              <span>{numMatch[1]}</span>
+            </div>
+          );
+        }
+
+        const hMatch = line.match(headerRegex);
+        if (hMatch && !line.startsWith('•') && !line.startsWith('-')) {
+          const title = hMatch[1].replace(/[:*]/g, '').trim();
+          return (
+            <div
+              key={idx}
+              className="font-bold text-slate-900 dark:text-white text-xs pt-1 pb-0.5 flex items-center gap-1 border-b border-slate-200/80 dark:border-slate-800/80"
+            >
+              <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span>{title}</span>
+            </div>
+          );
+        }
+
+        const bMatch = line.match(bulletRegex);
+        if (bMatch) {
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-0.5 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
+              <div className="flex-1 text-slate-700 dark:text-slate-300">
+                {renderCopilotInlineTokens(parseCopilotInlineTokens(bMatch[1]))}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div key={idx} className="text-slate-800 dark:text-slate-100">
+            {renderCopilotInlineTokens(parseCopilotInlineTokens(line))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function MobileApp() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -932,27 +1165,35 @@ export default function MobileApp() {
         {activeTab === 'chat' && (
           <main className="p-4 flex flex-col h-[calc(100vh-130px)]">
             {/* Header info */}
-            <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs space-y-1 shrink-0 mb-2.5">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 shadow-2xs space-y-1 shrink-0 mb-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="text-[12px] font-semibold text-slate-900 dark:text-white tracking-tight">
-                    Inbox Copilot
-                  </span>
-                  <span className="font-mono text-[9px] text-slate-400">
-                    • {emails.length} emails
-                  </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-bold text-slate-900 dark:text-white tracking-tight">
+                        Inbox Copilot
+                      </span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
+                    <span className="font-mono text-[9px] text-slate-400">
+                      • {emails.length} emails grounded
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
-                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded border transition cursor-pointer ${
+                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded-full border transition cursor-pointer flex items-center gap-1 ${
                       copilotMode === 'instant'
                         ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                         : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
                     }`}
                   >
-                    {copilotMode === 'instant' ? 'Instant Engine (0s)' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}
+                    {copilotMode === 'instant' ? <Zap className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
+                    <span>{copilotMode === 'instant' ? 'Instant Engine' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -965,49 +1206,11 @@ export default function MobileApp() {
                         },
                       ]);
                     }}
-                    className="text-[10px] text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded transition"
+                    className="text-[10px] text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded transition cursor-pointer"
                   >
                     Clear
                   </button>
                 </div>
-              </div>
-            </div>
-
-            {/* Quick Prompt Queries */}
-            <div className="mb-2.5 shrink-0 space-y-1">
-              <div className="flex items-center justify-between px-0.5">
-                <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
-                  Quick Queries
-                </span>
-                <span className="font-mono text-[9px] text-slate-400">1-tap</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {QUICK_PROMPTS.map((qp) => {
-                  const Icon = qp.icon;
-                  return (
-                    <button
-                      key={qp.id}
-                      onClick={() => handleSendChatMessage(qp.prompt, true)}
-                      disabled={isChatThinking}
-                      className="p-2 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors">
-                          <Icon className="w-3 h-3" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                            {qp.label}
-                          </div>
-                          <div className="font-mono text-[8px] text-slate-400 truncate">
-                            "{qp.prompt.slice(0, 24)}..."
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition shrink-0" />
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
@@ -1020,75 +1223,102 @@ export default function MobileApp() {
                     msg.role === 'user' ? 'items-end' : 'items-start'
                   }`}
                 >
-                  <div
-                    className={`max-w-[90%] rounded-xl px-3 py-2 text-xs shadow-2xs ${
-                      msg.role === 'user'
-                        ? 'bg-slate-900 dark:bg-blue-600 text-white rounded-br-xs font-medium'
-                        : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
-                    }`}
-                  >
-                    <div className="whitespace-pre-line leading-relaxed space-y-1 text-xs">
-                      {msg.text.split('\n').map((line, i) => {
-                        if (
-                          line.startsWith('#') ||
-                          line.startsWith('**') ||
-                          line.startsWith('📌 ') ||
-                          line.startsWith('🏆 ') ||
-                          line.startsWith('⚠️ ') ||
-                          line.startsWith('🎯 ') ||
-                          line.startsWith('✅ ') ||
-                          line.startsWith('🎉 ')
-                        ) {
-                          return (
-                            <div key={i} className="font-bold text-slate-900 dark:text-white pt-1">
-                              {line.replace(/^#+\s*/, '')}
-                            </div>
-                          );
-                        }
-                        if (line.startsWith('• ') || line.startsWith('- ')) {
-                          return (
-                            <div key={i} className="pl-1 text-slate-700 dark:text-slate-300">
-                              {line}
-                            </div>
-                          );
-                        }
-                        return <div key={i}>{line}</div>;
-                      })}
+                  {msg.role === 'user' ? (
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-xs px-3 py-2 text-xs bg-slate-900 dark:bg-blue-600 text-white font-normal shadow-2xs">
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
                     </div>
-
-                    {/* Referencing Emails Card */}
-                    {msg.references && msg.references.length > 0 && (
-                      <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1">
-                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                          Referenced Emails:
-                        </span>
-                        <div className="space-y-1">
-                          {msg.references.map((ref) => (
-                            <button
-                              key={ref.id}
-                              onClick={() => handleJumpToEmailFromReference(ref)}
-                              className="w-full text-left p-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition flex items-center justify-between gap-1.5 group cursor-pointer"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                  {ref.subject}
-                                </div>
-                                <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
-                                  {ref.sender} • {ref.date}
-                                </div>
-                              </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
-                            </button>
-                          ))}
+                  ) : (
+                    <div className="max-w-[94%] rounded-2xl rounded-tl-xs p-3 bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-1.5">
+                      <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-800/80">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-4 h-4 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                            <Sparkles className="w-2.5 h-2.5" />
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-900 dark:text-white">
+                            AcadMail Copilot
+                          </span>
                         </div>
+                        <span className="text-[9px] text-slate-400">
+                          {msg.timestamp}
+                        </span>
                       </div>
-                    )}
-                  </div>
+
+                      <CopilotMessageRenderer text={msg.text} />
+
+                      {/* Referencing Emails Card */}
+                      {msg.references && msg.references.length > 0 && (
+                        <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1">
+                          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                            Referenced Emails ({msg.references.length}):
+                          </span>
+                          <div className="space-y-1">
+                            {msg.references.map((ref) => (
+                              <button
+                                key={ref.id}
+                                onClick={() => handleJumpToEmailFromReference(ref)}
+                                className="w-full text-left p-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition flex items-center justify-between gap-1.5 group cursor-pointer"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                    {ref.subject}
+                                  </div>
+                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
+                                    {ref.sender} • {ref.date}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <span className="text-[8px] text-slate-400 mt-0.5 px-1">
                     {msg.timestamp}
                   </span>
                 </div>
               ))}
+
+              {/* If chat is new, show suggested questions inside chat area */}
+              {chatMessages.length <= 1 && (
+                <div className="pt-2 space-y-1.5">
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+                      Suggested Queries
+                    </span>
+                    <span className="font-mono text-[9px] text-slate-400">1-tap</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {QUICK_PROMPTS.map((qp) => {
+                      const Icon = qp.icon;
+                      return (
+                        <button
+                          key={qp.id}
+                          onClick={() => handleSendChatMessage(qp.prompt, true)}
+                          disabled={isChatThinking}
+                          className="p-2 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors">
+                              <Icon className="w-3 h-3" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                                {qp.label}
+                              </div>
+                              <div className="font-mono text-[8px] text-slate-400 truncate">
+                                "{qp.prompt.slice(0, 24)}..."
+                              </div>
+                            </div>
+                          </div>
+                          <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {isChatThinking && (
                 <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 w-fit">
@@ -1099,6 +1329,29 @@ export default function MobileApp() {
                 </div>
               )}
             </div>
+
+            {/* Compact Quick Queries Ribbon (when chat has messages) */}
+            {chatMessages.length > 1 && (
+              <div className="py-1.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 border-t border-slate-200/60 dark:border-slate-800/80">
+                <span className="font-mono text-[8px] uppercase tracking-wider text-slate-400 font-semibold shrink-0">
+                  Ask:
+                </span>
+                {QUICK_PROMPTS.map((qp) => {
+                  const Icon = qp.icon;
+                  return (
+                    <button
+                      key={qp.id}
+                      onClick={() => handleSendChatMessage(qp.prompt, true)}
+                      disabled={isChatThinking}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white dark:bg-[#111827] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 whitespace-nowrap transition cursor-pointer shadow-2xs shrink-0"
+                    >
+                      <Icon className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+                      <span>{qp.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Chat Input */}
             <form
