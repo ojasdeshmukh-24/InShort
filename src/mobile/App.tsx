@@ -158,35 +158,6 @@ function parseCopilotInlineTokens(input: string): CopilotInlineToken[] {
   return tokens;
 }
 
-function getCopilotKeyIcon(keyName: string) {
-  const k = keyName.toLowerCase();
-  if (k.includes('deadline') || k.includes('due')) {
-    return <Clock className="w-3 h-3 text-[#d93025] dark:text-[#f28b82] shrink-0" />;
-  }
-  if (k.includes('venue') || k.includes('location') || k.includes('room')) {
-    return <MapPin className="w-3 h-3 text-[#e37400] dark:text-[#fdd663] shrink-0" />;
-  }
-  if (k.includes('date') || k.includes('time') || k.includes('schedule') || k.includes('slot')) {
-    return <Calendar className="w-3 h-3 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />;
-  }
-  if (k.includes('course')) {
-    return <BookOpen className="w-3 h-3 text-[#188038] dark:text-[#81c995] shrink-0" />;
-  }
-  if (k.includes('instructor') || k.includes('from') || k.includes('club') || k.includes('organizer') || k.includes('organized')) {
-    return <User className="w-3 h-3 text-[#5f6368] dark:text-[#9aa0a6] shrink-0" />;
-  }
-  if (k.includes('prize')) {
-    return <Trophy className="w-3 h-3 text-[#f29900] dark:text-[#fdd663] shrink-0" />;
-  }
-  if (k.includes('link') || k.includes('url')) {
-    return <ExternalLink className="w-3 h-3 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />;
-  }
-  if (k.includes('status')) {
-    return <CheckCircle2 className="w-3 h-3 text-[#188038] dark:text-[#81c995] shrink-0" />;
-  }
-  return <Tag className="w-3 h-3 text-[#5f6368] dark:text-[#9aa0a6] shrink-0" />;
-}
-
 function renderCopilotInlineTokens(tokens: CopilotInlineToken[]) {
   return tokens.map((token, idx) => {
     switch (token.type) {
@@ -194,22 +165,20 @@ function renderCopilotInlineTokens(tokens: CopilotInlineToken[]) {
         return (
           <span
             key={idx}
-            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-[#e8f0fe] dark:bg-[#042d54] text-[#174ea6] dark:text-[#a8c7fa] border border-[#d2e3fc]/80 dark:border-[#004a77] my-0.5 align-middle select-all shadow-2xs"
+            className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-[#e8f0fe] dark:bg-[#042d54] text-[#174ea6] dark:text-[#a8c7fa] border border-[#d2e3fc]/80 dark:border-[#004a77] my-0.5 align-middle select-all shadow-2xs"
             title="Date & Time"
           >
-            <Clock className="w-2.5 h-2.5 text-[#1a73e8] dark:text-[#a8c7fa] shrink-0" />
-            <span>{token.val}</span>
+            {token.val}
           </span>
         );
       case 'venue':
         return (
           <span
             key={idx}
-            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-[#f1f3f4] dark:bg-[#28292c] text-[#3c4043] dark:text-[#e3e3e3] border border-[#dadce0] dark:border-[#3c4043] my-0.5 align-middle select-all shadow-2xs"
+            className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-[#f1f3f4] dark:bg-[#28292c] text-[#3c4043] dark:text-[#e3e3e3] border border-[#dadce0] dark:border-[#3c4043] my-0.5 align-middle select-all shadow-2xs"
             title="Location / Venue"
           >
-            <MapPin className="w-2.5 h-2.5 text-[#e37400] dark:text-[#fdd663] shrink-0" />
-            <span>{token.val}</span>
+            {token.val}
           </span>
         );
       case 'course':
@@ -229,10 +198,9 @@ function renderCopilotInlineTokens(tokens: CopilotInlineToken[]) {
             href={token.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[#0b57d0] dark:text-[#a8c7fa] hover:underline font-semibold my-0.5 align-middle cursor-pointer"
+            className="text-[#0b57d0] dark:text-[#a8c7fa] underline hover:opacity-80 font-semibold my-0.5 align-middle cursor-pointer"
           >
-            <span>{token.label}</span>
-            <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
+            {token.label}
           </a>
         );
       case 'code':
@@ -281,8 +249,7 @@ function CopilotMessageRenderer({ text }: { text: string }) {
               key={idx}
               className="flex items-start gap-1.5 py-0.5 pl-0.5 rounded-md hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
             >
-              <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px] font-semibold shrink-0 pt-0.5 min-w-[80px] max-w-[120px]">
-                {getCopilotKeyIcon(keyName)}
+              <div className="text-slate-500 dark:text-slate-400 text-[11px] font-semibold shrink-0 pt-0.5 min-w-[80px] max-w-[120px]">
                 <span className="truncate">{keyName}:</span>
               </div>
               <div className="flex-1 text-slate-800 dark:text-slate-100 font-normal break-words">
@@ -297,7 +264,7 @@ function CopilotMessageRenderer({ text }: { text: string }) {
           return (
             <div
               key={idx}
-              className="font-bold text-slate-900 dark:text-white text-xs pt-1.5 pb-0.5 flex items-center gap-1 border-b border-slate-200/60 dark:border-slate-800/60"
+              className="font-bold text-slate-900 dark:text-white text-xs pt-1.5 pb-0.5 border-b border-slate-200/60 dark:border-slate-800/60"
             >
               <span>{numMatch[1]}</span>
             </div>
@@ -310,9 +277,8 @@ function CopilotMessageRenderer({ text }: { text: string }) {
           return (
             <div
               key={idx}
-              className="font-bold text-slate-900 dark:text-white text-xs pt-1 pb-0.5 flex items-center gap-1 border-b border-slate-200/80 dark:border-slate-800/80"
+              className="font-bold text-slate-900 dark:text-white text-xs pt-1 pb-0.5 border-b border-slate-200/80 dark:border-slate-800/80"
             >
-              <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
               <span>{title}</span>
             </div>
           );
@@ -1167,32 +1133,26 @@ export default function MobileApp() {
             {/* Header info */}
             <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 shadow-2xs space-y-1 shrink-0 mb-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12px] font-bold text-slate-900 dark:text-white tracking-tight">
-                        Inbox Copilot
-                      </span>
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    </div>
-                    <span className="font-mono text-[9px] text-slate-400">
-                      • {emails.length} emails grounded
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-bold text-slate-900 dark:text-white tracking-tight">
+                      Inbox Copilot
                     </span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
+                  <span className="font-mono text-[9px] text-slate-400">
+                    • {emails.length} emails grounded
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
-                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded-full border transition cursor-pointer flex items-center gap-1 ${
+                    className={`font-mono text-[9px] font-medium px-2.5 py-1 rounded-full border transition cursor-pointer ${
                       copilotMode === 'instant'
                         ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                         : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
                     }`}
                   >
-                    {copilotMode === 'instant' ? <Zap className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
                     <span>{copilotMode === 'instant' ? 'Instant Engine' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}</span>
                   </button>
                   <button
@@ -1230,14 +1190,9 @@ export default function MobileApp() {
                   ) : (
                     <div className="max-w-[94%] rounded-2xl rounded-tl-xs p-3 bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-1.5">
                       <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-800/80">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-4 h-4 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                            <Sparkles className="w-2.5 h-2.5" />
-                          </div>
-                          <span className="text-[11px] font-bold text-slate-900 dark:text-white">
-                            AcadMail Copilot
-                          </span>
-                        </div>
+                        <span className="text-[11px] font-bold text-slate-900 dark:text-white">
+                          AcadMail Copilot
+                        </span>
                         <span className="text-[9px] text-slate-400">
                           {msg.timestamp}
                         </span>
@@ -1256,17 +1211,14 @@ export default function MobileApp() {
                               <button
                                 key={ref.id}
                                 onClick={() => handleJumpToEmailFromReference(ref)}
-                                className="w-full text-left p-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition flex items-center justify-between gap-1.5 group cursor-pointer"
+                                className="w-full text-left p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition group cursor-pointer"
                               >
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                    {ref.subject}
-                                  </div>
-                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
-                                    {ref.sender} • {ref.date}
-                                  </div>
+                                <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                  {ref.subject}
                                 </div>
-                                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
+                                <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                  {ref.sender} • {ref.date}
+                                </div>
                               </button>
                             ))}
                           </div>
@@ -1290,42 +1242,35 @@ export default function MobileApp() {
                     <span className="font-mono text-[9px] text-slate-400">1-tap</span>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {QUICK_PROMPTS.map((qp) => {
-                      const Icon = qp.icon;
-                      return (
-                        <button
-                          key={qp.id}
-                          onClick={() => handleSendChatMessage(qp.prompt, true)}
-                          disabled={isChatThinking}
-                          className="p-2 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors">
-                              <Icon className="w-3 h-3" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                                {qp.label}
-                              </div>
-                              <div className="font-mono text-[8px] text-slate-400 truncate">
-                                "{qp.prompt.slice(0, 24)}..."
-                              </div>
-                            </div>
-                          </div>
-                          <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition shrink-0" />
-                        </button>
-                      );
-                    })}
+                    {QUICK_PROMPTS.map((qp) => (
+                      <button
+                        key={qp.id}
+                        onClick={() => handleSendChatMessage(qp.prompt, true)}
+                        disabled={isChatThinking}
+                        className="p-2.5 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex flex-col justify-between gap-1 group cursor-pointer shadow-2xs"
+                      >
+                        <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {qp.label}
+                        </div>
+                        <div className="font-mono text-[8px] text-slate-400 truncate">
+                          "{qp.prompt.slice(0, 24)}..."
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
               {isChatThinking && (
-                <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 w-fit">
-                  <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                    Reasoning over campus emails...
-                  </span>
+                <div className="p-2.5 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 w-fit">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.15s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.3s]" />
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 italic ml-1">
+                      Reasoning over campus emails...
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -1336,20 +1281,16 @@ export default function MobileApp() {
                 <span className="font-mono text-[8px] uppercase tracking-wider text-slate-400 font-semibold shrink-0">
                   Ask:
                 </span>
-                {QUICK_PROMPTS.map((qp) => {
-                  const Icon = qp.icon;
-                  return (
-                    <button
-                      key={qp.id}
-                      onClick={() => handleSendChatMessage(qp.prompt, true)}
-                      disabled={isChatThinking}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white dark:bg-[#111827] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 whitespace-nowrap transition cursor-pointer shadow-2xs shrink-0"
-                    >
-                      <Icon className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
-                      <span>{qp.label}</span>
-                    </button>
-                  );
-                })}
+                {QUICK_PROMPTS.map((qp) => (
+                  <button
+                    key={qp.id}
+                    onClick={() => handleSendChatMessage(qp.prompt, true)}
+                    disabled={isChatThinking}
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white dark:bg-[#111827] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 whitespace-nowrap transition cursor-pointer shadow-2xs shrink-0"
+                  >
+                    <span>{qp.label}</span>
+                  </button>
+                ))}
               </div>
             )}
 
@@ -1372,9 +1313,9 @@ export default function MobileApp() {
               <button
                 type="submit"
                 disabled={!chatInput.trim() || isChatThinking}
-                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
+                className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs transition flex items-center justify-center shadow-xs cursor-pointer"
               >
-                <SendHorizontal className="w-4 h-4" />
+                Send
               </button>
             </form>
           </main>
