@@ -402,11 +402,14 @@ function classifyInboxItem(
   return { category: topCategory, courseCode, isPhd: false };
 }
 
-// Track clicked rows in Gmail
+// Track clicked rows & pagination navigation in Gmail
 document.addEventListener(
   'click',
   (e) => {
     const target = e.target as HTMLElement;
+    if (!target) return;
+
+    // 1. Email Row Click
     const row = target.closest('tr.zA');
     if (row) {
       lastClickedRow = row as HTMLElement;
@@ -418,6 +421,17 @@ document.addEventListener(
         safeSendMessage({ type: 'EMAIL_CHANGED' });
         checkAndInjectEmailBrief();
       }, 800);
+    }
+
+    // 2. Pagination Navigation Click (e.g. 1-50 to 51-100, Older/Newer buttons)
+    const paginationBtn = target.closest(
+      '.ar5, .amD, [aria-label*="Older" i], [aria-label*="Newer" i], [aria-label*="Next" i], [aria-label*="Previous" i], [data-tooltip*="Older" i], [data-tooltip*="Newer" i], [data-tooltip*="Previous" i], [data-tooltip*="Next" i]'
+    );
+    if (paginationBtn) {
+      setTimeout(scanVisibleInbox, 100);
+      setTimeout(scanVisibleInbox, 300);
+      setTimeout(scanVisibleInbox, 700);
+      setTimeout(scanVisibleInbox, 1200);
     }
   },
   true
@@ -469,6 +483,11 @@ function scanVisibleInbox(): InboxRowItem[] {
     injectMaterial3ToolbarChips(items);
   }
 
+  // Preserve active filter if one was selected
+  if (currentActiveFilter !== 'ALL') {
+    filterGmailDom(currentActiveFilter);
+  }
+
   return items;
 }
 
@@ -496,7 +515,12 @@ function injectRowBadge(
     : 'background: #edf5fd; color: #1a73e8; border: 1px solid #d2e3fc;';
   let labelText = courseCode || 'Acads';
 
-  if (category === 'Competitions & Tournaments') {
+  if (category === 'Assignment') {
+    badgeColor = isDark
+      ? 'background: rgba(11, 87, 208, 0.2); color: #a8c7fa; border: 1px solid rgba(11, 87, 208, 0.35);'
+      : 'background: #e8f0fe; color: #0b57d0; border: 1px solid #c2e7ff;';
+    labelText = courseCode ? `${courseCode} • Assign` : 'Assignment';
+  } else if (category === 'Competitions & Tournaments') {
     badgeColor = isDark
       ? 'background: rgba(210, 153, 34, 0.15); color: #e3b341; border: 1px solid rgba(210, 153, 34, 0.3);'
       : 'background: #fef7e0; color: #b06000; border: 1px solid #fce8b2;';
@@ -548,6 +572,10 @@ function injectRowBadge(
   `
   );
 
+  badge.setAttribute('data-category', category);
+  rowEl.setAttribute('data-acadmail-category', category);
+  rowEl.setAttribute('data-acadmail-scanned', 'true');
+
   badge.innerText = labelText;
   badge.title = courseCode ? `Filter Gmail for ${courseCode} (Right-click to change label)` : `Category: ${category} (Click to change)`;
 
@@ -598,16 +626,29 @@ function filterGmailDom(category: CategoryType | 'ALL') {
       return;
     }
 
+    const rowCat = rowEl.getAttribute('data-acadmail-category');
     const badge = rowEl.querySelector('.acadmail-row-badge');
+    const badgeCat = badge?.getAttribute('data-category');
     const badgeText = badge?.textContent || '';
 
     let match = false;
-    if (category === 'Academics' && (badgeText.includes('🎓') || badgeText.includes('Acads'))) match = true;
-    else if (category === 'Competitions & Tournaments' && (badgeText.includes('🏆') || badgeText.includes('Contest'))) match = true;
-    else if (category === 'Workshops' && (badgeText.includes('🛠️') || badgeText.includes('Workshop'))) match = true;
-    else if (category === 'Class Rescheduling' && (badgeText.includes('⏰') || badgeText.includes('Rescheduled'))) match = true;
-    else if (category === 'General' && (badgeText.includes('📢') || badgeText.includes('General') || badgeText.includes('PhD'))) match = true;
-    else if (badgeText.toLowerCase().includes(category.toLowerCase())) match = true; // Match custom filters!
+    if (rowCat === category || badgeCat === category) {
+      match = true;
+    } else if (category === 'Academics' && (badgeText.includes('🎓') || badgeText.includes('Acads'))) {
+      match = true;
+    } else if (category === 'Assignment' && badgeText.toLowerCase().includes('assign')) {
+      match = true;
+    } else if (category === 'Competitions & Tournaments' && (badgeText.includes('🏆') || badgeText.includes('Contest'))) {
+      match = true;
+    } else if (category === 'Workshops' && (badgeText.includes('🛠️') || badgeText.includes('Workshop'))) {
+      match = true;
+    } else if (category === 'Class Rescheduling' && (badgeText.includes('⏰') || badgeText.includes('Rescheduled'))) {
+      match = true;
+    } else if (category === 'General' && (badgeText.includes('📢') || badgeText.includes('General') || badgeText.includes('PhD'))) {
+      match = true;
+    } else if (badgeText.toLowerCase().includes(category.toLowerCase())) {
+      match = true; // Match custom filters!
+    }
 
     if (match) {
       rowEl.style.display = '';
@@ -672,17 +713,66 @@ function showToastNotification(message: string) {
   setTimeout(() => toast.remove(), 2500);
 }
 
+// Helper to locate active visible Gmail toolbar container across page navigation
+function findVisibleTargetBar(): HTMLElement | null {
+  // 1. Primary: Gmail's main top toolbar container
+  const topToolbar = document.querySelector<HTMLElement>('div[gh="tm"]');
+  if (topToolbar && (topToolbar.offsetParent !== null || topToolbar.offsetHeight > 0)) {
+    return topToolbar;
+  }
+
+  // 2. Visible div.G-atb in the top portion of viewport
+  const atbList = document.querySelectorAll<HTMLElement>('div.G-atb');
+  for (let i = 0; i < atbList.length; i++) {
+    const el = atbList[i];
+    if (el.offsetParent !== null && !el.classList.contains('G-atb-b')) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= 0 && rect.top < window.innerHeight * 0.45) {
+        return el;
+      }
+    }
+  }
+
+  // 3. Thread list container preceding sibling
+  const threadList = document.querySelector<HTMLElement>('div[gh="tl"]');
+  if (threadList && threadList.parentElement) {
+    if (threadList.previousElementSibling) {
+      return threadList.previousElementSibling as HTMLElement;
+    }
+    return threadList.parentElement;
+  }
+
+  // 4. Fallback selectors
+  const aeF = document.querySelector<HTMLElement>('div.aeF');
+  if (aeF && (aeF.offsetParent !== null || aeF.offsetHeight > 0)) {
+    return aeF;
+  }
+
+  return topToolbar || (atbList.length > 0 ? atbList[0] : null);
+}
+
+function ensureBarPosition(bar: HTMLElement, targetBar: HTMLElement) {
+  const parent = targetBar.parentElement;
+  if (!parent) return;
+
+  if (targetBar.nextSibling) {
+    if (targetBar.nextSibling !== bar) {
+      parent.insertBefore(bar, targetBar.nextSibling);
+    }
+  } else {
+    if (bar.parentElement !== parent || parent.lastElementChild !== bar) {
+      parent.appendChild(bar);
+    }
+  }
+}
+
 // =========================================================================
 // 1. INLINE MATERIAL 3 TOOLBAR CHIPS (Pixel-Perfect, Zero-Clipping, Native Google Design)
 // =========================================================================
 function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   if (uiMode !== 'blended') return;
 
-  const targetBar =
-    document.querySelector('div[gh="tm"]') ||
-    document.querySelector('div.G-atb') ||
-    document.querySelector('div.aeF');
-
+  const targetBar = findVisibleTargetBar();
   if (!targetBar) return;
 
   // Inject or update stylesheet for pristine, non-clipping M3 styling
@@ -762,30 +852,34 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   });
 
   const isDark = isGmailDark();
+  const barStyle = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 16px;
+    min-height: 44px;
+    box-sizing: border-box;
+    background: ${isDark ? '#141517' : '#ffffff'};
+    border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e0e2ec'};
+    font-family: Roboto, "Google Sans", "Google Sans Text", -apple-system, sans-serif;
+    font-size: 12px;
+    z-index: 10;
+  `;
+
   let bar = document.getElementById('acadmail-native-chip-bar');
 
-  if (!bar) {
+  if (!bar || !document.body.contains(bar)) {
+    if (bar && bar.parentElement) {
+      bar.remove();
+    }
     bar = document.createElement('div');
     bar.id = 'acadmail-native-chip-bar';
-    bar.setAttribute(
-      'style',
-      `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 6px 16px;
-      min-height: 44px;
-      box-sizing: border-box;
-      background: ${isDark ? '#141517' : '#ffffff'};
-      border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e0e2ec'};
-      font-family: Roboto, "Google Sans", "Google Sans Text", -apple-system, sans-serif;
-      font-size: 12px;
-      z-index: 10;
-    `
-    );
-
-    targetBar.parentElement?.insertBefore(bar, targetBar.nextSibling || targetBar);
+    bar.setAttribute('style', barStyle);
+    ensureBarPosition(bar, targetBar);
+  } else {
+    bar.setAttribute('style', barStyle);
+    ensureBarPosition(bar, targetBar);
   }
 
   const getPillStyle = (cat: CategoryType | 'ALL') => {
@@ -1837,19 +1931,111 @@ if (document.readyState === 'loading') {
   setTimeout(syncGmailTheme, 1200);
 }
 
-// Watch DOM mutations & URL changes
-let lastUrl = location.href;
-new MutationObserver(() => {
-  const url = location.href;
-  if (url !== lastUrl) {
-    lastUrl = url;
-    setTimeout(() => {
-      safeSendMessage({ type: 'EMAIL_CHANGED' });
-      syncGmailTheme();
-      scanVisibleInbox();
-      checkAndInjectEmailBrief();
-      injectSideRailIcon();
-    }, 400);
+// =========================================================================
+// ACTIVE PAGE DETECTION & LIFECYCLE WATCHERS (Pagination, Tabs, DOM mutations)
+// =========================================================================
+
+function getPaginationSignature(): string {
+  const dj = document.querySelector('span.Dj, .ar5 span');
+  if (dj && dj.textContent) {
+    return dj.textContent.trim();
   }
+  const ar5 = document.querySelector('.ar5');
+  if (ar5 && ar5.textContent) {
+    return ar5.textContent.trim();
+  }
+  return '';
+}
+
+function hasUnbadgedRows(): boolean {
+  const rows = document.querySelectorAll('tr.zA');
+  if (rows.length === 0) return false;
+  for (let i = 0; i < rows.length; i++) {
+    if (!rows[i].querySelector('.acadmail-row-badge')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isToolbarMissing(): boolean {
+  if (uiMode !== 'blended') return false;
+  const rows = document.querySelectorAll('tr.zA');
+  if (rows.length === 0) return false;
+
+  const bar = document.getElementById('acadmail-native-chip-bar');
+  if (!bar || !document.body.contains(bar)) return true;
+
+  const targetBar = findVisibleTargetBar();
+  if (targetBar && (bar.parentElement !== targetBar.parentElement || targetBar.nextSibling !== bar)) {
+    return true;
+  }
+
+  return false;
+}
+
+let lastUrl = location.href;
+let lastPaginationText = '';
+let scanDebounceTimer: any = null;
+
+function requestInboxScan(delay = 120) {
+  if (scanDebounceTimer) clearTimeout(scanDebounceTimer);
+  scanDebounceTimer = setTimeout(() => {
+    scanVisibleInbox();
+    checkAndInjectEmailBrief();
+    injectSideRailIcon();
+  }, delay);
+}
+
+// Watch DOM mutations, URL changes, and pagination transitions (1-50 -> 51-100)
+new MutationObserver(() => {
+  const currentUrl = location.href;
+  if (currentUrl !== lastUrl) {
+    lastUrl = currentUrl;
+    safeSendMessage({ type: 'EMAIL_CHANGED' });
+    syncGmailTheme();
+    requestInboxScan(250);
+  }
+
+  const paginationText = getPaginationSignature();
+  if (paginationText && paginationText !== lastPaginationText) {
+    lastPaginationText = paginationText;
+    requestInboxScan(100);
+  }
+
+  if (hasUnbadgedRows() || isToolbarMissing()) {
+    requestInboxScan(100);
+  }
+
   injectComposePolisher();
 }).observe(document, { subtree: true, childList: true });
+
+// Listen for browser navigation & hash changes
+window.addEventListener('popstate', () => {
+  requestInboxScan(200);
+  setTimeout(requestInboxScan, 600);
+});
+window.addEventListener('hashchange', () => {
+  requestInboxScan(200);
+  setTimeout(requestInboxScan, 600);
+});
+
+// Keyboard navigation in Gmail (j/k/n/p/u/x)
+document.addEventListener('keydown', (e) => {
+  if (['j', 'k', 'n', 'p', 'o', 'u', 'x'].includes(e.key.toLowerCase())) {
+    setTimeout(() => {
+      if (hasUnbadgedRows() || isToolbarMissing()) {
+        scanVisibleInbox();
+      }
+    }, 200);
+  }
+});
+
+// Periodic keep-alive guard: ensures toolbar NEVER disappears across any page
+setInterval(() => {
+  if (uiMode === 'blended' && document.querySelectorAll('tr.zA').length > 0) {
+    if (isToolbarMissing() || hasUnbadgedRows()) {
+      scanVisibleInbox();
+    }
+  }
+}, 1000);
