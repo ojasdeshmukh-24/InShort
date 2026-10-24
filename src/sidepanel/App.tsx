@@ -110,6 +110,53 @@ export default function App() {
   const [newFilterKeywords, setNewFilterKeywords] = useState('');
   const [newFilterColor, setNewFilterColor] = useState('#8b5cf6');
 
+  // First-Time Setup & Preferential Labels State
+  const [hasCompletedSetup, setHasCompletedSetup] = useState<boolean>(true);
+  const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
+  const [preferredLabels, setPreferredLabels] = useState<string[]>([
+    'Academics',
+    'Competitions & Tournaments',
+  ]);
+
+  const AVAILABLE_PRIORITY_CATEGORIES = [
+    {
+      id: 'Academics',
+      label: 'Academics',
+      desc: 'Coursework, assignments & exams',
+      icon: BookOpen,
+    },
+    {
+      id: 'Competitions & Tournaments',
+      label: 'Competitions',
+      desc: 'Hackathons, sports & contests',
+      icon: Trophy,
+    },
+    {
+      id: 'Class Rescheduling',
+      label: 'Rescheduling',
+      desc: 'Timing changes & cancellations',
+      icon: Clock,
+    },
+    {
+      id: 'Workshops',
+      label: 'Workshops & Talks',
+      desc: 'Bootcamps, seminars & guest talks',
+      icon: Zap,
+    },
+    {
+      id: 'Placements & Internships',
+      label: 'Placements',
+      desc: 'Interviews, shortlists & TPO notices',
+      icon: Briefcase,
+    },
+    {
+      id: 'Hostel & Campus Mess',
+      label: 'Hostel & Mess',
+      desc: 'Hall of residence & maintenance',
+      icon: Layers,
+    },
+  ];
+
   // Aggregated Deadlines State
   const [deadlines, setDeadlines] = useState<AggregatedDeadline[]>([]);
   const [deadlineFilter, setDeadlineFilter] = useState<'all' | 'urgent' | 'academics' | 'competitions'>('all');
@@ -190,7 +237,14 @@ export default function App() {
       if (settings.labelOverrides) {
         setLabelOverrides(settings.labelOverrides);
       }
-      if (!settings.apiKey && !settings.groqApiKey) {
+      if (Array.isArray(settings.preferredLabels) && settings.preferredLabels.length > 0) {
+        setPreferredLabels(settings.preferredLabels);
+      }
+      const completed = settings.hasCompletedSetup ?? false;
+      setHasCompletedSetup(completed);
+      if (!completed) {
+        setShowSetupModal(true);
+      } else if (!settings.apiKey && !settings.groqApiKey) {
         setShowSettings(true);
       }
     });
@@ -706,6 +760,38 @@ export default function App() {
     }
   };
 
+  const togglePreferredLabel = (catId: string) => {
+    setPreferredLabels((prev) => {
+      if (prev.includes(catId)) {
+        if (prev.length <= 1) return prev; // Keep at least one priority
+        return prev.filter((id) => id !== catId);
+      }
+      return [...prev, catId];
+    });
+  };
+
+  const handleSaveFirstTimeSetup = async (selected: string[]) => {
+    const finalSelected = selected.length > 0 ? selected : ['Academics', 'Class Rescheduling'];
+    setPreferredLabels(finalSelected);
+    setHasCompletedSetup(true);
+    setShowSetupModal(false);
+
+    await saveSettings({
+      hasCompletedSetup: true,
+      preferredLabels: finalSelected,
+    });
+
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'UPDATE_SETTINGS',
+        preferredLabels: finalSelected,
+      }).catch(() => {});
+    }
+
+    setTimeout(scanInbox, 300);
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveSettings({
@@ -714,12 +800,23 @@ export default function App() {
       inPageIntegration: uiMode !== 'off',
       uiMode,
       customFilters,
+      preferredLabels,
     });
     setShowSettings(false);
     setError(null);
+
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'UPDATE_SETTINGS',
+        preferredLabels,
+      }).catch(() => {});
+    }
+
     if (email) {
       triggerAnalysis(email, apiKey.trim(), groqKey.trim());
     }
+    setTimeout(scanInbox, 300);
   };
 
   const toggleActionItem = (id: string) => {
@@ -1167,6 +1264,51 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Priority Labels (Preferential Routing) */}
+                <div className="pt-2 border-t border-[#f1f3f4] dark:border-[#2c2d30] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
+                      Priority Labels (Preferential Routing)
+                    </div>
+                    <span className="text-xs text-[#5f6368] dark:text-[#8e918f] font-medium">
+                      {preferredLabels.length} selected
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#5f6368] dark:text-[#8e918f] leading-tight">
+                    AcadMail prioritizes routing incoming emails into these chosen buckets even when keyword probability is low.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-1">
+                    {AVAILABLE_PRIORITY_CATEGORIES.map((cat) => {
+                      const isSelected = preferredLabels.includes(cat.id);
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => togglePreferredLabel(cat.id)}
+                          className={`p-2 rounded-lg border text-left transition flex items-start gap-2 cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#c2e7ff]/30 dark:bg-[#004a77]/30 border-[#7fcfff] dark:border-[#005c93] text-[#001d35] dark:text-[#c2e7ff]'
+                              : 'bg-white dark:bg-[#1e1f20] border-[#dadce0] dark:border-[#3c4043] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f8fafd] dark:hover:bg-[#28292c]'
+                          }`}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            {isSelected ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
+                            ) : (
+                              <Circle className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold truncate">{cat.label}</div>
+                            <div className="text-[10px] opacity-70 truncate">{cat.desc}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="flex justify-end pt-1">
                   <button
                     type="submit"
@@ -1176,6 +1318,94 @@ export default function App() {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* FIRST-TIME SETUP MODAL: USER LABELING PREFERENCES */}
+          {/* ========================================================================= */}
+          {showSetupModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+              <div className="w-full max-w-sm bg-white dark:bg-[#1e1f20] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl shadow-xl p-5 space-y-4">
+                <div className="text-center space-y-1.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#c2e7ff] dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] flex items-center justify-center mx-auto mb-1 shadow-2xs">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-[17px] text-[#1f1f1f] dark:text-[#e3e3e3] font-['Batangas',serif]">
+                    Welcome to AcadMail
+                  </h3>
+                  <p className="text-xs text-[#5f6368] dark:text-[#8e918f] leading-relaxed">
+                    Choose your high-priority categories. AcadMail prioritizes organizing emails into these labels even with subtle keywords.
+                  </p>
+                </div>
+
+                {/* Priority Label Cards */}
+                <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+                  {AVAILABLE_PRIORITY_CATEGORIES.map((cat) => {
+                    const isSelected = preferredLabels.includes(cat.id);
+                    const Icon = cat.icon;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => togglePreferredLabel(cat.id)}
+                        className={`w-full p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#c2e7ff]/35 dark:bg-[#004a77]/35 border-[#7fcfff] dark:border-[#005c93] text-[#001d35] dark:text-[#c2e7ff]'
+                            : 'bg-white dark:bg-[#1e1f20] border-[#dadce0] dark:border-[#3c4043] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f8fafd] dark:hover:bg-[#28292c]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`p-1.5 rounded-lg shrink-0 ${
+                              isSelected
+                                ? 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff]'
+                                : 'bg-[#f1f3f4] dark:bg-[#282a2d] text-[#5f6368] dark:text-[#8e918f]'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold truncate">{cat.label}</div>
+                            <div className="text-[10.5px] opacity-70 truncate">{cat.desc}</div>
+                          </div>
+                        </div>
+                        <div className="ml-2 shrink-0">
+                          {isSelected ? (
+                            <CheckCircle2 className="w-4 h-4 text-[#0b57d0] dark:text-[#a8c7fa]" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-[#dadce0] dark:text-[#444746]" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-2 border-t border-[#f1f3f4] dark:border-[#282a2d] space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveFirstTimeSetup(preferredLabels)}
+                    className="w-full py-2.5 px-4 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] font-semibold rounded-xl text-xs transition shadow-xs cursor-pointer text-center"
+                  >
+                    Save Preferences & Start ({preferredLabels.length} selected)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSaveFirstTimeSetup([
+                        'Academics',
+                        'Competitions & Tournaments',
+                        'Class Rescheduling',
+                      ])
+                    }
+                    className="w-full py-1 text-xs text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-white font-medium transition cursor-pointer text-center"
+                  >
+                    Use Smart Defaults
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

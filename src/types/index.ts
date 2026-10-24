@@ -117,6 +117,8 @@ export interface UserSettings {
   academicLevel?: 'undergrad' | 'grad' | 'researcher' | 'faculty';
   inPageIntegration?: boolean; // When true, injects in-page elements into Gmail
   uiMode?: UiIntegrationMode; // 'blended' (Native Material 3), 'floating' (Pill toolbar), 'off' (Side Panel only)
+  hasCompletedSetup?: boolean; // First-time user preference setup flag
+  preferredLabels?: string[]; // High-priority preferential labels selected by the user
   customFilters?: CustomFilter[];
   labelOverrides?: Record<string, string>;
   customLabels: {

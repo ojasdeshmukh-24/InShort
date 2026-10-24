@@ -8,6 +8,8 @@ const DEFAULT_SETTINGS: UserSettings = {
   academicLevel: 'undergrad',
   inPageIntegration: true,
   uiMode: 'blended',
+  hasCompletedSetup: false,
+  preferredLabels: ['Academics', 'Competitions & Tournaments'],
   customFilters: [
     {
       id: 'filter-placements',

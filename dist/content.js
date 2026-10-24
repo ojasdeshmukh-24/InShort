@@ -1,4 +1,4 @@
-console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filters & Relabeling active.");let I="ALL",_=[],w="blended",L=!1,S=[{id:"filter-placements",name:"Placements & Internships",color:"#8b5cf6",keywords:["placement","tpo","internship","interview","shortlist","offer","ctc","pre-placement"]},{id:"filter-hostel",name:"Hostel & Campus Mess",color:"#06b6d4",keywords:["hostel","mess","warden","room","maintenance","electricity","water","hall of residence"]}],$={};function A(n){var t;try{typeof chrome<"u"&&((t=chrome.runtime)!=null&&t.id)&&chrome.runtime.sendMessage(n).catch(()=>{})}catch{}}function E(){try{const n=window.getComputedStyle(document.body).backgroundColor;if(n){const t=n.match(/\d+/g);if(t&&t.length>=3)return(parseInt(t[0])*299+parseInt(t[1])*587+parseInt(t[2])*114)/1e3<128}}catch{}return window.matchMedia("(prefers-color-scheme: dark)").matches}function D(){var o;const t=E()?"dark":"light";typeof chrome<"u"&&((o=chrome.storage)!=null&&o.local)&&chrome.storage.local.set({acadmail_gmail_theme:t}),A({type:"GMAIL_THEME_DETECTED",theme:t})}function Z(){var n;D(),typeof chrome<"u"&&((n=chrome.storage)!=null&&n.local)&&chrome.storage.local.get(["acadmail_settings"],t=>{t.acadmail_settings&&(t.acadmail_settings.uiMode?w=t.acadmail_settings.uiMode:t.acadmail_settings.inPageIntegration===!1?w="off":w="blended",Array.isArray(t.acadmail_settings.customFilters)&&(S=t.acadmail_settings.customFilters),t.acadmail_settings.labelOverrides&&($=t.acadmail_settings.labelOverrides)),N()})}function N(){var n,t,o,a;if((n=document.getElementById("acadmail-native-chip-bar"))==null||n.remove(),(t=document.getElementById("acadmail-inbox-filter-bar"))==null||t.remove(),(o=document.getElementById("acadmail-email-brief-card"))==null||o.remove(),(a=document.getElementById("acadmail-siderail-btn"))==null||a.remove(),w==="off"){R("ALL");return}C(),T(),G()}function J(n,t,o,a){var r;$[n]=a,t&&($[t]=a);const e=`${t}::${o}`.trim();e&&($[e]=a),typeof chrome<"u"&&((r=chrome.storage)!=null&&r.local)&&chrome.storage.local.get(["acadmail_settings"],s=>{const p=s.acadmail_settings||{},l=p.labelOverrides||{};l[n]=a,t&&(l[t]=a),e&&(l[e]=a),chrome.storage.local.set({acadmail_settings:{...p,labelOverrides:l}})}),C(),T(),A({type:"EMAIL_CHANGED"}),V(`Email re-labeled as "${a}"`)}function ee(n,t){var e;if(!n.trim())return;const o=t.split(",").map(r=>r.trim().toLowerCase()).filter(Boolean),a={id:`filter-${Date.now()}`,name:n.trim(),color:"#8b5cf6",keywords:o.length>0?o:[n.trim().toLowerCase()]};S.push(a),typeof chrome<"u"&&((e=chrome.storage)!=null&&e.local)&&chrome.storage.local.get(["acadmail_settings"],r=>{const s=r.acadmail_settings||{},p=s.customFilters||[];chrome.storage.local.set({acadmail_settings:{...s,customFilters:[...p,a]}})}),C(),A({type:"UPDATE_CUSTOM_FILTERS"}),V(`Created filter "${a.name}"`)}function K(n,t,o,a){const e=`${n} ${t} ${o}`.toLowerCase(),r=n.match(/\b([A-Z]{2,4}\s?[-_]?\s?\d{3,4}[A-Z]?)\b/i),s=r?r[1].toUpperCase():void 0;if(a&&$[a])return{category:$[a],courseCode:s};if($[n])return{category:$[n],courseCode:s};const p=`${n}::${t}`.trim();if($[p])return{category:$[p],courseCode:s};if(S&&S.length>0){for(const l of S)if(l.keywords&&l.keywords.some(i=>i.trim()&&e.includes(i.trim().toLowerCase())))return{category:l.name,courseCode:s}}return e.includes("viva")||e.includes("viva-voce")||e.includes("viva voce")||e.includes("oral defense")||e.includes("thesis defense")||e.includes("phd defense")||e.includes("ph.d. defense")||e.includes("synopsis presentation")||e.includes("synopsis submission")||e.includes("ph.d. viva")||e.includes("phd viva")||e.includes("doctoral defense")?{category:"General",courseCode:s,isPhd:!0}:e.includes("reschedule")||e.includes("rescheduled")||e.includes("postpone")||e.includes("postponed")||e.includes("cancelled")||e.includes("class canceled")||e.includes("venue change")||e.includes("room change")||e.includes("lecture timing")||e.includes("no class today")||e.includes("extra class")?{category:"Class Rescheduling",courseCode:s}:e.includes("competition")||e.includes("tournament")||e.includes("contest")||e.includes("hackathon")||e.includes("sociothon")||e.includes("devfolio")||e.includes("trials")||e.includes("open trials")||e.includes("inter-iit")||e.includes("inter iit")||e.includes("inter-hostel")||e.includes("inter hostel")||e.includes("inter-college")||e.includes("championship")||e.includes("trophy")||e.includes("athletics")||e.includes("sports")||e.includes("cricket")||e.includes("football")||e.includes("badminton")||e.includes("volleyball")||e.includes("table tennis")||e.includes("chess")||e.includes("squash")||e.includes("esports")||e.includes("case competition")||e.includes("case comp")||e.includes("quiz competition")||e.includes("challenge")||e.includes("cash prize")||e.includes("prize pool")||e.includes("mushaira")||e.includes("ideathon")?{category:"Competitions & Tournaments",courseCode:s}:e.includes("intro talk")||e.includes("intro talks")||e.includes("opening talk")||e.includes("introductory talk")||e.includes("orientation talk")||e.includes("info session")||e.includes("tech talk")||e.includes("talk by")||e.includes("distinguished lecture")||e.includes("guest lecture")||e.includes("workshop")||e.includes("webinar")||e.includes("seminar")||e.includes("conclave")||e.includes("symposium")||e.includes("bootcamp")||e.includes("masterclass")||e.includes("hands-on")||e.includes("enactus")||e.includes("sdslabs")||e.includes("pragati")||e.includes("hr conclave")?{category:"Workshops",courseCode:s}:s||e.includes("assignment")||e.includes("homework")||e.includes("syllabus")||e.includes("quiz")||e.includes("midterm")||e.includes("endterm")||e.includes("exam")||e.includes("grade")||e.includes("grading")||e.includes("lab manual")||e.includes("tutorial")||e.includes("office hours")||e.includes("canvas")||e.includes("moodle")||e.includes("classroom")||e.includes("prof.")||e.includes("professor")||e.includes("teaching day")||e.includes("lecture")||e.includes("faculty")||e.includes("ug-i")||e.includes("ug-ii")||e.includes("pg-i")||e.includes("project evaluation")?{category:"Academics",courseCode:s}:{category:"General",courseCode:s}}document.addEventListener("click",n=>{n.target.closest("tr.zA")&&(setTimeout(()=>{A({type:"EMAIL_CHANGED"}),T()},350),setTimeout(()=>{A({type:"EMAIL_CHANGED"}),T()},800))},!0);function C(){const n=document.querySelectorAll("tr.zA"),t=[];return n.forEach((o,a)=>{var x,h,M,q;const e=o,r=e.querySelector(".bqe, .bog, span[data-thread-id]"),s=((x=r==null?void 0:r.textContent)==null?void 0:x.trim())||"(No Subject)",p=e.querySelector(".bA4 span, .yP, .zF"),l=((h=p==null?void 0:p.textContent)==null?void 0:h.trim())||"Unknown",i=e.querySelector(".y2"),u=((M=i==null?void 0:i.textContent)==null?void 0:M.trim())||"",c=e.querySelector(".xW span"),m=((q=c==null?void 0:c.textContent)==null?void 0:q.trim())||"Recent",f=!e.classList.contains("zE"),g=`${s}::${l}`.trim(),{category:b,courseCode:k,isPhd:v}=K(s,l,u,g),d={id:`row-${a}-${s.slice(0,15).replace(/[^a-zA-Z0-9]/g,"_")}`,index:a,subject:s,sender:l,snippet:u,date:m,category:b,courseCode:k,isRead:f};t.push(d),te(e,b,k,v,s,l)}),_=t,w==="blended"&&t.length>0&&X(t),t}function te(n,t,o,a,e,r){const s=n.querySelector(".acadmail-row-badge");s&&s.remove();const p=n.querySelector(".y6, .bog");if(!p)return;const l=E(),i=document.createElement("span");i.className="acadmail-row-badge";let u=l?"background: rgba(56, 139, 253, 0.15); color: #79c0ff; border: 1px solid rgba(56, 139, 253, 0.3);":"background: #edf5fd; color: #1a73e8; border: 1px solid #d2e3fc;",c=o||"Acads";t==="Competitions & Tournaments"?(u=l?"background: rgba(210, 153, 34, 0.15); color: #e3b341; border: 1px solid rgba(210, 153, 34, 0.3);":"background: #fef7e0; color: #b06000; border: 1px solid #fce8b2;",c="Contest"):t==="Workshops"?(u=l?"background: rgba(46, 160, 67, 0.15); color: #7ee787; border: 1px solid rgba(46, 160, 67, 0.3);":"background: #e6f4ea; color: #137333; border: 1px solid #ceead6;",c="Workshop"):t==="Class Rescheduling"?(u=l?"background: rgba(248, 81, 73, 0.15); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.3);":"background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;",c="Rescheduled"):a?(u=l?"background: rgba(142, 145, 143, 0.15); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.3);":"background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0;",c="PhD / Viva"):t==="General"?(u=l?"background: rgba(142, 145, 143, 0.12); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.2);":"background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0;",c="General"):(u=l?"background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);":"background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;",c=t),i.setAttribute("style",`
+console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filters & Relabeling active.");let R="ALL",j=[],$="blended",z=!1,S=[{id:"filter-placements",name:"Placements & Internships",color:"#8b5cf6",keywords:["placement","tpo","internship","interview","shortlist","offer","ctc","pre-placement"]},{id:"filter-hostel",name:"Hostel & Campus Mess",color:"#06b6d4",keywords:["hostel","mess","warden","room","maintenance","electricity","water","hall of residence"]}],A={},G=["Academics","Class Rescheduling"];function L(t){var e;try{typeof chrome<"u"&&((e=chrome.runtime)!=null&&e.id)&&chrome.runtime.sendMessage(t).catch(()=>{})}catch{}}function q(){try{const t=window.getComputedStyle(document.body).backgroundColor;if(t){const e=t.match(/\d+/g);if(e&&e.length>=3)return(parseInt(e[0])*299+parseInt(e[1])*587+parseInt(e[2])*114)/1e3<128}}catch{}return window.matchMedia("(prefers-color-scheme: dark)").matches}function P(){var o;const e=q()?"dark":"light";typeof chrome<"u"&&((o=chrome.storage)!=null&&o.local)&&chrome.storage.local.set({acadmail_gmail_theme:e}),L({type:"GMAIL_THEME_DETECTED",theme:e})}function O(){var t;P(),typeof chrome<"u"&&((t=chrome.storage)!=null&&t.local)&&chrome.storage.local.get(["acadmail_settings"],e=>{e.acadmail_settings&&(e.acadmail_settings.uiMode?$=e.acadmail_settings.uiMode:e.acadmail_settings.inPageIntegration===!1?$="off":$="blended",Array.isArray(e.acadmail_settings.customFilters)&&(S=e.acadmail_settings.customFilters),e.acadmail_settings.labelOverrides&&(A=e.acadmail_settings.labelOverrides),Array.isArray(e.acadmail_settings.preferredLabels)&&(G=e.acadmail_settings.preferredLabels)),U()})}function U(){var t,e,o,i;if((t=document.getElementById("acadmail-native-chip-bar"))==null||t.remove(),(e=document.getElementById("acadmail-inbox-filter-bar"))==null||e.remove(),(o=document.getElementById("acadmail-email-brief-card"))==null||o.remove(),(i=document.getElementById("acadmail-siderail-btn"))==null||i.remove(),$==="off"){_("ALL");return}T(),M(),B()}function Y(t,e,o,i){var a;A[t]=i,e&&(A[e]=i);const s=`${e}::${o}`.trim();s&&(A[s]=i),typeof chrome<"u"&&((a=chrome.storage)!=null&&a.local)&&chrome.storage.local.get(["acadmail_settings"],r=>{const l=r.acadmail_settings||{},d=l.labelOverrides||{};d[t]=i,e&&(d[e]=i),s&&(d[s]=i),chrome.storage.local.set({acadmail_settings:{...l,labelOverrides:d}})}),T(),M(),L({type:"EMAIL_CHANGED"}),Q(`Email re-labeled as "${i}"`)}function oe(t,e){var s;if(!t.trim())return;const o=e.split(",").map(a=>a.trim().toLowerCase()).filter(Boolean),i={id:`filter-${Date.now()}`,name:t.trim(),color:"#8b5cf6",keywords:o.length>0?o:[t.trim().toLowerCase()]};S.push(i),typeof chrome<"u"&&((s=chrome.storage)!=null&&s.local)&&chrome.storage.local.get(["acadmail_settings"],a=>{const r=a.acadmail_settings||{},l=r.customFilters||[];chrome.storage.local.set({acadmail_settings:{...r,customFilters:[...l,i]}})}),T(),L({type:"UPDATE_CUSTOM_FILTERS"}),Q(`Created filter "${i.name}"`)}function V(t,e,o,i){const s=(t||"").toLowerCase(),a=(e||"").toLowerCase(),r=(o||"").toLowerCase(),l=`${s} ${a} ${r}`,d=t.match(/\b([A-Z]{2,4}\s?[-_]?\s?\d{3,4}[A-Z]?)\b/i),n=d?d[1].toUpperCase():void 0;if(i&&A[i])return{category:A[i],courseCode:n};if(A[t])return{category:A[t],courseCode:n};const u=`${t}::${e}`.trim();if(A[u])return{category:A[u],courseCode:n};if(l.includes("viva")||l.includes("viva-voce")||l.includes("viva voce")||l.includes("oral defense")||l.includes("thesis defense")||l.includes("phd defense")||l.includes("ph.d. defense")||l.includes("synopsis presentation")||l.includes("synopsis submission")||l.includes("ph.d. viva")||l.includes("phd viva")||l.includes("doctoral defense")||l.includes("comprehensive exam presentation"))return{category:"General",courseCode:n,isPhd:!0};const f={"Class Rescheduling":0,"Competitions & Tournaments":0,Workshops:0,Academics:n?6:0,General:1};S&&S.length>0&&S.forEach(g=>{f[g.name]=0});const m=(g,k,E,I=[])=>{let C=0;for(const y of k)s.includes(y)?C+=6:r.includes(y)&&(C+=3);for(const y of E)s.includes(y)?C+=3.5:r.includes(y)&&(C+=1.5);for(const y of I)a.includes(y)&&(C+=2.5);f[g]!==void 0&&(f[g]+=C)};m("Class Rescheduling",["reschedule","rescheduled","class cancelled","class canceled","lecture cancelled","no class today","no class","extra class","room change","venue change","timing change","rescheduled lecture","swapped class"],["cancelled","canceled","postpone","postponed","lecture timing","timing","schedule change"],["acad","timetable"]),m("Competitions & Tournaments",["competition","tournament","hackathon","sociothon","ideathon","devfolio","open trials","inter-iit","inter iit","inter-hostel","inter-college","championship","prize pool","cash prize","case competition","quiz competition","coding contest","athletics"],["contest","trials","sports","cricket","football","badminton","volleyball","table tennis","chess","squash","esports","case comp","challenge","mushaira","trophy"],["sports","gymkhana","cultural","council","club"]),m("Workshops",["workshop","bootcamp","masterclass","hands-on session","distinguished lecture","guest lecture","orientation talk","intro talk","intro talks","introductory talk","conclave","symposium","info session","tech talk"],["webinar","seminar","talk by","opening talk","hands-on","enactus","sdslabs","pragati","hr conclave","panel discussion"],["seminar","chapter","society","ieee","acm"]),m("Academics",["assignment","homework","syllabus","midterm","endterm","quiz","exam","examination","lab manual","grading","grade submission","project evaluation","teaching day"],["canvas","moodle","classroom","prof.","professor","lecture","faculty","tutorial","office hours","ug-i","ug-ii","pg-i","coursework","submission"],["acad","faculty","professor","instructor","doaa","dean"]),S&&S.length>0&&S.forEach(g=>{g.keywords&&g.keywords.length>0&&m(g.name,g.keywords,[g.name.toLowerCase()],[])});const b=G&&G.length>0?G:["Academics","Class Rescheduling"],h={},v=Object.keys(f);v.forEach(g=>{const k=f[g];b.includes(g)&&k>0?h[g]=k*4.5+4:h[g]=k});let w="General",c=-1;return v.forEach(g=>{h[g]>c&&(c=h[g],w=g)}),!v.some(g=>g!=="General"&&f[g]>0)&&!n&&(w="General"),{category:w,courseCode:n,isPhd:!1}}document.addEventListener("click",t=>{t.target.closest("tr.zA")&&(setTimeout(()=>{L({type:"EMAIL_CHANGED"}),M()},350),setTimeout(()=>{L({type:"EMAIL_CHANGED"}),M()},800))},!0);function T(){const t=document.querySelectorAll("tr.zA"),e=[];return t.forEach((o,i)=>{var x,g,k,E;const s=o,a=s.querySelector(".bqe, .bog, span[data-thread-id]"),r=((x=a==null?void 0:a.textContent)==null?void 0:x.trim())||"(No Subject)",l=s.querySelector(".bA4 span, .yP, .zF"),d=((g=l==null?void 0:l.textContent)==null?void 0:g.trim())||"Unknown",n=s.querySelector(".y2"),u=((k=n==null?void 0:n.textContent)==null?void 0:k.trim())||"",p=s.querySelector(".xW span"),f=((E=p==null?void 0:p.textContent)==null?void 0:E.trim())||"Recent",m=!s.classList.contains("zE"),b=`${r}::${d}`.trim(),{category:h,courseCode:v,isPhd:w}=V(r,d,u,b),c={id:`row-${i}-${r.slice(0,15).replace(/[^a-zA-Z0-9]/g,"_")}`,index:i,subject:r,sender:d,snippet:u,date:f,category:h,courseCode:v,isRead:m};e.push(c),ne(s,h,v,w,r,d)}),j=e,$==="blended"&&e.length>0&&ee(e),e}function ne(t,e,o,i,s,a){const r=t.querySelector(".acadmail-row-badge");r&&r.remove();const l=t.querySelector(".y6, .bog");if(!l)return;const d=q(),n=document.createElement("span");n.className="acadmail-row-badge";let u=d?"background: rgba(56, 139, 253, 0.15); color: #79c0ff; border: 1px solid rgba(56, 139, 253, 0.3);":"background: #edf5fd; color: #1a73e8; border: 1px solid #d2e3fc;",p=o||"Acads";e==="Competitions & Tournaments"?(u=d?"background: rgba(210, 153, 34, 0.15); color: #e3b341; border: 1px solid rgba(210, 153, 34, 0.3);":"background: #fef7e0; color: #b06000; border: 1px solid #fce8b2;",p="Contest"):e==="Workshops"?(u=d?"background: rgba(46, 160, 67, 0.15); color: #7ee787; border: 1px solid rgba(46, 160, 67, 0.3);":"background: #e6f4ea; color: #137333; border: 1px solid #ceead6;",p="Workshop"):e==="Class Rescheduling"?(u=d?"background: rgba(248, 81, 73, 0.15); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.3);":"background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf;",p="Rescheduled"):i?(u=d?"background: rgba(142, 145, 143, 0.15); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.3);":"background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0;",p="PhD / Viva"):e==="General"?(u=d?"background: rgba(142, 145, 143, 0.12); color: #c4c7c5; border: 1px solid rgba(142, 145, 143, 0.2);":"background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0;",p="General"):(u=d?"background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);":"background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;",p=e),n.setAttribute("style",`
     display: inline-flex;
     align-items: center;
     gap: 3px;
@@ -12,9 +12,9 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
     vertical-align: middle;
     cursor: pointer;
     ${u}
-  `),i.innerText=c,i.title=o?`Filter Gmail for ${o} (Right-click to change label)`:`Category: ${t} (Click to change)`,i.onclick=m=>{m.stopPropagation(),o?ne(o):B(i,e,r,t)},i.oncontextmenu=m=>{m.preventDefault(),m.stopPropagation(),B(i,e,r,t)},p.prepend(i)}function ne(n){const t=document.querySelector('input[name="q"], input[aria-label*="Search"]');if(t){t.value=n,t.dispatchEvent(new Event("input",{bubbles:!0}));const o=t.closest("form");o?o.dispatchEvent(new Event("submit",{bubbles:!0,cancelable:!0})):t.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",keyCode:13,bubbles:!0}))}}function R(n){I=n,document.querySelectorAll("tr.zA").forEach(o=>{const a=o;if(n==="ALL"){a.style.display="";return}const e=a.querySelector(".acadmail-row-badge"),r=(e==null?void 0:e.textContent)||"";let s=!1;(n==="Academics"&&(r.includes("🎓")||r.includes("Acads"))||n==="Competitions & Tournaments"&&(r.includes("🏆")||r.includes("Contest"))||n==="Workshops"&&(r.includes("🛠️")||r.includes("Workshop"))||n==="Class Rescheduling"&&(r.includes("⏰")||r.includes("Rescheduled"))||n==="General"&&(r.includes("📢")||r.includes("General")||r.includes("PhD"))||r.toLowerCase().includes(n.toLowerCase()))&&(s=!0),s?a.style.display="":a.style.display="none"}),ie()}function Y(n,t,o){const a="https://calendar.google.com/calendar/render?action=TEMPLATE";let e="";if(o){const s=new Date(o);if(!isNaN(s.getTime())){const p=s.toISOString().replace(/-|:|\.\d\d\d/g,""),i=new Date(s.getTime()+3600*1e3).toISOString().replace(/-|:|\.\d\d\d/g,"");e=`&dates=${p}/${i}`}}const r=new URLSearchParams({text:`[AcadMail] ${n}`,details:`${t}
+  `),n.innerText=p,n.title=o?`Filter Gmail for ${o} (Right-click to change label)`:`Category: ${e} (Click to change)`,n.onclick=f=>{f.stopPropagation(),o?ie(o):N(n,s,a,e)},n.oncontextmenu=f=>{f.preventDefault(),f.stopPropagation(),N(n,s,a,e)},l.prepend(n)}function ie(t){const e=document.querySelector('input[name="q"], input[aria-label*="Search"]');if(e){e.value=t,e.dispatchEvent(new Event("input",{bubbles:!0}));const o=e.closest("form");o?o.dispatchEvent(new Event("submit",{bubbles:!0,cancelable:!0})):e.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",keyCode:13,bubbles:!0}))}}function _(t){R=t,document.querySelectorAll("tr.zA").forEach(o=>{const i=o;if(t==="ALL"){i.style.display="";return}const s=i.querySelector(".acadmail-row-badge"),a=(s==null?void 0:s.textContent)||"";let r=!1;(t==="Academics"&&(a.includes("🎓")||a.includes("Acads"))||t==="Competitions & Tournaments"&&(a.includes("🏆")||a.includes("Contest"))||t==="Workshops"&&(a.includes("🛠️")||a.includes("Workshop"))||t==="Class Rescheduling"&&(a.includes("⏰")||a.includes("Rescheduled"))||t==="General"&&(a.includes("📢")||a.includes("General")||a.includes("PhD"))||a.toLowerCase().includes(t.toLowerCase()))&&(r=!0),r?i.style.display="":i.style.display="none"}),re()}function X(t,e,o){const i="https://calendar.google.com/calendar/render?action=TEMPLATE";let s="";if(o){const r=new Date(o);if(!isNaN(r.getTime())){const l=r.toISOString().replace(/-|:|\.\d\d\d/g,""),n=new Date(r.getTime()+3600*1e3).toISOString().replace(/-|:|\.\d\d\d/g,"");s=`&dates=${l}/${n}`}}const a=new URLSearchParams({text:`[AcadMail] ${t}`,details:`${e}
 
-— Auto-extracted by AcadMail AI`});return`${a}&${r.toString()}${e}`}function V(n){const t=document.getElementById("acadmail-toast");t&&t.remove();const o=document.createElement("div");o.id="acadmail-toast",o.innerText=n,o.setAttribute("style",`
+— Auto-extracted by AcadMail AI`});return`${i}&${a.toString()}${s}`}function Q(t){const e=document.getElementById("acadmail-toast");e&&e.remove();const o=document.createElement("div");o.id="acadmail-toast",o.innerText=t,o.setAttribute("style",`
     position: fixed;
     bottom: 24px;
     left: 50%;
@@ -29,7 +29,7 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
     z-index: 9999999;
     font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
     animation: fadeIn 0.15s ease-out;
-  `),document.body.appendChild(o),setTimeout(()=>o.remove(),2500)}function X(n){var v;if(w!=="blended")return;const t=document.querySelector('div[gh="tm"]')||document.querySelector("div.G-atb")||document.querySelector("div.aeF");if(!t)return;if(!document.getElementById("acadmail-m3-css")){const d=document.createElement("style");d.id="acadmail-m3-css",d.textContent=`
+  `),document.body.appendChild(o),setTimeout(()=>o.remove(),2500)}function ee(t){var w;if($!=="blended")return;const e=document.querySelector('div[gh="tm"]')||document.querySelector("div.G-atb")||document.querySelector("div.aeF");if(!e)return;if(!document.getElementById("acadmail-m3-css")){const c=document.createElement("style");c.id="acadmail-m3-css",c.textContent=`
       @font-face {
         font-family: 'Batangas';
         src: url('${chrome.runtime.getURL("fonts/Batangas-Bold.otf")}') format('opentype');
@@ -74,7 +74,7 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
         align-items: center !important;
         justify-content: center !important;
       }
-    `,document.head.appendChild(d)}let o=0,a=0,e=0,r=0,s=0;const p=/\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/gi,l=[];n.forEach(d=>{d.category==="Academics"?o++:d.category==="Competitions & Tournaments"?a++:d.category==="Workshops"?e++:d.category==="Class Rescheduling"?r++:d.category==="General"&&s++;const h=[...`${d.subject} ${d.snippet}`.matchAll(p)];h.length>0&&l.push({title:d.subject,deadline:h[0][1]})});const i=E();let u=document.getElementById("acadmail-native-chip-bar");u||(u=document.createElement("div"),u.id="acadmail-native-chip-bar",u.setAttribute("style",`
+    `,document.head.appendChild(c)}let o=0,i=0,s=0,a=0,r=0;const l=/\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/gi,d=[];t.forEach(c=>{c.category==="Academics"?o++:c.category==="Competitions & Tournaments"?i++:c.category==="Workshops"?s++:c.category==="Class Rescheduling"?a++:c.category==="General"&&r++;const g=[...`${c.subject} ${c.snippet}`.matchAll(l)];g.length>0&&d.push({title:c.subject,deadline:g[0][1]})});const n=q();let u=document.getElementById("acadmail-native-chip-bar");u||(u=document.createElement("div"),u.id="acadmail-native-chip-bar",u.setAttribute("style",`
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -82,78 +82,78 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
       padding: 6px 16px;
       min-height: 44px;
       box-sizing: border-box;
-      background: ${i?"#141517":"#ffffff"};
-      border-bottom: 1px solid ${i?"rgba(255,255,255,0.08)":"#e0e2ec"};
+      background: ${n?"#141517":"#ffffff"};
+      border-bottom: 1px solid ${n?"rgba(255,255,255,0.08)":"#e0e2ec"};
       font-family: Roboto, "Google Sans", "Google Sans Text", -apple-system, sans-serif;
       font-size: 12px;
       z-index: 10;
-    `),(v=t.parentElement)==null||v.insertBefore(u,t.nextSibling||t));const c=d=>I===d?`
-        background: ${i?"#004a77":"#c2e7ff"};
-        color: ${i?"#c2e7ff":"#001d35"};
-        border: 1px solid ${i?"#005f9e":"#7fcfff"};
+    `),(w=e.parentElement)==null||w.insertBefore(u,e.nextSibling||e));const p=c=>R===c?`
+        background: ${n?"#004a77":"#c2e7ff"};
+        color: ${n?"#c2e7ff":"#001d35"};
+        border: 1px solid ${n?"#005f9e":"#7fcfff"};
         font-weight: 600;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       `:`
-      background: ${i?"rgba(255,255,255,0.04)":"#f8fafd"};
-      color: ${i?"#e3e3e3":"#3c4043"};
-      border: 1px solid ${i?"rgba(255,255,255,0.12)":"#dadce0"};
+      background: ${n?"rgba(255,255,255,0.04)":"#f8fafd"};
+      color: ${n?"#e3e3e3":"#3c4043"};
+      border: 1px solid ${n?"rgba(255,255,255,0.12)":"#dadce0"};
       font-weight: 500;
-    `,m=(d,x)=>`<span class="m3-chip-count" style="background: ${I===d?i?"rgba(194, 231, 255, 0.22)":"rgba(0, 29, 53, 0.12)":i?"rgba(255, 255, 255, 0.1)":"rgba(0, 0, 0, 0.06)"}; color: inherit;">${x}</span>`;u.innerHTML=`
+    `,f=(c,x)=>`<span class="m3-chip-count" style="background: ${R===c?n?"rgba(194, 231, 255, 0.22)":"rgba(0, 29, 53, 0.12)":n?"rgba(255, 255, 255, 0.1)":"rgba(0, 0, 0, 0.06)"}; color: inherit;">${x}</span>`;u.innerHTML=`
     <!-- Left: Slim Google Material 3 Chips (Defaults + Dynamic Custom Filters) -->
     <div id="acadmail-chip-scroll-track" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; flex: 1; min-width: 0; padding: 2px 0;">
       
       <!-- Brand Pill -->
-      <div style="display: inline-flex; align-items: center; gap: 6px; height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: ${i?"rgba(56, 139, 253, 0.12)":"rgba(26, 115, 232, 0.08)"}; color: ${i?"#79c0ff":"#1a73e8"}; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${i?"rgba(56, 139, 253, 0.25)":"rgba(26, 115, 232, 0.2)"};">
+      <div style="display: inline-flex; align-items: center; gap: 6px; height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: ${n?"rgba(56, 139, 253, 0.12)":"rgba(26, 115, 232, 0.08)"}; color: ${n?"#79c0ff":"#1a73e8"}; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${n?"rgba(56, 139, 253, 0.25)":"rgba(26, 115, 232, 0.2)"};">
         <img src="${chrome.runtime.getURL("icons/envelope-logo.png")}" alt="AcadMail" style="width: 17px; height: 17px; border-radius: 3px; object-fit: contain;" />
         <span style="font-family: 'Batangas', Roboto, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.2px;">AcadMail</span>
       </div>
 
       <!-- 1. All Emails -->
-      <button class="m3-chip" data-cat="ALL" style="${c("ALL")}">
+      <button class="m3-chip" data-cat="ALL" style="${p("ALL")}">
         <span>All</span>
-        ${m("ALL",n.length)}
+        ${f("ALL",t.length)}
       </button>
 
       <!-- 2. Academics -->
-      <button class="m3-chip" data-cat="Academics" style="${c("Academics")}">
+      <button class="m3-chip" data-cat="Academics" style="${p("Academics")}">
         <span>Academics</span>
-        ${m("Academics",o)}
+        ${f("Academics",o)}
       </button>
 
       <!-- 3. Competitions -->
-      <button class="m3-chip" data-cat="Competitions & Tournaments" style="${c("Competitions & Tournaments")}">
+      <button class="m3-chip" data-cat="Competitions & Tournaments" style="${p("Competitions & Tournaments")}">
         <span>Contests</span>
-        ${m("Competitions & Tournaments",a)}
+        ${f("Competitions & Tournaments",i)}
       </button>
 
       <!-- 4. Workshops -->
-      <button class="m3-chip" data-cat="Workshops" style="${c("Workshops")}">
+      <button class="m3-chip" data-cat="Workshops" style="${p("Workshops")}">
         <span>Workshops</span>
-        ${m("Workshops",e)}
+        ${f("Workshops",s)}
       </button>
 
       <!-- 5. Reschedules -->
-      <button class="m3-chip" data-cat="Class Rescheduling" style="${c("Class Rescheduling")}">
+      <button class="m3-chip" data-cat="Class Rescheduling" style="${p("Class Rescheduling")}">
         <span>Rescheduled</span>
-        ${m("Class Rescheduling",r)}
+        ${f("Class Rescheduling",a)}
       </button>
 
       <!-- 6. General -->
-      <button class="m3-chip" data-cat="General" style="${c("General")}">
+      <button class="m3-chip" data-cat="General" style="${p("General")}">
         <span>General & PhD</span>
-        ${m("General",s)}
+        ${f("General",r)}
       </button>
 
       <!-- 7. Dynamic User-Defined Custom Filters -->
-      ${S.map(d=>{const x=n.filter(h=>h.category===d.name).length;return`
-          <button class="m3-chip" data-cat="${d.name}" style="${c(d.name)}">
-            <span>${d.name}</span>
-            ${m(d.name,x)}
+      ${S.map(c=>{const x=t.filter(g=>g.category===c.name).length;return`
+          <button class="m3-chip" data-cat="${c.name}" style="${p(c.name)}">
+            <span>${c.name}</span>
+            ${f(c.name,x)}
           </button>
         `}).join("")}
 
       <!-- 8. Add Custom Filter Button -->
-      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px dashed ${i?"rgba(255,255,255,0.25)":"#94a3b8"}; background: transparent; color: ${i?"#79c0ff":"#1a73e8"}; font-size: 12px; font-weight: 500; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
+      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px dashed ${n?"rgba(255,255,255,0.25)":"#94a3b8"}; background: transparent; color: ${n?"#79c0ff":"#1a73e8"}; font-size: 12px; font-weight: 500; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
         <span style="font-size: 14px; font-weight: 600; line-height: 1;">+</span>
         <span>Filter</span>
       </button>
@@ -161,26 +161,26 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
 
     <!-- Right: Mini Deadlines Dropdown & Instant Hide Button -->
     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-      ${l.length>0?`
+      ${d.length>0?`
         <div style="position: relative; flex-shrink: 0;">
-          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid ${i?"rgba(210,153,34,0.4)":"#fde68a"}; background: ${i?"rgba(210,153,34,0.15)":"#fffbeb"}; color: ${i?"#e3b341":"#b45309"}; font-size: 12px; font-weight: 600; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
+          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid ${n?"rgba(210,153,34,0.4)":"#fde68a"}; background: ${n?"rgba(210,153,34,0.15)":"#fffbeb"}; color: ${n?"#e3b341":"#b45309"}; font-size: 12px; font-weight: 600; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
             <span style="font-weight: 700; font-family: Roboto, 'Google Sans', sans-serif; font-size: 11px;">DUE</span>
-            <span>${l.length}</span>
+            <span>${d.length}</span>
           </button>
 
-          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 310px; background: ${i?"#1e1f20":"#ffffff"}; border: 1px solid ${i?"#3c4043":"#e0e2ec"}; border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999; font-family: Roboto, 'Google Sans', sans-serif;">
-            <div style="font-weight: 600; color: ${i?"#e3e3e3":"#1f1f1f"}; font-size: 11.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 310px; background: ${n?"#1e1f20":"#ffffff"}; border: 1px solid ${n?"#3c4043":"#e0e2ec"}; border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999; font-family: Roboto, 'Google Sans', sans-serif;">
+            <div style="font-weight: 600; color: ${n?"#e3e3e3":"#1f1f1f"}; font-size: 11.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
               <span>Detected Due Dates</span>
               <span style="font-size: 10px; color: #1a73e8; font-weight: 600;">+ Google Calendar</span>
             </div>
             <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
-              ${l.map(d=>`
-                <div style="padding: 8px 10px; background: ${i?"#2b2c2f":"#f8fafd"}; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              ${d.map(c=>`
+                <div style="padding: 8px 10px; background: ${n?"#2b2c2f":"#f8fafd"}; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                   <div style="overflow: hidden; flex: 1;">
-                    <div style="font-size: 11.5px; font-weight: 500; color: ${i?"#e3e3e3":"#1f1f1f"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
-                    <div style="font-size: 10.5px; color: ${i?"#e3b341":"#b45309"}; font-weight: 600; margin-top: 2px;">⏰ ${d.deadline}</div>
+                    <div style="font-size: 11.5px; font-weight: 500; color: ${n?"#e3e3e3":"#1f1f1f"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.title}</div>
+                    <div style="font-size: 10.5px; color: ${n?"#e3b341":"#b45309"}; font-weight: 600; margin-top: 2px;">⏰ ${c.deadline}</div>
                   </div>
-                  <a href="${Y(d.title,"Course deadline from email",d.deadline)}" target="_blank" style="text-decoration: none; flex-shrink: 0; padding: 3px 8px; background: ${i?"#004a77":"#c2e7ff"}; color: ${i?"#c2e7ff":"#001d35"}; border-radius: 4px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
+                  <a href="${X(c.title,"Course deadline from email",c.deadline)}" target="_blank" style="text-decoration: none; flex-shrink: 0; padding: 3px 8px; background: ${n?"#004a77":"#c2e7ff"}; color: ${n?"#c2e7ff":"#001d35"}; border-radius: 4px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
                 </div>
               `).join("")}
             </div>
@@ -188,19 +188,19 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
         </div>
       `:""}
 
-      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: ${i?"#8e918f":"#64748b"}; font-size: 12px; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
+      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: ${n?"#8e918f":"#64748b"}; font-size: 12px; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
         <span style="font-size: 13px; line-height: 1;">✕</span>
         <span>Hide</span>
       </button>
     </div>
-  `,u.querySelectorAll(".m3-chip").forEach(d=>{const x=d;x.onclick=()=>{const h=x.getAttribute("data-cat");R(I===h&&h!=="ALL"?"ALL":h)}});const f=u.querySelector("#m3-add-filter-chip");f&&(f.onclick=()=>oe());const g=u.querySelector("#m3-deadlines-btn"),b=u.querySelector("#m3-deadlines-popover");g&&b&&(g.onclick=d=>{d.stopPropagation(),b.style.display=b.style.display==="block"?"none":"block"},document.addEventListener("click",d=>{!b.contains(d.target)&&d.target!==g&&(b.style.display="none")}));const k=u.querySelector("#acadmail-instant-revert-btn");k&&(k.onclick=()=>{var d;w="off",typeof chrome<"u"&&((d=chrome.storage)!=null&&d.local)&&chrome.storage.local.get(["acadmail_settings"],x=>{const h=x.acadmail_settings||{};chrome.storage.local.set({acadmail_settings:{...h,uiMode:"off",inPageIntegration:!1}})}),N()})}function oe(){const n=document.getElementById("acadmail-add-filter-modal");if(n){n.remove();return}const t=E(),o=document.createElement("div");o.id="acadmail-add-filter-modal",o.setAttribute("style",`
+  `,u.querySelectorAll(".m3-chip").forEach(c=>{const x=c;x.onclick=()=>{const g=x.getAttribute("data-cat");_(R===g&&g!=="ALL"?"ALL":g)}});const m=u.querySelector("#m3-add-filter-chip");m&&(m.onclick=()=>ae());const b=u.querySelector("#m3-deadlines-btn"),h=u.querySelector("#m3-deadlines-popover");b&&h&&(b.onclick=c=>{c.stopPropagation(),h.style.display=h.style.display==="block"?"none":"block"},document.addEventListener("click",c=>{!h.contains(c.target)&&c.target!==b&&(h.style.display="none")}));const v=u.querySelector("#acadmail-instant-revert-btn");v&&(v.onclick=()=>{var c;$="off",typeof chrome<"u"&&((c=chrome.storage)!=null&&c.local)&&chrome.storage.local.get(["acadmail_settings"],x=>{const g=x.acadmail_settings||{};chrome.storage.local.set({acadmail_settings:{...g,uiMode:"off",inPageIntegration:!1}})}),U()})}function ae(){const t=document.getElementById("acadmail-add-filter-modal");if(t){t.remove();return}const e=q(),o=document.createElement("div");o.id="acadmail-add-filter-modal",o.setAttribute("style",`
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 320px;
-    background: ${t?"#1e1f20":"#ffffff"};
-    border: 1px solid ${t?"#444746":"#cbd5e1"};
+    background: ${e?"#1e1f20":"#ffffff"};
+    border: 1px solid ${e?"#444746":"#cbd5e1"};
     border-radius: 16px;
     box-shadow: 0 16px 36px rgba(0,0,0,0.25);
     padding: 16px;
@@ -208,7 +208,7 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
     font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
   `),o.innerHTML=`
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <span style="font-weight: 700; font-size: 13px; color: ${t?"#e3e3e3":"#0f172a"};">
+      <span style="font-weight: 700; font-size: 13px; color: ${e?"#e3e3e3":"#0f172a"};">
         ✨ Create Custom Academic Filter
       </span>
       <button id="modal-close-btn" style="border: none; background: transparent; color: #94a3b8; font-size: 14px; cursor: pointer;">✕</button>
@@ -216,99 +216,99 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
 
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <div>
-        <label style="font-size: 10.5px; font-weight: 600; color: ${t?"#c4c7c5":"#475569"}; display: block; margin-bottom: 3px;">
+        <label style="font-size: 10.5px; font-weight: 600; color: ${e?"#c4c7c5":"#475569"}; display: block; margin-bottom: 3px;">
           Filter / Bucket Name
         </label>
-        <input id="new-filter-name" type="text" placeholder="e.g. Mess & Hostel, Library, Placements" style="width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; border: 1px solid ${t?"#444746":"#cbd5e1"}; background: ${t?"#2b2c2f":"#f8fafc"}; color: ${t?"#e3e3e3":"#0f172a"}; font-size: 12px; outline: none;" />
+        <input id="new-filter-name" type="text" placeholder="e.g. Mess & Hostel, Library, Placements" style="width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; border: 1px solid ${e?"#444746":"#cbd5e1"}; background: ${e?"#2b2c2f":"#f8fafc"}; color: ${e?"#e3e3e3":"#0f172a"}; font-size: 12px; outline: none;" />
       </div>
 
       <div>
-        <label style="font-size: 10.5px; font-weight: 600; color: ${t?"#c4c7c5":"#475569"}; display: block; margin-bottom: 3px;">
+        <label style="font-size: 10.5px; font-weight: 600; color: ${e?"#c4c7c5":"#475569"}; display: block; margin-bottom: 3px;">
           Keywords (comma-separated)
         </label>
-        <input id="new-filter-keywords" type="text" placeholder="e.g. mess, rebate, room, warden, hostel" style="width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; border: 1px solid ${t?"#444746":"#cbd5e1"}; background: ${t?"#2b2c2f":"#f8fafc"}; color: ${t?"#e3e3e3":"#0f172a"}; font-size: 12px; outline: none;" />
+        <input id="new-filter-keywords" type="text" placeholder="e.g. mess, rebate, room, warden, hostel" style="width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; border: 1px solid ${e?"#444746":"#cbd5e1"}; background: ${e?"#2b2c2f":"#f8fafc"}; color: ${e?"#e3e3e3":"#0f172a"}; font-size: 12px; outline: none;" />
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
-        <button id="modal-cancel-btn" style="padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: ${t?"#c4c7c5":"#64748b"}; font-size: 11px; cursor: pointer;">Cancel</button>
+        <button id="modal-cancel-btn" style="padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: ${e?"#c4c7c5":"#64748b"}; font-size: 11px; cursor: pointer;">Cancel</button>
         <button id="modal-save-btn" style="padding: 5px 14px; border-radius: 8px; border: none; background: #2563eb; color: #ffffff; font-size: 11px; font-weight: 600; cursor: pointer;">Save Filter</button>
       </div>
     </div>
-  `,document.body.appendChild(o);const a=o.querySelector("#modal-close-btn"),e=o.querySelector("#modal-cancel-btn"),r=o.querySelector("#modal-save-btn"),s=o.querySelector("#new-filter-name"),p=o.querySelector("#new-filter-keywords");a.onclick=()=>o.remove(),e.onclick=()=>o.remove(),r.onclick=()=>{const l=s.value.trim(),i=p.value.trim();l&&(ee(l,i),o.remove())}}function B(n,t,o,a){const e=document.getElementById("acadmail-relabel-popup");if(e){e.remove();return}const r=E(),s=n.getBoundingClientRect(),p=document.createElement("div");p.id="acadmail-relabel-popup",p.setAttribute("style",`
+  `,document.body.appendChild(o);const i=o.querySelector("#modal-close-btn"),s=o.querySelector("#modal-cancel-btn"),a=o.querySelector("#modal-save-btn"),r=o.querySelector("#new-filter-name"),l=o.querySelector("#new-filter-keywords");i.onclick=()=>o.remove(),s.onclick=()=>o.remove(),a.onclick=()=>{const d=r.value.trim(),n=l.value.trim();d&&(oe(d,n),o.remove())}}function N(t,e,o,i){const s=document.getElementById("acadmail-relabel-popup");if(s){s.remove();return}const a=q(),r=t.getBoundingClientRect(),l=document.createElement("div");l.id="acadmail-relabel-popup",l.setAttribute("style",`
     position: fixed;
-    top: ${s.bottom+4}px;
-    left: ${Math.min(s.left,window.innerWidth-220)}px;
+    top: ${r.bottom+4}px;
+    left: ${Math.min(r.left,window.innerWidth-220)}px;
     width: 210px;
-    background: ${r?"#1e1f20":"#ffffff"};
-    border: 1px solid ${r?"#444746":"#e0e2ec"};
+    background: ${a?"#1e1f20":"#ffffff"};
+    border: 1px solid ${a?"#444746":"#e0e2ec"};
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     padding: 6px;
     z-index: 9999999;
     font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
-  `);const l=["Academics","Competitions & Tournaments","Workshops","Class Rescheduling","General"],i=[...l,...S.map(c=>c.name).filter(c=>!l.includes(c))];p.innerHTML=`
-    <div style="padding: 4px 8px; font-size: 10px; font-weight: 700; color: ${r?"#8e918f":"#64748b"}; text-transform: uppercase; border-bottom: 1px solid ${r?"#333537":"#f1f5f9"};">
+  `);const d=["Academics","Competitions & Tournaments","Workshops","Class Rescheduling","General"],n=[...d,...S.map(p=>p.name).filter(p=>!d.includes(p))];l.innerHTML=`
+    <div style="padding: 4px 8px; font-size: 10px; font-weight: 700; color: ${a?"#8e918f":"#64748b"}; text-transform: uppercase; border-bottom: 1px solid ${a?"#333537":"#f1f5f9"};">
       Change Category Label
     </div>
     <div style="display: flex; flex-direction: column; gap: 2px; padding-top: 4px; max-height: 200px; overflow-y: auto;">
-      ${i.map(c=>`
-        <button class="relabel-opt" data-cat="${c}" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: ${c===a?r?"#004a77":"#c2e7ff":"transparent"}; color: ${c===a?r?"#c2e7ff":"#001d35":r?"#e3e3e3":"#1f1f1f"}; font-size: 11.5px; font-weight: ${c===a?"600":"400"}; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-          <span>${c}</span>
-          ${c===a?"<span>✓</span>":""}
+      ${n.map(p=>`
+        <button class="relabel-opt" data-cat="${p}" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: ${p===i?a?"#004a77":"#c2e7ff":"transparent"}; color: ${p===i?a?"#c2e7ff":"#001d35":a?"#e3e3e3":"#1f1f1f"}; font-size: 11.5px; font-weight: ${p===i?"600":"400"}; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+          <span>${p}</span>
+          ${p===i?"<span>✓</span>":""}
         </button>
       `).join("")}
     </div>
-  `,document.body.appendChild(p),p.querySelectorAll(".relabel-opt").forEach(c=>{const m=c;m.onclick=f=>{f.stopPropagation();const g=m.getAttribute("data-cat")||"General";J(t,t,o,g),p.remove()}});const u=c=>{!p.contains(c.target)&&!n.contains(c.target)&&(p.remove(),document.removeEventListener("click",u))};setTimeout(()=>document.addEventListener("click",u),50)}function ie(){w==="blended"&&_.length>0&&X(_)}function T(){var M,q,j,H;if(w==="off")return;const n=Q();if(!n){(M=document.getElementById("acadmail-email-brief-card"))==null||M.remove();return}const t=document.querySelector("div.ha")||((q=document.querySelector("h2.hP"))==null?void 0:q.parentElement)||((j=document.querySelector('div[role="main"] h2'))==null?void 0:j.parentElement);if(!t)return;const o=document.getElementById("acadmail-email-brief-card"),a=o==null?void 0:o.getAttribute("data-email-id");if(o&&a===n.id)return;o&&o.remove();const e=K(n.subject,n.senderName,n.bodyText,n.id),r=`${n.subject} ${n.bodyText}`,s=/\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/i,p=r.match(s),l=p?p[1]:null,i=r.match(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?(?:zoom\.us\/j|meet\.google\.com|teams\.microsoft\.com\/l)\/[^\s<>"']+/i),u=i?i[0]:null,m=n.bodyText.split(/\.\s+/).map(y=>y.trim()).filter(y=>y.length>25&&!y.includes("http")&&!y.includes("unsubscribe")&&!y.includes("Regards")).slice(0,3);m.length===0&&m.push(`Announcement regarding ${n.subject} from ${n.senderName}.`);const f=E(),g=document.createElement("div");g.id="acadmail-email-brief-card",g.setAttribute("data-email-id",n.id),g.setAttribute("style",`
+  `,document.body.appendChild(l),l.querySelectorAll(".relabel-opt").forEach(p=>{const f=p;f.onclick=m=>{m.stopPropagation();const b=f.getAttribute("data-cat")||"General";Y(e,e,o,b),l.remove()}});const u=p=>{!l.contains(p.target)&&!t.contains(p.target)&&(l.remove(),document.removeEventListener("click",u))};setTimeout(()=>document.addEventListener("click",u),50)}function re(){$==="blended"&&j.length>0&&ee(j)}function M(){var k,E,I,C;if($==="off")return;const t=te();if(!t){(k=document.getElementById("acadmail-email-brief-card"))==null||k.remove();return}const e=document.querySelector("div.ha")||((E=document.querySelector("h2.hP"))==null?void 0:E.parentElement)||((I=document.querySelector('div[role="main"] h2'))==null?void 0:I.parentElement);if(!e)return;const o=document.getElementById("acadmail-email-brief-card"),i=o==null?void 0:o.getAttribute("data-email-id");if(o&&i===t.id)return;o&&o.remove();const s=V(t.subject,t.senderName,t.bodyText,t.id),a=`${t.subject} ${t.bodyText}`,r=/\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/i,l=a.match(r),d=l?l[1]:null,n=a.match(/https?:\/\/(?:[a-zA-Z0-9-]+\.)?(?:zoom\.us\/j|meet\.google\.com|teams\.microsoft\.com\/l)\/[^\s<>"']+/i),u=n?n[0]:null,f=t.bodyText.split(/\.\s+/).map(y=>y.trim()).filter(y=>y.length>25&&!y.includes("http")&&!y.includes("unsubscribe")&&!y.includes("Regards")).slice(0,3);f.length===0&&f.push(`Announcement regarding ${t.subject} from ${t.senderName}.`);const m=q(),b=document.createElement("div");b.id="acadmail-email-brief-card",b.setAttribute("data-email-id",t.id),b.setAttribute("style",`
     margin: 4px 0 10px 0;
     padding: 6px 12px;
-    background: ${f?"#1e1f20":"#f8fafd"};
-    border: 1px solid ${f?"#333537":"#e0e7ff"};
+    background: ${m?"#1e1f20":"#f8fafd"};
+    border: 1px solid ${m?"#333537":"#e0e7ff"};
     border-radius: 8px;
     font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
     font-size: 12px;
-    color: ${f?"#e3e3e3":"#1f1f1f"};
+    color: ${m?"#e3e3e3":"#1f1f1f"};
     transition: all 0.2s ease;
-  `),g.innerHTML=`
+  `),b.innerHTML=`
     <!-- Top 1-Line Compact Summary Bar -->
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
       <div id="m3-brief-toggle-line" style="display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; overflow: hidden;">
         <img src="${chrome.runtime.getURL("icons/envelope-logo.png")}" alt="AcadMail" style="width: 14px; height: 14px; border-radius: 2.5px; object-fit: contain; flex-shrink: 0;" />
-        <span style="font-family: 'Batangas', Roboto, sans-serif; font-weight: 700; font-size: 12px; color: ${f?"#79c0ff":"#1a73e8"}; shrink: 0;">AcadMail:</span>
-        <span style="font-size: 11.5px; color: ${f?"#c4c7c5":"#475569"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          ${l?`⏰ Due: <strong>${l}</strong> • `:""}${m[0]}
+        <span style="font-family: 'Batangas', Roboto, sans-serif; font-weight: 700; font-size: 12px; color: ${m?"#79c0ff":"#1a73e8"}; shrink: 0;">AcadMail:</span>
+        <span style="font-size: 11.5px; color: ${m?"#c4c7c5":"#475569"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${d?`⏰ Due: <strong>${d}</strong> • `:""}${f[0]}
         </span>
       </div>
 
       <div style="display: flex; align-items: center; gap: 5px; shrink: 0;">
         <!-- Category Chip with Re-label button -->
-        <span style="padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; background: ${f?"rgba(56, 139, 253, 0.2)":"#e8f0fe"}; color: ${f?"#79c0ff":"#1a73e8"};">
-          ${e.category}
+        <span style="padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; background: ${m?"rgba(56, 139, 253, 0.2)":"#e8f0fe"}; color: ${m?"#79c0ff":"#1a73e8"};">
+          ${s.category}
         </span>
 
-        <button id="acadmail-brief-relabel-btn" title="Change this email's category label" style="cursor: pointer; padding: 2px 5px; border-radius: 4px; border: 1px dashed ${f?"#444746":"#cbd5e1"}; background: transparent; font-size: 10px; font-weight: 500; color: ${f?"#a8c7fa":"#1a73e8"};">
+        <button id="acadmail-brief-relabel-btn" title="Change this email's category label" style="cursor: pointer; padding: 2px 5px; border-radius: 4px; border: 1px dashed ${m?"#444746":"#cbd5e1"}; background: transparent; font-size: 10px; font-weight: 500; color: ${m?"#a8c7fa":"#1a73e8"};">
           ✎ Relabel
         </button>
 
-        ${l?`
-          <a href="${Y(n.subject,n.bodyText.slice(0,300),l)}" target="_blank" style="text-decoration: none; padding: 2px 7px; background: ${f?"#004a77":"#c2e7ff"}; color: ${f?"#c2e7ff":"#001d35"}; border-radius: 6px; font-size: 10px; font-weight: 600;">+ GCal</a>
+        ${d?`
+          <a href="${X(t.subject,t.bodyText.slice(0,300),d)}" target="_blank" style="text-decoration: none; padding: 2px 7px; background: ${m?"#004a77":"#c2e7ff"}; color: ${m?"#c2e7ff":"#001d35"}; border-radius: 6px; font-size: 10px; font-weight: 600;">+ GCal</a>
         `:""}
-        <button id="m3-brief-expand-btn" style="cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid ${f?"#444746":"#d2e3fc"}; background: transparent; font-size: 10px; font-weight: 600; color: ${f?"#79c0ff":"#1a73e8"};">
-          ${L?"Collapse ▴":"Details ▾"}
+        <button id="m3-brief-expand-btn" style="cursor: pointer; padding: 2px 6px; border-radius: 4px; border: 1px solid ${m?"#444746":"#d2e3fc"}; background: transparent; font-size: 10px; font-weight: 600; color: ${m?"#79c0ff":"#1a73e8"};">
+          ${z?"Collapse ▴":"Details ▾"}
         </button>
         <button id="m3-brief-dismiss-btn" title="Dismiss card" style="cursor: pointer; padding: 2px 4px; border: none; background: transparent; color: #94a3b8; font-size: 11px;">✕</button>
       </div>
     </div>
 
     <!-- Expandable Drawer Details -->
-    <div id="m3-brief-drawer" style="display: ${L?"flex":"none"}; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed ${f?"#333537":"#e0e2ec"};">
-      <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: ${f?"#c4c7c5":"#334155"}; line-height: 1.45;">
-        ${m.map(y=>`<li>${y}</li>`).join("")}
+    <div id="m3-brief-drawer" style="display: ${z?"flex":"none"}; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed ${m?"#333537":"#e0e2ec"};">
+      <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: ${m?"#c4c7c5":"#334155"}; line-height: 1.45;">
+        ${f.map(y=>`<li>${y}</li>`).join("")}
       </ul>
 
       <!-- Action Row: Meeting Links + Quick Reply Chips -->
       <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 2px;">
         ${u?`
-          <a href="${u}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: ${f?"#143e2e":"#e6f4ea"}; color: ${f?"#a7f3d0":"#137333"}; border-radius: 6px; font-size: 10.5px; font-weight: 600;">
+          <a href="${u}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: ${m?"#143e2e":"#e6f4ea"}; color: ${m?"#a7f3d0":"#137333"}; border-radius: 6px; font-size: 10.5px; font-weight: 600;">
             <span>🎥</span>
             <span>Join Meeting</span>
           </a>
@@ -316,42 +316,42 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
 
         <span style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-left: 2px;">Reply draft:</span>
 
-        <button class="m3-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${f?"#444746":"#cbd5e1"}; background: transparent; color: ${f?"#e3e3e3":"#334155"}; font-size: 10.5px; font-weight: 500;">
+        <button class="m3-quick-reply-btn" data-reply="confirm" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${m?"#444746":"#cbd5e1"}; background: transparent; color: ${m?"#e3e3e3":"#334155"}; font-size: 10.5px; font-weight: 500;">
           Confirm Attendance
         </button>
 
-        <button class="m3-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${f?"#444746":"#cbd5e1"}; background: transparent; color: ${f?"#e3e3e3":"#334155"}; font-size: 10.5px; font-weight: 500;">
+        <button class="m3-quick-reply-btn" data-reply="extension" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${m?"#444746":"#cbd5e1"}; background: transparent; color: ${m?"#e3e3e3":"#334155"}; font-size: 10.5px; font-weight: 500;">
           Request Extension
         </button>
 
-        <button class="m3-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${f?"#444746":"#cbd5e1"}; background: transparent; color: ${f?"#e3e3e3":"#334155"}; font-size: 10.5px; font-weight: 500;">
+        <button class="m3-quick-reply-btn" data-reply="doubt" style="cursor: pointer; padding: 2px 8px; border-radius: 12px; border: 1px solid ${m?"#444746":"#cbd5e1"}; background: transparent; color: ${m?"#e3e3e3":"#334155"}; font-size: 10.5px; font-weight: 500;">
           Ask Clarification
         </button>
       </div>
     </div>
-  `;const b=g.querySelector("#acadmail-brief-relabel-btn");b&&(b.onclick=y=>{y.stopPropagation(),B(b,n.subject,n.senderName,e.category)});const k=g.querySelector("#m3-brief-drawer"),v=g.querySelector("#m3-brief-expand-btn"),d=g.querySelector("#m3-brief-toggle-line"),x=()=>{L=!L,k.style.display=L?"flex":"none",v.innerText=L?"Collapse ▴":"Details ▾"};v.onclick=x,d.onclick=x;const h=g.querySelector("#m3-brief-dismiss-btn");h&&(h.onclick=()=>g.remove()),g.querySelectorAll(".m3-quick-reply-btn").forEach(y=>{const P=y;P.onclick=async()=>{const O=P.getAttribute("data-reply");let z="";O==="confirm"?z=`Dear ${n.senderName||"Professor"},
+  `;const h=b.querySelector("#acadmail-brief-relabel-btn");h&&(h.onclick=y=>{y.stopPropagation(),N(h,t.subject,t.senderName,s.category)});const v=b.querySelector("#m3-brief-drawer"),w=b.querySelector("#m3-brief-expand-btn"),c=b.querySelector("#m3-brief-toggle-line"),x=()=>{z=!z,v.style.display=z?"flex":"none",w.innerText=z?"Collapse ▴":"Details ▾"};w.onclick=x,c.onclick=x;const g=b.querySelector("#m3-brief-dismiss-btn");g&&(g.onclick=()=>b.remove()),b.querySelectorAll(".m3-quick-reply-btn").forEach(y=>{const F=y;F.onclick=async()=>{const W=F.getAttribute("data-reply");let D="";W==="confirm"?D=`Dear ${t.senderName||"Professor"},
 
-Thank you for the update regarding "${n.subject}". I confirm my participation and will ensure all prerequisites are met.
+Thank you for the update regarding "${t.subject}". I confirm my participation and will ensure all prerequisites are met.
 
 Best regards,
 [Your Name]
-[Student ID]`:O==="extension"?z=`Dear Professor ${n.senderName||""},
+[Student ID]`:W==="extension"?D=`Dear Professor ${t.senderName||""},
 
-I hope this email finds you well. I am writing to respectfully ask if it might be possible to grant a short extension on the submission for "${n.subject}". I want to ensure my work meets the highest standards.
+I hope this email finds you well. I am writing to respectfully ask if it might be possible to grant a short extension on the submission for "${t.subject}". I want to ensure my work meets the highest standards.
 
 Thank you for your time and understanding.
 
 Sincerely,
 [Your Name]
-[Student ID]`:z=`Dear Professor ${n.senderName||""},
+[Student ID]`:D=`Dear Professor ${t.senderName||""},
 
-I hope you are well. Regarding the announcement on "${n.subject}", I had a quick question regarding the specifications and would appreciate some guidance.
+I hope you are well. Regarding the announcement on "${t.subject}", I had a quick question regarding the specifications and would appreciate some guidance.
 
 Thank you very much.
 
 Sincerely,
 [Your Name]
-[Student ID]`,await ae(z,P)}}),(H=t.parentElement)==null||H.insertBefore(g,t.nextSibling)}async function ae(n,t){const o=t.innerText;t.innerText="Drafting...";const a=document.querySelector('div[role="button"][aria-label*="Reply"]')||document.querySelector(".ams.bkH")||document.querySelector('.T-I.J-J5-Ji.T-I-Js-IF[data-tooltip*="Reply"]')||document.querySelector('span[role="button"][aria-label*="Reply"]');a&&a.click();let e=0;const r=setInterval(()=>{e++;const s=document.querySelector('div[aria-label="Message Body"], div[role="textbox"][contenteditable="true"]');s?(clearInterval(r),s.focus(),s.innerText=n,s.dispatchEvent(new Event("input",{bubbles:!0})),s.scrollIntoView({behavior:"smooth",block:"center"}),t.innerText="✅ Drafted!",setTimeout(()=>{t.innerText=o},2500)):e>15&&(clearInterval(r),t.innerText="⚠️ Click Reply first",setTimeout(()=>{t.innerText=o},2e3))},200)}function G(){if(w==="off"||document.getElementById("acadmail-siderail-btn"))return;const n=document.querySelector("div.aDG")||document.querySelector('div[aria-label="Side panel"]')||document.querySelector("div.bq9");if(!n)return;const t=document.createElement("div");t.id="acadmail-siderail-btn",t.title="AcadMail AI Copilot",t.setAttribute("role","button"),t.setAttribute("tabindex","0");const o=E();t.setAttribute("style",`
+[Student ID]`,await se(D,F)}}),(C=e.parentElement)==null||C.insertBefore(b,e.nextSibling)}async function se(t,e){const o=e.innerText;e.innerText="Drafting...";const i=document.querySelector('div[role="button"][aria-label*="Reply"]')||document.querySelector(".ams.bkH")||document.querySelector('.T-I.J-J5-Ji.T-I-Js-IF[data-tooltip*="Reply"]')||document.querySelector('span[role="button"][aria-label*="Reply"]');i&&i.click();let s=0;const a=setInterval(()=>{s++;const r=document.querySelector('div[aria-label="Message Body"], div[role="textbox"][contenteditable="true"]');r?(clearInterval(a),r.focus(),r.innerText=t,r.dispatchEvent(new Event("input",{bubbles:!0})),r.scrollIntoView({behavior:"smooth",block:"center"}),e.innerText="✅ Drafted!",setTimeout(()=>{e.innerText=o},2500)):s>15&&(clearInterval(a),e.innerText="⚠️ Click Reply first",setTimeout(()=>{e.innerText=o},2e3))},200)}function B(){if($==="off"||document.getElementById("acadmail-siderail-btn"))return;const t=document.querySelector("div.aDG")||document.querySelector('div[aria-label="Side panel"]')||document.querySelector("div.bq9");if(!t)return;const e=document.createElement("div");e.id="acadmail-siderail-btn",e.title="AcadMail AI Copilot",e.setAttribute("role","button"),e.setAttribute("tabindex","0");const o=q();e.setAttribute("style",`
     width: 36px;
     height: 36px;
     margin: 6px auto;
@@ -363,9 +363,9 @@ Sincerely,
     background: transparent;
     color: ${o?"#79c0ff":"#1a73e8"};
     transition: background 0.15s;
-  `),t.innerHTML=`
+  `),e.innerHTML=`
     <img src="${chrome.runtime.getURL("icons/envelope-logo.png")}" alt="AcadMail" style="width: 22px; height: 22px; border-radius: 4px; object-fit: contain;" />
-  `,t.onmouseenter=()=>t.style.background=o?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",t.onmouseleave=()=>t.style.background="transparent",t.onclick=()=>A({type:"OPEN_SIDEPANEL"}),n.prepend(t)}function Q(){var e,r,s,p,l;const n=document.querySelector("h2.hP")||document.querySelector("div.ha h2")||document.querySelector('div[role="main"] h2')||document.querySelector("h2[data-legacy-thread-id]")||document.querySelector("h1[data-thread-perm-id]"),t=((e=n==null?void 0:n.textContent)==null?void 0:e.trim())||"",o=document.querySelectorAll('.a3s.aiL, div[role="listitem"] .adn .a3s, .ii.gt, div.adn.ads');let a="";if(o.length>0&&(a=((r=o[o.length-1].textContent)==null?void 0:r.trim())||""),t&&(a||o.length>0)){const i=document.querySelector("span[email]")||document.querySelector(".gD")||document.querySelector(".go")||document.querySelector("span.zF"),u=(i==null?void 0:i.getAttribute("email"))||((s=i==null?void 0:i.textContent)==null?void 0:s.trim())||"academic@university.edu",c=(i==null?void 0:i.getAttribute("name"))||((p=i==null?void 0:i.textContent)==null?void 0:p.trim())||"Academic Sender",m=document.querySelector(".g3")||document.querySelector("span.mI")||document.querySelector(".date"),f=(m==null?void 0:m.getAttribute("title"))||((l=m==null?void 0:m.textContent)==null?void 0:l.trim())||new Date().toLocaleString();return{id:(window.location.hash||"").replace(/[^a-zA-Z0-9_-]/g,"_")||`email-${Date.now()}`,subject:t,senderName:c,senderEmail:u,recipient:"Me",dateStr:f,bodyText:a.slice(0,5e3),url:window.location.href}}return null}function F(){document.querySelectorAll("tr.btC, .gU.Up").forEach(t=>{if(t.querySelector(".acadmail-polish-btn"))return;const o=document.createElement("div");o.className="acadmail-polish-btn",o.setAttribute("style",`
+  `,e.onmouseenter=()=>e.style.background=o?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",e.onmouseleave=()=>e.style.background="transparent",e.onclick=()=>L({type:"OPEN_SIDEPANEL"}),t.prepend(e)}function te(){var s,a,r,l,d;const t=document.querySelector("h2.hP")||document.querySelector("div.ha h2")||document.querySelector('div[role="main"] h2')||document.querySelector("h2[data-legacy-thread-id]")||document.querySelector("h1[data-thread-perm-id]"),e=((s=t==null?void 0:t.textContent)==null?void 0:s.trim())||"",o=document.querySelectorAll('.a3s.aiL, div[role="listitem"] .adn .a3s, .ii.gt, div.adn.ads');let i="";if(o.length>0&&(i=((a=o[o.length-1].textContent)==null?void 0:a.trim())||""),e&&(i||o.length>0)){const n=document.querySelector("span[email]")||document.querySelector(".gD")||document.querySelector(".go")||document.querySelector("span.zF"),u=(n==null?void 0:n.getAttribute("email"))||((r=n==null?void 0:n.textContent)==null?void 0:r.trim())||"academic@university.edu",p=(n==null?void 0:n.getAttribute("name"))||((l=n==null?void 0:n.textContent)==null?void 0:l.trim())||"Academic Sender",f=document.querySelector(".g3")||document.querySelector("span.mI")||document.querySelector(".date"),m=(f==null?void 0:f.getAttribute("title"))||((d=f==null?void 0:f.textContent)==null?void 0:d.trim())||new Date().toLocaleString();return{id:(window.location.hash||"").replace(/[^a-zA-Z0-9_-]/g,"_")||`email-${Date.now()}`,subject:e,senderName:p,senderEmail:u,recipient:"Me",dateStr:m,bodyText:i.slice(0,5e3),url:window.location.href}}return null}function H(){document.querySelectorAll("tr.btC, .gU.Up").forEach(e=>{if(e.querySelector(".acadmail-polish-btn"))return;const o=document.createElement("div");o.className="acadmail-polish-btn",o.setAttribute("style",`
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -385,7 +385,7 @@ Sincerely,
     `),o.innerHTML=`
       <span style="font-size: 11px;">✨</span>
       <span>Polish</span>
-    `,o.onclick=a=>{a.stopPropagation(),se(t,o)},t.appendChild(o)})}function se(n,t){var l;const o=document.getElementById("acadmail-tone-menu");if(o){o.remove();return}const a=n.closest('div[role="dialog"]')||n.closest(".M9"),e=a==null?void 0:a.querySelector('div[aria-label="Message Body"], div[contenteditable="true"]'),r=((l=e==null?void 0:e.innerText)==null?void 0:l.trim())||"",s=document.createElement("div");s.id="acadmail-tone-menu",s.setAttribute("style",`
+    `,o.onclick=i=>{i.stopPropagation(),le(e,o)},e.appendChild(o)})}function le(t,e){var d;const o=document.getElementById("acadmail-tone-menu");if(o){o.remove();return}const i=t.closest('div[role="dialog"]')||t.closest(".M9"),s=i==null?void 0:i.querySelector('div[aria-label="Message Body"], div[contenteditable="true"]'),a=((d=s==null?void 0:s.innerText)==null?void 0:d.trim())||"",r=document.createElement("div");r.id="acadmail-tone-menu",r.setAttribute("style",`
     position: absolute;
     bottom: 40px;
     left: 8px;
@@ -397,7 +397,7 @@ Sincerely,
     padding: 6px;
     width: 240px;
     font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
-  `),s.innerHTML=`
+  `),r.innerHTML=`
     <div style="padding: 4px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Academic Tone</div>
     <div style="display: flex; flex-direction: column; gap: 3px; padding-top: 4px;">
       <button class="acad-tone-opt" data-tone="formal" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Respectful & Formal</button>
@@ -405,8 +405,8 @@ Sincerely,
       <button class="acad-tone-opt" data-tone="doubt" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Clarify Doubt</button>
       <button class="acad-tone-opt" data-tone="lor" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; color: #1e293b;">Request LoR / Reference</button>
     </div>
-  `,s.querySelectorAll(".acad-tone-opt").forEach(i=>{const u=i;u.onclick=async()=>{const c=u.getAttribute("data-tone")||"formal";s.remove(),await re(e,r,c,t)}}),t.appendChild(s);const p=i=>{!s.contains(i.target)&&!t.contains(i.target)&&(s.remove(),document.removeEventListener("click",p))};setTimeout(()=>document.addEventListener("click",p),100)}async function re(n,t,o,a){if(!n)return;const e=a.innerHTML;a.innerHTML="<span>Polishing...</span>";try{const r=await new Promise(u=>{var c;typeof chrome<"u"&&((c=chrome.storage)!=null&&c.local)?chrome.storage.local.get(["acadmail_settings"],m=>u(m.acadmail_settings||{})):u({})}),s=r.apiKey||"",p=r.groqApiKey||"",i=await le(t||"Need extension for lab assignment due this friday because of fever.",o,s,p);n.focus(),n.innerText=i,n.dispatchEvent(new Event("input",{bubbles:!0})),a.innerHTML="<span>Polished!</span>",setTimeout(()=>{a.innerHTML=e},2e3)}catch{a.innerHTML="<span>Error</span>",setTimeout(()=>{a.innerHTML=e},2e3)}}async function le(n,t,o,a){var s,p,l,i,u,c,m,f,g;const r=`Transform this student's rough notes into a courteous, polished academic email to a professor.
-Tone: ${{formal:"Polite, professional academic tone to a professor.",extension:"Polite, respectful request for an assignment deadline extension showing dedication.",doubt:"Polite conceptual question or office hours request referencing lecture material.",lor:"Courteous inquiry requesting a Letter of Recommendation for graduate studies/internships."}[t]||"Formal"}
+  `,r.querySelectorAll(".acad-tone-opt").forEach(n=>{const u=n;u.onclick=async()=>{const p=u.getAttribute("data-tone")||"formal";r.remove(),await ce(s,a,p,e)}}),e.appendChild(r);const l=n=>{!r.contains(n.target)&&!e.contains(n.target)&&(r.remove(),document.removeEventListener("click",l))};setTimeout(()=>document.addEventListener("click",l),100)}async function ce(t,e,o,i){if(!t)return;const s=i.innerHTML;i.innerHTML="<span>Polishing...</span>";try{const a=await new Promise(u=>{var p;typeof chrome<"u"&&((p=chrome.storage)!=null&&p.local)?chrome.storage.local.get(["acadmail_settings"],f=>u(f.acadmail_settings||{})):u({})}),r=a.apiKey||"",l=a.groqApiKey||"",n=await de(e||"Need extension for lab assignment due this friday because of fever.",o,r,l);t.focus(),t.innerText=n,t.dispatchEvent(new Event("input",{bubbles:!0})),i.innerHTML="<span>Polished!</span>",setTimeout(()=>{i.innerHTML=s},2e3)}catch{i.innerHTML="<span>Error</span>",setTimeout(()=>{i.innerHTML=s},2e3)}}async function de(t,e,o,i){var r,l,d,n,u,p,f,m,b;const a=`Transform this student's rough notes into a courteous, polished academic email to a professor.
+Tone: ${{formal:"Polite, professional academic tone to a professor.",extension:"Polite, respectful request for an assignment deadline extension showing dedication.",doubt:"Polite conceptual question or office hours request referencing lecture material.",lor:"Courteous inquiry requesting a Letter of Recommendation for graduate studies/internships."}[e]||"Formal"}
 Guidelines:
 - Include respectful salutation ("Dear Professor [Name],", "I hope this email finds you well.")
 - Keep it concise, courteous, and respectful.
@@ -415,14 +415,14 @@ Guidelines:
 - Output ONLY the final email text.
 
 Student's notes:
-${n}`;if(a&&a.trim())try{const b=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${a.trim()}`,"Content-Type":"application/json"},body:JSON.stringify({model:"llama-3.3-70b-versatile",messages:[{role:"user",content:r}],temperature:.3})});if(b.ok)return((i=(l=(p=(s=(await b.json()).choices)==null?void 0:s[0])==null?void 0:p.message)==null?void 0:l.content)==null?void 0:i.trim())||n}catch{}if(o&&o.trim()){const b=["models/gemini-2.0-flash","models/gemini-3.8-flash","models/gemini-1.5-flash"];for(const k of b)try{const v=await fetch(`https://generativelanguage.googleapis.com/v1beta/${k}:generateContent?key=${o.trim()}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:r}]}],generationConfig:{temperature:.3}})});if(v.ok){const d=await v.json(),x=(g=(f=(m=(c=(u=d==null?void 0:d.candidates)==null?void 0:u[0])==null?void 0:c.content)==null?void 0:m.parts)==null?void 0:f[0])==null?void 0:g.text;if(x)return x.trim()}}catch{}}return`Dear Professor,
+${t}`;if(i&&i.trim())try{const h=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${i.trim()}`,"Content-Type":"application/json"},body:JSON.stringify({model:"llama-3.3-70b-versatile",messages:[{role:"user",content:a}],temperature:.3})});if(h.ok)return((n=(d=(l=(r=(await h.json()).choices)==null?void 0:r[0])==null?void 0:l.message)==null?void 0:d.content)==null?void 0:n.trim())||t}catch{}if(o&&o.trim()){const h=["models/gemini-2.0-flash","models/gemini-3.8-flash","models/gemini-1.5-flash"];for(const v of h)try{const w=await fetch(`https://generativelanguage.googleapis.com/v1beta/${v}:generateContent?key=${o.trim()}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:a}]}],generationConfig:{temperature:.3}})});if(w.ok){const c=await w.json(),x=(b=(m=(f=(p=(u=c==null?void 0:c.candidates)==null?void 0:u[0])==null?void 0:p.content)==null?void 0:f.parts)==null?void 0:m[0])==null?void 0:b.text;if(x)return x.trim()}}catch{}}return`Dear Professor,
 
 I hope this email finds you well.
 
-I am writing to respectfully request your guidance regarding ${n}.
+I am writing to respectfully request your guidance regarding ${t}.
 
 Thank you for your time and consideration.
 
 Sincerely,
 [Your Name]
-[Student ID]`}var W;typeof chrome<"u"&&((W=chrome.runtime)!=null&&W.onMessage)&&chrome.runtime.onMessage.addListener((n,t,o)=>{if(n.type==="GET_ACTIVE_EMAIL"){const a=Q();o({email:a})}else if(n.type==="SCAN_INBOX"){const a=C();o({items:a})}else n.type==="FILTER_GMAIL_DOM"?(R(n.category),o({success:!0})):n.type==="SET_UI_MODE"?(w=n.mode,N(),o({success:!0})):n.type==="RELABEL_EMAIL"?(J(n.emailId,n.subject||"",n.sender||"",n.newCategory),o({success:!0})):n.type==="UPDATE_CUSTOM_FILTERS"&&(Z(),o({success:!0}));return!0});Z();document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>{setTimeout(C,1200),setTimeout(T,1200),setTimeout(G,1200),setTimeout(F,1200),setTimeout(D,1200)}):(setTimeout(C,1200),setTimeout(T,1200),setTimeout(G,1200),setTimeout(F,1200),setTimeout(D,1200));let U=location.href;new MutationObserver(()=>{const n=location.href;n!==U&&(U=n,setTimeout(()=>{A({type:"EMAIL_CHANGED"}),D(),C(),T(),G()},400)),F()}).observe(document,{subtree:!0,childList:!0});
+[Student ID]`}var J;typeof chrome<"u"&&((J=chrome.runtime)!=null&&J.onMessage)&&chrome.runtime.onMessage.addListener((t,e,o)=>{if(t.type==="GET_ACTIVE_EMAIL"){const i=te();o({email:i})}else if(t.type==="SCAN_INBOX"){const i=T();o({items:i})}else t.type==="FILTER_GMAIL_DOM"?(_(t.category),o({success:!0})):t.type==="SET_UI_MODE"?($=t.mode,U(),o({success:!0})):t.type==="RELABEL_EMAIL"?(Y(t.emailId,t.subject||"",t.sender||"",t.newCategory),o({success:!0})):(t.type==="UPDATE_CUSTOM_FILTERS"||t.type==="UPDATE_SETTINGS")&&(O(),setTimeout(T,300),o({success:!0}));return!0});var K;typeof chrome<"u"&&((K=chrome.storage)!=null&&K.onChanged)&&chrome.storage.onChanged.addListener((t,e)=>{e==="local"&&t.acadmail_settings&&(O(),setTimeout(T,300))});O();document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>{setTimeout(T,1200),setTimeout(M,1200),setTimeout(B,1200),setTimeout(H,1200),setTimeout(P,1200)}):(setTimeout(T,1200),setTimeout(M,1200),setTimeout(B,1200),setTimeout(H,1200),setTimeout(P,1200));let Z=location.href;new MutationObserver(()=>{const t=location.href;t!==Z&&(Z=t,setTimeout(()=>{L({type:"EMAIL_CHANGED"}),P(),T(),M(),B()},400)),H()}).observe(document,{subtree:!0,childList:!0});

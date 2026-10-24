@@ -22,6 +22,7 @@ let customFiltersCache: CustomFilter[] = [
   }
 ];
 let labelOverridesCache: Record<string, string> = {};
+let preferredLabelsCache: string[] = ['Academics', 'Class Rescheduling'];
 
 // Safe message sender
 function safeSendMessage(message: any) {
@@ -75,6 +76,9 @@ function loadSettings() {
         }
         if (res.acadmail_settings.labelOverrides) {
           labelOverridesCache = res.acadmail_settings.labelOverrides;
+        }
+        if (Array.isArray(res.acadmail_settings.preferredLabels)) {
+          preferredLabelsCache = res.acadmail_settings.preferredLabels;
         }
       }
       applyUiMode();
@@ -153,14 +157,17 @@ function saveNewCustomFilter(name: string, keywordsStr: string) {
   showToastNotification(`Created filter "${newFilter.name}"`);
 }
 
-// Inlined classifier supporting custom filters & user label overrides
+// Inlined probabilistic classifier with keyword frequency scoring & user preferential weighting
 function classifyInboxItem(
   subject: string,
   sender: string,
   snippet: string,
   emailId?: string
 ): { category: CategoryType; courseCode?: string; isPhd?: boolean } {
-  const combined = `${subject} ${sender} ${snippet}`.toLowerCase();
+  const subjectLower = (subject || '').toLowerCase();
+  const senderLower = (sender || '').toLowerCase();
+  const snippetLower = (snippet || '').toLowerCase();
+  const combined = `${subjectLower} ${senderLower} ${snippetLower}`;
 
   const courseMatch = subject.match(/\b([A-Z]{2,4}\s?[-_]?\s?\d{3,4}[A-Z]?)\b/i);
   const courseCode = courseMatch ? courseMatch[1].toUpperCase() : undefined;
@@ -177,20 +184,8 @@ function classifyInboxItem(
     return { category: labelOverridesCache[rowKey], courseCode };
   }
 
-  // 0.5. Check user-defined custom filters
-  if (customFiltersCache && customFiltersCache.length > 0) {
-    for (const filter of customFiltersCache) {
-      if (
-        filter.keywords &&
-        filter.keywords.some((k) => k.trim() && combined.includes(k.trim().toLowerCase()))
-      ) {
-        return { category: filter.name, courseCode };
-      }
-    }
-  }
-
   // 1. PhD and Viva-Voce Notices -> Route directly to General
-  if (
+  const isPhd =
     combined.includes('viva') ||
     combined.includes('viva-voce') ||
     combined.includes('viva voce') ||
@@ -202,127 +197,116 @@ function classifyInboxItem(
     combined.includes('synopsis submission') ||
     combined.includes('ph.d. viva') ||
     combined.includes('phd viva') ||
-    combined.includes('doctoral defense')
-  ) {
+    combined.includes('doctoral defense') ||
+    combined.includes('comprehensive exam presentation');
+
+  if (isPhd) {
     return { category: 'General', courseCode, isPhd: true };
   }
 
-  // 2. Class Rescheduling
-  if (
-    combined.includes('reschedule') ||
-    combined.includes('rescheduled') ||
-    combined.includes('postpone') ||
-    combined.includes('postponed') ||
-    combined.includes('cancelled') ||
-    combined.includes('class canceled') ||
-    combined.includes('venue change') ||
-    combined.includes('room change') ||
-    combined.includes('lecture timing') ||
-    combined.includes('no class today') ||
-    combined.includes('extra class')
-  ) {
-    return { category: 'Class Rescheduling', courseCode };
+  // 2. Probabilistic keyword scoring across candidate categories
+  const scoreMap: Record<string, number> = {
+    'Class Rescheduling': 0,
+    'Competitions & Tournaments': 0,
+    'Workshops': 0,
+    'Academics': courseCode ? 6.0 : 0,
+    'General': 1.0,
+  };
+
+  if (customFiltersCache && customFiltersCache.length > 0) {
+    customFiltersCache.forEach((cf) => {
+      scoreMap[cf.name] = 0;
+    });
   }
 
-  // 3. Competitions & Tournaments
-  if (
-    combined.includes('competition') ||
-    combined.includes('tournament') ||
-    combined.includes('contest') ||
-    combined.includes('hackathon') ||
-    combined.includes('sociothon') ||
-    combined.includes('devfolio') ||
-    combined.includes('trials') ||
-    combined.includes('open trials') ||
-    combined.includes('inter-iit') ||
-    combined.includes('inter iit') ||
-    combined.includes('inter-hostel') ||
-    combined.includes('inter hostel') ||
-    combined.includes('inter-college') ||
-    combined.includes('championship') ||
-    combined.includes('trophy') ||
-    combined.includes('athletics') ||
-    combined.includes('sports') ||
-    combined.includes('cricket') ||
-    combined.includes('football') ||
-    combined.includes('badminton') ||
-    combined.includes('volleyball') ||
-    combined.includes('table tennis') ||
-    combined.includes('chess') ||
-    combined.includes('squash') ||
-    combined.includes('esports') ||
-    combined.includes('case competition') ||
-    combined.includes('case comp') ||
-    combined.includes('quiz competition') ||
-    combined.includes('challenge') ||
-    combined.includes('cash prize') ||
-    combined.includes('prize pool') ||
-    combined.includes('mushaira') ||
-    combined.includes('ideathon')
-  ) {
-    return { category: 'Competitions & Tournaments', courseCode };
+  const scoreWords = (cat: string, strongKws: string[], medKws: string[], senderCues: string[] = []) => {
+    let score = 0;
+    for (const kw of strongKws) {
+      if (subjectLower.includes(kw)) score += 6.0;
+      else if (snippetLower.includes(kw)) score += 3.0;
+    }
+    for (const kw of medKws) {
+      if (subjectLower.includes(kw)) score += 3.5;
+      else if (snippetLower.includes(kw)) score += 1.5;
+    }
+    for (const cue of senderCues) {
+      if (senderLower.includes(cue)) score += 2.5;
+    }
+    if (scoreMap[cat] !== undefined) scoreMap[cat] += score;
+  };
+
+  scoreWords(
+    'Class Rescheduling',
+    ['reschedule', 'rescheduled', 'class cancelled', 'class canceled', 'lecture cancelled', 'no class today', 'no class', 'extra class', 'room change', 'venue change', 'timing change', 'rescheduled lecture', 'swapped class'],
+    ['cancelled', 'canceled', 'postpone', 'postponed', 'lecture timing', 'timing', 'schedule change'],
+    ['acad', 'timetable']
+  );
+
+  scoreWords(
+    'Competitions & Tournaments',
+    ['competition', 'tournament', 'hackathon', 'sociothon', 'ideathon', 'devfolio', 'open trials', 'inter-iit', 'inter iit', 'inter-hostel', 'inter-college', 'championship', 'prize pool', 'cash prize', 'case competition', 'quiz competition', 'coding contest', 'athletics'],
+    ['contest', 'trials', 'sports', 'cricket', 'football', 'badminton', 'volleyball', 'table tennis', 'chess', 'squash', 'esports', 'case comp', 'challenge', 'mushaira', 'trophy'],
+    ['sports', 'gymkhana', 'cultural', 'council', 'club']
+  );
+
+  scoreWords(
+    'Workshops',
+    ['workshop', 'bootcamp', 'masterclass', 'hands-on session', 'distinguished lecture', 'guest lecture', 'orientation talk', 'intro talk', 'intro talks', 'introductory talk', 'conclave', 'symposium', 'info session', 'tech talk'],
+    ['webinar', 'seminar', 'talk by', 'opening talk', 'hands-on', 'enactus', 'sdslabs', 'pragati', 'hr conclave', 'panel discussion'],
+    ['seminar', 'chapter', 'society', 'ieee', 'acm']
+  );
+
+  scoreWords(
+    'Academics',
+    ['assignment', 'homework', 'syllabus', 'midterm', 'endterm', 'quiz', 'exam', 'examination', 'lab manual', 'grading', 'grade submission', 'project evaluation', 'teaching day'],
+    ['canvas', 'moodle', 'classroom', 'prof.', 'professor', 'lecture', 'faculty', 'tutorial', 'office hours', 'ug-i', 'ug-ii', 'pg-i', 'coursework', 'submission'],
+    ['acad', 'faculty', 'professor', 'instructor', 'doaa', 'dean']
+  );
+
+  if (customFiltersCache && customFiltersCache.length > 0) {
+    customFiltersCache.forEach((cf) => {
+      if (cf.keywords && cf.keywords.length > 0) {
+        scoreWords(cf.name, cf.keywords, [cf.name.toLowerCase()], []);
+      }
+    });
   }
 
-  // 4. Workshops & Talks
-  if (
-    combined.includes('intro talk') ||
-    combined.includes('intro talks') ||
-    combined.includes('opening talk') ||
-    combined.includes('introductory talk') ||
-    combined.includes('orientation talk') ||
-    combined.includes('info session') ||
-    combined.includes('tech talk') ||
-    combined.includes('talk by') ||
-    combined.includes('distinguished lecture') ||
-    combined.includes('guest lecture') ||
-    combined.includes('workshop') ||
-    combined.includes('webinar') ||
-    combined.includes('seminar') ||
-    combined.includes('conclave') ||
-    combined.includes('symposium') ||
-    combined.includes('bootcamp') ||
-    combined.includes('masterclass') ||
-    combined.includes('hands-on') ||
-    combined.includes('enactus') ||
-    combined.includes('sdslabs') ||
-    combined.includes('pragati') ||
-    combined.includes('hr conclave')
-  ) {
-    return { category: 'Workshops', courseCode };
+  // 3. User Preferential Weighting
+  // "even if prob is low then too add it in high prefernceial labels"
+  const userPreferences = preferredLabelsCache && preferredLabelsCache.length > 0
+    ? preferredLabelsCache
+    : ['Academics', 'Class Rescheduling'];
+
+  const boostedScores: Record<string, number> = {};
+  const categories = Object.keys(scoreMap);
+
+  categories.forEach((cat) => {
+    const raw = scoreMap[cat];
+    const isPreferred = userPreferences.includes(cat);
+    if (isPreferred && raw > 0) {
+      // 4.5x boost + 4.0 base prior bonus: routes to preferred label even on subtle keywords
+      boostedScores[cat] = raw * 4.5 + 4.0;
+    } else {
+      boostedScores[cat] = raw;
+    }
+  });
+
+  let topCategory: CategoryType = 'General';
+  let maxScore = -1;
+
+  categories.forEach((cat) => {
+    if (boostedScores[cat] > maxScore) {
+      maxScore = boostedScores[cat];
+      topCategory = cat;
+    }
+  });
+
+  const anyMatched = categories.some((cat) => cat !== 'General' && scoreMap[cat] > 0);
+  if (!anyMatched && !courseCode) {
+    topCategory = 'General';
   }
 
-  // 5. Academics
-  if (
-    courseCode ||
-    combined.includes('assignment') ||
-    combined.includes('homework') ||
-    combined.includes('syllabus') ||
-    combined.includes('quiz') ||
-    combined.includes('midterm') ||
-    combined.includes('endterm') ||
-    combined.includes('exam') ||
-    combined.includes('grade') ||
-    combined.includes('grading') ||
-    combined.includes('lab manual') ||
-    combined.includes('tutorial') ||
-    combined.includes('office hours') ||
-    combined.includes('canvas') ||
-    combined.includes('moodle') ||
-    combined.includes('classroom') ||
-    combined.includes('prof.') ||
-    combined.includes('professor') ||
-    combined.includes('teaching day') ||
-    combined.includes('lecture') ||
-    combined.includes('faculty') ||
-    combined.includes('ug-i') ||
-    combined.includes('ug-ii') ||
-    combined.includes('pg-i') ||
-    combined.includes('project evaluation')
-  ) {
-    return { category: 'Academics', courseCode };
-  }
-
-  return { category: 'General', courseCode };
+  return { category: topCategory, courseCode, isPhd: false };
 }
 
 // Track clicked rows in Gmail
@@ -1718,11 +1702,22 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
     } else if (message.type === 'RELABEL_EMAIL') {
       saveEmailLabelOverride(message.emailId, message.subject || '', message.sender || '', message.newCategory);
       sendResponse({ success: true });
-    } else if (message.type === 'UPDATE_CUSTOM_FILTERS') {
+    } else if (message.type === 'UPDATE_CUSTOM_FILTERS' || message.type === 'UPDATE_SETTINGS') {
       loadSettings();
+      setTimeout(scanVisibleInbox, 300);
       sendResponse({ success: true });
     }
     return true;
+  });
+}
+
+// Watch settings changes in storage
+if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.acadmail_settings) {
+      loadSettings();
+      setTimeout(scanVisibleInbox, 300);
+    }
   });
 }
 
