@@ -349,7 +349,7 @@ export default function MobileApp() {
       label: 'Assignment Due Date',
       prompt: 'When is my next assignment due?',
       icon: CalendarCheck2,
-      category: 'Academics',
+      category: 'Assignment',
     },
     {
       id: 'qp-hackathon',

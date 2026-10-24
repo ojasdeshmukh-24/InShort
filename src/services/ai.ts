@@ -484,22 +484,28 @@ export function answerWithLocalHeuristic(
   // 1. Next Assignment Due
   if (
     q.includes('assignment') ||
+    q.includes('tutorial') ||
     q.includes('hw') ||
     q.includes('homework') ||
     q.includes('problem set') ||
+    q.includes('pset') ||
     q.includes('due') ||
+    q.includes('deadline') ||
     q.includes('submission') ||
     q.includes('when is my next')
   ) {
     const assignmentMatches = emails.filter((e) => {
       const text = `${e.subject} ${e.bodyOrSnippet}`.toLowerCase();
       return (
+        e.category === 'Assignment' ||
         e.category === 'Academics' ||
         text.includes('assignment') ||
+        text.includes('tutorial') ||
         text.includes('homework') ||
         text.includes('due date') ||
         text.includes('submission deadline') ||
         text.includes('problem set') ||
+        text.includes('pset') ||
         text.includes('lab submission')
       );
     });
