@@ -1,13 +1,24 @@
-import { AnalysisResult, ExtractedEmail, CategoryType, PolishTone } from '../types';
+import { AnalysisResult, ExtractedEmail, CategoryType, PolishTone, CustomFilter } from '../types';
 import { classifyInboxItem } from './classifier';
 
 /**
  * Robust Local Heuristic Fallback
  */
-export function extractHeuristicFallback(email: ExtractedEmail): AnalysisResult {
+export function extractHeuristicFallback(
+  email: ExtractedEmail,
+  customFilters?: CustomFilter[],
+  labelOverrides?: Record<string, string>
+): AnalysisResult {
   const text = `${email.subject}\n${email.bodyText}`;
 
-  const { category, courseCode } = classifyInboxItem(email.subject, email.senderName, email.bodyText);
+  const { category, courseCode } = classifyInboxItem(
+    email.subject,
+    email.senderName,
+    email.bodyText,
+    customFilters,
+    labelOverrides,
+    email.id
+  );
 
   const meetingLinks: AnalysisResult['meetingLinks'] = [];
   const zoomRegex = /https:\/\/[a-zA-Z0-9-]+\.zoom\.us\/j\/[a-zA-Z0-9?&=_-]+/gi;
@@ -83,28 +94,60 @@ export function extractHeuristicFallback(email: ExtractedEmail): AnalysisResult 
 export async function analyzeAcademicEmail(
   email: ExtractedEmail,
   apiKey: string,
-  groqKey?: string
+  groqKey?: string,
+  customFilters?: CustomFilter[],
+  labelOverrides?: Record<string, string>
 ): Promise<AnalysisResult> {
+  let result: AnalysisResult;
+
   if (groqKey && groqKey.trim() !== '') {
     try {
-      return await analyzeWithGroq(email, groqKey.trim());
+      result = await analyzeWithGroq(email, groqKey.trim());
     } catch (e) {
       console.warn('[AcadMail AI] Groq attempt failed, falling back to Gemini cascade:', e);
+      result = await runGeminiOrFallback(email, apiKey, customFilters, labelOverrides);
+    }
+  } else if (apiKey && apiKey.trim() !== '') {
+    result = await runGeminiOrFallback(email, apiKey, customFilters, labelOverrides);
+  } else {
+    result = extractHeuristicFallback(email, customFilters, labelOverrides);
+  }
+
+  // Enforce manual label override or custom filter if present
+  if (email.id && labelOverrides && labelOverrides[email.id]) {
+    result.category = labelOverrides[email.id];
+  } else if (labelOverrides && labelOverrides[email.subject]) {
+    result.category = labelOverrides[email.subject];
+  } else if (customFilters && customFilters.length > 0) {
+    const combined = `${email.subject} ${email.senderName} ${email.bodyText}`.toLowerCase();
+    for (const f of customFilters) {
+      if (f.keywords && f.keywords.some((k) => k.trim() && combined.includes(k.trim().toLowerCase()))) {
+        result.category = f.name;
+        break;
+      }
     }
   }
 
+  return result;
+}
+
+async function runGeminiOrFallback(
+  email: ExtractedEmail,
+  apiKey: string,
+  customFilters?: CustomFilter[],
+  labelOverrides?: Record<string, string>
+): Promise<AnalysisResult> {
   if (apiKey && apiKey.trim() !== '') {
     try {
       return await analyzeWithGeminiCascade(email, apiKey.trim());
     } catch (err: any) {
       console.warn('[AcadMail AI] Gemini cascade failed, activating smart local engine:', err);
-      const fallback = extractHeuristicFallback(email);
+      const fallback = extractHeuristicFallback(email, customFilters, labelOverrides);
       fallback.suggestedReply += `\n(Processed via local parser due to Google server traffic).`;
       return fallback;
     }
   }
-
-  return extractHeuristicFallback(email);
+  return extractHeuristicFallback(email, customFilters, labelOverrides);
 }
 
 /**

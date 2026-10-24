@@ -34,7 +34,12 @@ import {
   ArrowUpRight,
   Moon,
   Sun,
-  LayoutGrid
+  LayoutGrid,
+  Plus,
+  Trash2,
+  Tag,
+  ChevronDown,
+  Edit3
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -42,11 +47,20 @@ import {
   CategoryType,
   InboxRowItem,
   AggregatedDeadline,
-  UiIntegrationMode
+  UiIntegrationMode,
+  CustomFilter
 } from '../types';
 import { analyzeAcademicEmail } from '../services/ai';
 import { createGoogleCalendarUrl } from '../services/calendar';
-import { getSettings, saveSettings, getCachedAnalysis, saveAnalysis } from '../services/storage';
+import {
+  getSettings,
+  saveSettings,
+  getCachedAnalysis,
+  saveAnalysis,
+  saveLabelOverride,
+  addCustomFilter,
+  deleteCustomFilter
+} from '../services/storage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'buckets' | 'deadlines' | 'detail'>('buckets');
@@ -69,6 +83,28 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isScanningInbox, setIsScanningInbox] = useState(false);
   const [syncGmailDom, setSyncGmailDom] = useState(false);
+
+  // Custom Filters & Relabeling State
+  const [customFilters, setCustomFilters] = useState<CustomFilter[]>([
+    {
+      id: 'filter-placements',
+      name: 'Placements & Internships',
+      color: '#8b5cf6',
+      keywords: ['placement', 'tpo', 'internship', 'interview', 'shortlist', 'offer', 'ctc', 'pre-placement']
+    },
+    {
+      id: 'filter-hostel',
+      name: 'Hostel & Campus Mess',
+      color: '#06b6d4',
+      keywords: ['hostel', 'mess', 'warden', 'room', 'maintenance', 'electricity', 'water', 'hall of residence']
+    }
+  ]);
+  const [labelOverrides, setLabelOverrides] = useState<Record<string, string>>({});
+  const [showRelabelMenu, setShowRelabelMenu] = useState(false);
+  const [showAddFilterModal, setShowAddFilterModal] = useState(false);
+  const [newFilterName, setNewFilterName] = useState('');
+  const [newFilterKeywords, setNewFilterKeywords] = useState('');
+  const [newFilterColor, setNewFilterColor] = useState('#8b5cf6');
 
   // Aggregated Deadlines State
   const [deadlines, setDeadlines] = useState<AggregatedDeadline[]>([]);
@@ -98,6 +134,12 @@ export default function App() {
       } else {
         setUiMode('blended');
       }
+      if (Array.isArray(settings.customFilters) && settings.customFilters.length > 0) {
+        setCustomFilters(settings.customFilters);
+      }
+      if (settings.labelOverrides) {
+        setLabelOverrides(settings.labelOverrides);
+      }
       if (!settings.apiKey && !settings.groqApiKey) {
         setShowSettings(true);
       }
@@ -107,7 +149,15 @@ export default function App() {
     fetchEmailFromActiveTab();
 
     const listener = (message: any) => {
-      if (message.type === 'EMAIL_CHANGED') {
+      if (message.type === 'EMAIL_CHANGED' || message.type === 'SETTINGS_CHANGED') {
+        getSettings().then((s) => {
+          if (Array.isArray(s.customFilters) && s.customFilters.length > 0) {
+            setCustomFilters(s.customFilters);
+          }
+          if (s.labelOverrides) {
+            setLabelOverrides(s.labelOverrides);
+          }
+        });
         fetchEmailFromActiveTab();
         scanInbox();
       }
@@ -340,7 +390,13 @@ export default function App() {
     setError(null);
 
     try {
-      const result = await analyzeAcademicEmail(targetEmail, keyToUse, groqToUse);
+      const result = await analyzeAcademicEmail(
+        targetEmail,
+        keyToUse,
+        groqToUse,
+        customFilters,
+        labelOverrides
+      );
       setAnalysis(result);
       await saveAnalysis(targetEmail.id, result);
     } catch (err: any) {
@@ -348,6 +404,103 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRelabelEmail = async (emailId: string, newCategory: string) => {
+    if (!email) return;
+    const updatedOverrides = {
+      ...labelOverrides,
+      [emailId]: newCategory,
+      [email.subject]: newCategory,
+    };
+    setLabelOverrides(updatedOverrides);
+    await saveLabelOverride(emailId, newCategory);
+    if (email.subject) {
+      await saveLabelOverride(email.subject, newCategory);
+    }
+
+    // Update current analysis
+    if (analysis) {
+      const updatedAnalysis = { ...analysis, category: newCategory };
+      setAnalysis(updatedAnalysis);
+      await saveAnalysis(emailId, updatedAnalysis);
+    }
+
+    // Update inboxItems state
+    setInboxItems((prev) =>
+      prev.map((item) =>
+        item.id === emailId || item.subject === email.subject
+          ? { ...item, category: newCategory }
+          : item
+      )
+    );
+
+    setShowRelabelMenu(false);
+
+    // Notify active tab so in-page chip and Gmail row badge update in real-time
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'RELABEL_EMAIL',
+        emailId,
+        newCategory,
+      }).catch(() => {});
+    }
+  };
+
+  const handleAddCustomFilter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFilterName.trim()) return;
+
+    const keywords = newFilterKeywords
+      .split(',')
+      .map((k) => k.trim().toLowerCase())
+      .filter(Boolean);
+
+    const filter: CustomFilter = {
+      id: `filter-${Date.now()}`,
+      name: newFilterName.trim(),
+      color: newFilterColor || '#8b5cf6',
+      keywords: keywords.length > 0 ? keywords : [newFilterName.trim().toLowerCase()],
+    };
+
+    const updatedFilters = [...customFilters, filter];
+    setCustomFilters(updatedFilters);
+    await addCustomFilter(filter);
+
+    setNewFilterName('');
+    setNewFilterKeywords('');
+    setShowAddFilterModal(false);
+
+    // Notify Gmail tab to update its chip bar
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'UPDATE_CUSTOM_FILTERS',
+        customFilters: updatedFilters,
+      }).catch(() => {});
+    }
+
+    // Rescan inbox with new filters
+    scanInbox();
+  };
+
+  const handleDeleteCustomFilter = async (filterId: string) => {
+    const updatedFilters = customFilters.filter((f) => f.id !== filterId);
+    setCustomFilters(updatedFilters);
+    await deleteCustomFilter(filterId);
+
+    // Notify Gmail tab
+    const tab = await getGmailTab();
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'UPDATE_CUSTOM_FILTERS',
+        customFilters: updatedFilters,
+      }).catch(() => {});
+    }
+
+    // Rescan inbox
+    scanInbox();
   };
 
   const handleSetUiMode = async (mode: UiIntegrationMode) => {
@@ -370,6 +523,7 @@ export default function App() {
       groqApiKey: groqKey.trim(),
       inPageIntegration: uiMode !== 'off',
       uiMode,
+      customFilters,
     });
     setShowSettings(false);
     setError(null);
@@ -439,13 +593,40 @@ export default function App() {
           activeBtn: 'bg-rose-600 dark:bg-rose-600 text-white border-rose-600 shadow-sm shadow-rose-500/20',
           countBadge: 'bg-rose-100 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200',
         };
-      default:
+      case 'General':
         return {
           icon: <ScrollText className="w-3.5 h-3.5" />,
           chip: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/60',
           dot: 'bg-slate-600 dark:bg-slate-400',
           activeBtn: 'bg-slate-800 dark:bg-slate-700 text-white border-slate-700 shadow-sm',
           countBadge: 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+        };
+      default:
+        // Custom user-defined categories
+        if (cat.toLowerCase().includes('placement') || cat.toLowerCase().includes('intern')) {
+          return {
+            icon: <Tag className="w-3.5 h-3.5" />,
+            chip: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60',
+            dot: 'bg-purple-600 dark:bg-purple-400',
+            activeBtn: 'bg-purple-600 dark:bg-purple-600 text-white border-purple-600 shadow-sm shadow-purple-500/20',
+            countBadge: 'bg-purple-100 dark:bg-purple-900/80 text-purple-800 dark:text-purple-200',
+          };
+        }
+        if (cat.toLowerCase().includes('hostel') || cat.toLowerCase().includes('mess')) {
+          return {
+            icon: <Tag className="w-3.5 h-3.5" />,
+            chip: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-200/80 dark:border-cyan-800/60',
+            dot: 'bg-cyan-600 dark:bg-cyan-400',
+            activeBtn: 'bg-cyan-600 dark:bg-cyan-600 text-white border-cyan-600 shadow-sm shadow-cyan-500/20',
+            countBadge: 'bg-cyan-100 dark:bg-cyan-900/80 text-cyan-800 dark:text-cyan-200',
+          };
+        }
+        return {
+          icon: <Tag className="w-3.5 h-3.5" />,
+          chip: 'bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-200/80 dark:border-violet-800/60',
+          dot: 'bg-violet-600 dark:bg-violet-400',
+          activeBtn: 'bg-violet-600 dark:bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-500/20',
+          countBadge: 'bg-violet-100 dark:bg-violet-900/80 text-violet-800 dark:text-violet-200',
         };
     }
   };
@@ -469,7 +650,7 @@ export default function App() {
     return true;
   });
 
-  const counts = {
+  const counts: Record<string, number> = {
     all: inboxItems.length,
     academics: inboxItems.filter((i) => i.category === 'Academics').length,
     competitions: inboxItems.filter((i) => i.category === 'Competitions & Tournaments').length,
@@ -477,6 +658,9 @@ export default function App() {
     rescheduling: inboxItems.filter((i) => i.category === 'Class Rescheduling').length,
     general: inboxItems.filter((i) => i.category === 'General').length,
   };
+  customFilters.forEach((f) => {
+    counts[f.name] = inboxItems.filter((i) => i.category === f.name).length;
+  });
 
   const pendingDeadlinesCount = deadlines.filter((d) => !d.completed).length;
 
@@ -748,6 +932,87 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Custom Academic Filters Management */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                      <span>Custom Academic Filters</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {customFilters.length} active
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    Add custom filters for placements, hostels, clubs, or research labs.
+                  </p>
+
+                  {/* Existing Filters List */}
+                  {customFilters.length > 0 && (
+                    <div className="space-y-1 max-h-36 overflow-y-auto">
+                      {customFilters.map((f) => (
+                        <div
+                          key={f.id}
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800"
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <div className="font-bold text-[11px] text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: f.color || '#8b5cf6' }} />
+                              <span className="truncate">{f.name}</span>
+                            </div>
+                            <div className="text-[9px] text-slate-400 truncate mt-0.5">
+                              Keywords: {f.keywords.join(', ')}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCustomFilter(f.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition shrink-0"
+                            title="Delete custom filter"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add New Filter Inline */}
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-900/40 space-y-2">
+                    <div className="text-[10px] font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1">
+                      <Plus className="w-3 h-3" />
+                      <span>Add New Custom Filter</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <input
+                        type="text"
+                        placeholder="Filter Name (e.g. Library & Fines)"
+                        value={newFilterName}
+                        onChange={(e) => setNewFilterName(e.target.value)}
+                        className="w-full px-2 py-1 text-[11px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Keywords (e.g. library, book, fine, return)"
+                        value={newFilterKeywords}
+                        onChange={(e) => setNewFilterKeywords(e.target.value)}
+                        className="w-full px-2 py-1 text-[11px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        disabled={!newFilterName.trim()}
+                        onClick={handleAddCustomFilter}
+                        className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-2xs"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Create Filter</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-end pt-1">
                   <button
                     type="submit"
@@ -938,6 +1203,63 @@ export default function App() {
                     {counts.general}
                   </span>
                 </button>
+
+                {/* Dynamic User-Defined Custom Filters */}
+                {customFilters.length > 0 && (
+                  <div className="space-y-1.5 pt-1.5">
+                    <div className="flex items-center justify-between px-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Tag className="w-3 h-3 text-purple-500" />
+                        <span>Custom Academic Filters</span>
+                      </span>
+                      <button
+                        onClick={() => setShowAddFilterModal(true)}
+                        className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline font-semibold flex items-center gap-0.5"
+                      >
+                        <Plus className="w-3 h-3" /> Add Filter
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {customFilters.map((filter) => {
+                        const theme = getCategoryTheme(filter.name);
+                        const isSelected = selectedCategory === filter.name;
+
+                        return (
+                          <button
+                            key={filter.id}
+                            onClick={() => handleCategoryFilterChange(filter.name)}
+                            className={`p-2.5 rounded-2xl border text-left transition flex items-center justify-between group ${
+                              isSelected
+                                ? theme.activeBtn
+                                : 'bg-white dark:bg-[#111827] hover:border-purple-300 dark:hover:border-purple-800 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 shadow-2xs'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <div
+                                className={`p-1.5 rounded-lg ${
+                                  isSelected
+                                    ? 'bg-white/20 text-white'
+                                    : 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400'
+                                }`}
+                              >
+                                <Tag className="w-3.5 h-3.5" />
+                              </div>
+                              <span className="font-bold truncate text-[11px]">{filter.name}</span>
+                            </div>
+                            <span
+                              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                                isSelected ? 'bg-white/20 text-white' : theme.countBadge
+                              }`}
+                            >
+                              {counts[filter.name] || 0}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Subheader Toolbar */}
@@ -1277,12 +1599,73 @@ export default function App() {
                       {(() => {
                         const theme = getCategoryTheme(analysis.category);
                         return (
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold border text-[10px] ${theme.chip}`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
-                            {analysis.category}
-                          </span>
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowRelabelMenu(!showRelabelMenu)}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold border text-[10px] transition hover:shadow-xs cursor-pointer ${theme.chip}`}
+                              title="Click to manually change or override this email label"
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
+                              <span>{analysis.category}</span>
+                              <ChevronDown className="w-3 h-3 opacity-60" />
+                            </button>
+
+                            {showRelabelMenu && (
+                              <div className="absolute left-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 space-y-1 animate-in fade-in duration-150">
+                                <div className="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
+                                  Change Email Category
+                                </div>
+                                {(
+                                  [
+                                    'Academics',
+                                    'Competitions & Tournaments',
+                                    'Workshops',
+                                    'Class Rescheduling',
+                                    'General',
+                                  ] as CategoryType[]
+                                ).map((cat) => (
+                                  <button
+                                    key={cat}
+                                    onClick={() => handleRelabelEmail(email.id, cat)}
+                                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+                                      analysis.category === cat
+                                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-bold'
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                    }`}
+                                  >
+                                    <span>{cat}</span>
+                                    {analysis.category === cat && (
+                                      <Check className="w-3 h-3 text-blue-600" />
+                                    )}
+                                  </button>
+                                ))}
+
+                                {customFilters.length > 0 && (
+                                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
+                                    <div className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-purple-500">
+                                      Custom Filters
+                                    </div>
+                                    {customFilters.map((f) => (
+                                      <button
+                                        key={f.id}
+                                        onClick={() => handleRelabelEmail(email.id, f.name)}
+                                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+                                          analysis.category === f.name
+                                            ? 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold'
+                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                        }`}
+                                      >
+                                        <span className="truncate">{f.name}</span>
+                                        {analysis.category === f.name && (
+                                          <Check className="w-3 h-3 text-purple-600" />
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         );
                       })()}
 
@@ -1522,6 +1905,75 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {/* Add Filter Modal */}
+        {showAddFilterModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+            <div className="bg-white dark:bg-[#0f172a] rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-purple-600" />
+                  <span>New Custom Academic Filter</span>
+                </h3>
+                <button
+                  onClick={() => setShowAddFilterModal(false)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddCustomFilter} className="space-y-2.5">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                    Filter Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newFilterName}
+                    onChange={(e) => setNewFilterName(e.target.value)}
+                    placeholder="e.g. Placements, Library, Hostel"
+                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500 text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                    Matching Keywords (Comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newFilterKeywords}
+                    onChange={(e) => setNewFilterKeywords(e.target.value)}
+                    placeholder="e.g. interview, ctc, tpo, offer"
+                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500 text-slate-900 dark:text-slate-100"
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1">
+                    Emails containing these words in their subject or body will be auto-categorized here.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddFilterModal(false)}
+                    className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
+                  >
+                    Create Filter
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="border-t border-slate-200/70 dark:border-slate-800/80 px-3.5 py-2 text-center text-[10px] text-slate-400 dark:text-slate-500 bg-white dark:bg-[#0f172a] transition-colors">

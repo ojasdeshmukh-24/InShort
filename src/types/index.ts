@@ -1,9 +1,18 @@
-export type CategoryType =
+export type DefaultCategoryType =
   | 'Academics'
   | 'Workshops'
   | 'Competitions & Tournaments'
   | 'Class Rescheduling'
   | 'General';
+
+export type CategoryType = DefaultCategoryType | string;
+
+export interface CustomFilter {
+  id: string;
+  name: string;
+  color: string;
+  keywords: string[];
+}
 
 export interface ActionItem {
   id: string;
@@ -79,6 +88,8 @@ export interface UserSettings {
   academicLevel?: 'undergrad' | 'grad' | 'researcher' | 'faculty';
   inPageIntegration?: boolean; // When true, injects in-page elements into Gmail
   uiMode?: UiIntegrationMode; // 'blended' (Native Material 3), 'floating' (Pill toolbar), 'off' (Side Panel only)
+  customFilters?: CustomFilter[];
+  labelOverrides?: Record<string, string>;
   customLabels: {
     name: string;
     color: string;

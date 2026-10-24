@@ -1,4 +1,4 @@
-import { CategoryType } from '../types';
+import { CategoryType, CustomFilter } from '../types';
 
 /**
  * High-speed academic classifier for sorting batch emails in milliseconds.
@@ -6,12 +6,35 @@ import { CategoryType } from '../types';
 export function classifyInboxItem(
   subject: string,
   sender: string,
-  snippet: string
+  snippet: string,
+  customFilters?: CustomFilter[],
+  labelOverrides?: Record<string, string>,
+  emailId?: string
 ): { category: CategoryType; courseCode?: string } {
   const combined = `${subject} ${sender} ${snippet}`.toLowerCase();
 
   const courseMatch = subject.match(/\b([A-Z]{2,4}\s?[-_]?\s?\d{3,4}[A-Z]?)\b/i);
   const courseCode = courseMatch ? courseMatch[1].toUpperCase() : undefined;
+
+  // 0. Check manual user label overrides first (User Preference Rule)
+  if (emailId && labelOverrides && labelOverrides[emailId]) {
+    return { category: labelOverrides[emailId], courseCode };
+  }
+  if (labelOverrides && labelOverrides[subject]) {
+    return { category: labelOverrides[subject], courseCode };
+  }
+
+  // 0.5. Check user-defined custom filters
+  if (customFilters && customFilters.length > 0) {
+    for (const filter of customFilters) {
+      if (
+        filter.keywords &&
+        filter.keywords.some((k) => k.trim() && combined.includes(k.trim().toLowerCase()))
+      ) {
+        return { category: filter.name, courseCode };
+      }
+    }
+  }
 
   // 1. PhD and Viva-Voce Notices -> Route directly to General (as requested)
   if (

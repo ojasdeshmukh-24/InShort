@@ -1,4 +1,4 @@
-import { UserSettings, AnalysisResult, ExtractedEmail } from '../types';
+import { UserSettings, AnalysisResult, ExtractedEmail, CustomFilter } from '../types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   apiKey: '',
@@ -8,6 +8,21 @@ const DEFAULT_SETTINGS: UserSettings = {
   academicLevel: 'undergrad',
   inPageIntegration: true,
   uiMode: 'blended',
+  customFilters: [
+    {
+      id: 'filter-placements',
+      name: 'Placements & Internships',
+      color: '#8b5cf6',
+      keywords: ['placement', 'tpo', 'internship', 'interview', 'shortlist', 'offer', 'ctc', 'pre-placement']
+    },
+    {
+      id: 'filter-hostel',
+      name: 'Hostel & Campus Mess',
+      color: '#06b6d4',
+      keywords: ['hostel', 'mess', 'warden', 'room', 'maintenance', 'electricity', 'water', 'hall of residence']
+    }
+  ],
+  labelOverrides: {},
   customLabels: [
     { name: 'Thesis / Research', color: '#8b5cf6', keywords: ['thesis', 'dissertation', 'advisor', 'lab meeting'] },
     { name: 'Financial Aid', color: '#10b981', keywords: ['scholarship', 'bursar', 'grant', 'tuition', 'finaid'] },
@@ -43,6 +58,24 @@ export async function saveSettings(settings: Partial<UserSettings>): Promise<voi
       resolve();
     });
   });
+}
+
+export async function saveLabelOverride(emailId: string, category: string): Promise<void> {
+  const current = await getSettings();
+  const overrides = { ...(current.labelOverrides || {}), [emailId]: category };
+  await saveSettings({ labelOverrides: overrides });
+}
+
+export async function addCustomFilter(filter: CustomFilter): Promise<void> {
+  const current = await getSettings();
+  const filters = [...(current.customFilters || []), filter];
+  await saveSettings({ customFilters: filters });
+}
+
+export async function deleteCustomFilter(filterId: string): Promise<void> {
+  const current = await getSettings();
+  const filters = (current.customFilters || []).filter((f) => f.id !== filterId);
+  await saveSettings({ customFilters: filters });
 }
 
 export async function getCachedAnalysis(emailId: string): Promise<AnalysisResult | null> {

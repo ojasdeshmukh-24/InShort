@@ -1,12 +1,27 @@
-import { ExtractedEmail, InboxRowItem, CategoryType, UiIntegrationMode } from '../types';
+import { ExtractedEmail, InboxRowItem, CategoryType, UiIntegrationMode, CustomFilter } from '../types';
 
-console.log('[AcadMail AI] Ultra-Clean Material 3 Gmail Script active.');
+console.log('[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filters & Relabeling active.');
 
 let lastClickedRow: HTMLElement | null = null;
 let currentActiveFilter: CategoryType | 'ALL' = 'ALL';
 let scannedItemsCache: InboxRowItem[] = [];
 let uiMode: UiIntegrationMode = 'blended';
 let isBriefExpanded = false;
+let customFiltersCache: CustomFilter[] = [
+  {
+    id: 'filter-placements',
+    name: 'Placements & Internships',
+    color: '#8b5cf6',
+    keywords: ['placement', 'tpo', 'internship', 'interview', 'shortlist', 'offer', 'ctc', 'pre-placement']
+  },
+  {
+    id: 'filter-hostel',
+    name: 'Hostel & Campus Mess',
+    color: '#06b6d4',
+    keywords: ['hostel', 'mess', 'warden', 'room', 'maintenance', 'electricity', 'water', 'hall of residence']
+  }
+];
+let labelOverridesCache: Record<string, string> = {};
 
 // Safe message sender
 function safeSendMessage(message: any) {
@@ -32,7 +47,7 @@ function isGmailDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-// Load UI Mode Settings
+// Load UI Mode, Custom Filters & Label Overrides
 function loadSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     chrome.storage.local.get(['acadmail_settings'], (res) => {
@@ -43,6 +58,13 @@ function loadSettings() {
           uiMode = 'off';
         } else {
           uiMode = 'blended';
+        }
+
+        if (Array.isArray(res.acadmail_settings.customFilters)) {
+          customFiltersCache = res.acadmail_settings.customFilters;
+        }
+        if (res.acadmail_settings.labelOverrides) {
+          labelOverridesCache = res.acadmail_settings.labelOverrides;
         }
       }
       applyUiMode();
@@ -67,16 +89,95 @@ function applyUiMode() {
   injectSideRailIcon();
 }
 
-// Inlined classifier for standalone content.js
+// Save manual email re-label override
+function saveEmailLabelOverride(emailId: string, subject: string, sender: string, newCategory: string) {
+  labelOverridesCache[emailId] = newCategory;
+  if (subject) labelOverridesCache[subject] = newCategory;
+  const rowKey = `${subject}::${sender}`.trim();
+  if (rowKey) labelOverridesCache[rowKey] = newCategory;
+
+  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    chrome.storage.local.get(['acadmail_settings'], (res) => {
+      const current = res.acadmail_settings || {};
+      const currentOverrides = current.labelOverrides || {};
+      currentOverrides[emailId] = newCategory;
+      if (subject) currentOverrides[subject] = newCategory;
+      if (rowKey) currentOverrides[rowKey] = newCategory;
+      chrome.storage.local.set({
+        acadmail_settings: { ...current, labelOverrides: currentOverrides }
+      });
+    });
+  }
+
+  scanVisibleInbox();
+  checkAndInjectEmailBrief();
+  safeSendMessage({ type: 'EMAIL_CHANGED' });
+  showToastNotification(`Email re-labeled as "${newCategory}"`);
+}
+
+// Save new custom filter from in-page dialog
+function saveNewCustomFilter(name: string, keywordsStr: string) {
+  if (!name.trim()) return;
+  const keywords = keywordsStr.split(',').map((k) => k.trim().toLowerCase()).filter(Boolean);
+  const newFilter: CustomFilter = {
+    id: `filter-${Date.now()}`,
+    name: name.trim(),
+    color: '#8b5cf6',
+    keywords: keywords.length > 0 ? keywords : [name.trim().toLowerCase()]
+  };
+
+  customFiltersCache.push(newFilter);
+
+  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    chrome.storage.local.get(['acadmail_settings'], (res) => {
+      const current = res.acadmail_settings || {};
+      const existingFilters = current.customFilters || [];
+      chrome.storage.local.set({
+        acadmail_settings: { ...current, customFilters: [...existingFilters, newFilter] }
+      });
+    });
+  }
+
+  scanVisibleInbox();
+  safeSendMessage({ type: 'UPDATE_CUSTOM_FILTERS' });
+  showToastNotification(`Created filter "${newFilter.name}"`);
+}
+
+// Inlined classifier supporting custom filters & user label overrides
 function classifyInboxItem(
   subject: string,
   sender: string,
-  snippet: string
+  snippet: string,
+  emailId?: string
 ): { category: CategoryType; courseCode?: string; isPhd?: boolean } {
   const combined = `${subject} ${sender} ${snippet}`.toLowerCase();
 
   const courseMatch = subject.match(/\b([A-Z]{2,4}\s?[-_]?\s?\d{3,4}[A-Z]?)\b/i);
   const courseCode = courseMatch ? courseMatch[1].toUpperCase() : undefined;
+
+  // 0. Check manual user label overrides first (highest priority)
+  if (emailId && labelOverridesCache[emailId]) {
+    return { category: labelOverridesCache[emailId], courseCode };
+  }
+  if (labelOverridesCache[subject]) {
+    return { category: labelOverridesCache[subject], courseCode };
+  }
+  const rowKey = `${subject}::${sender}`.trim();
+  if (labelOverridesCache[rowKey]) {
+    return { category: labelOverridesCache[rowKey], courseCode };
+  }
+
+  // 0.5. Check user-defined custom filters
+  if (customFiltersCache && customFiltersCache.length > 0) {
+    for (const filter of customFiltersCache) {
+      if (
+        filter.keywords &&
+        filter.keywords.some((k) => k.trim() && combined.includes(k.trim().toLowerCase()))
+      ) {
+        return { category: filter.name, courseCode };
+      }
+    }
+  }
 
   // 1. PhD and Viva-Voce Notices -> Route directly to General
   if (
@@ -256,7 +357,8 @@ function scanVisibleInbox(): InboxRowItem[] {
 
     const isRead = !rowEl.classList.contains('zE');
 
-    const { category, courseCode, isPhd } = classifyInboxItem(subject, sender, snippet);
+    const emailKey = `${subject}::${sender}`.trim();
+    const { category, courseCode, isPhd } = classifyInboxItem(subject, sender, snippet, emailKey);
 
     const item: InboxRowItem = {
       id: `row-${index}-${subject.slice(0, 15).replace(/[^a-zA-Z0-9]/g, '_')}`,
@@ -271,7 +373,7 @@ function scanVisibleInbox(): InboxRowItem[] {
     };
 
     items.push(item);
-    injectRowBadge(rowEl, category, courseCode, isPhd);
+    injectRowBadge(rowEl, category, courseCode, isPhd, subject, sender);
   });
 
   scannedItemsCache = items;
@@ -283,12 +385,14 @@ function scanVisibleInbox(): InboxRowItem[] {
   return items;
 }
 
-// Subtle, elegant micro-badge matching native Gmail labels
+// Subtle, elegant micro-badge matching native Gmail labels (with relabel click)
 function injectRowBadge(
   rowEl: HTMLElement,
   category: CategoryType,
   courseCode?: string,
-  isPhd?: boolean
+  isPhd?: boolean,
+  subject?: string,
+  sender?: string
 ) {
   const existing = rowEl.querySelector('.acadmail-row-badge');
   if (existing) existing.remove();
@@ -336,6 +440,13 @@ function injectRowBadge(
       : 'background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0;';
     icon = '📢';
     labelText = 'General';
+  } else {
+    // Custom user filter
+    badgeColor = isDark
+      ? 'background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);'
+      : 'background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;';
+    icon = '🏷️';
+    labelText = category;
   }
 
   badge.setAttribute(
@@ -352,20 +463,30 @@ function injectRowBadge(
     font-weight: 500;
     font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
     vertical-align: middle;
-    cursor: ${courseCode ? 'pointer' : 'default'};
+    cursor: pointer;
     ${badgeColor}
   `
   );
 
   badge.innerText = `${icon} ${labelText}`;
+  badge.title = courseCode ? `Filter Gmail for ${courseCode} (Right-click to change label)` : `Category: ${category} (Click to change)`;
 
-  if (courseCode) {
-    badge.title = `Filter Gmail for ${courseCode}`;
-    badge.onclick = (e) => {
-      e.stopPropagation();
+  badge.onclick = (e) => {
+    e.stopPropagation();
+    if (courseCode) {
       executeGmailSearch(courseCode);
-    };
-  }
+    } else if (subject && sender) {
+      openRelabelMenu(badge, subject, sender, category);
+    }
+  };
+
+  badge.oncontextmenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (subject && sender) {
+      openRelabelMenu(badge, subject, sender, category);
+    }
+  };
 
   subjectContainer.prepend(badge);
 }
@@ -385,7 +506,7 @@ function executeGmailSearch(query: string) {
   }
 }
 
-// Filter rows on Gmail DOM
+// Filter rows on Gmail DOM (supports custom filters)
 function filterGmailDom(category: CategoryType | 'ALL') {
   currentActiveFilter = category;
   const rows = document.querySelectorAll('tr.zA');
@@ -402,10 +523,11 @@ function filterGmailDom(category: CategoryType | 'ALL') {
 
     let match = false;
     if (category === 'Academics' && (badgeText.includes('🎓') || badgeText.includes('Acads'))) match = true;
-    if (category === 'Competitions & Tournaments' && (badgeText.includes('🏆') || badgeText.includes('Contest'))) match = true;
-    if (category === 'Workshops' && (badgeText.includes('🛠️') || badgeText.includes('Workshop'))) match = true;
-    if (category === 'Class Rescheduling' && (badgeText.includes('⏰') || badgeText.includes('Rescheduled'))) match = true;
-    if (category === 'General' && (badgeText.includes('📢') || badgeText.includes('General') || badgeText.includes('PhD'))) match = true;
+    else if (category === 'Competitions & Tournaments' && (badgeText.includes('🏆') || badgeText.includes('Contest'))) match = true;
+    else if (category === 'Workshops' && (badgeText.includes('🛠️') || badgeText.includes('Workshop'))) match = true;
+    else if (category === 'Class Rescheduling' && (badgeText.includes('⏰') || badgeText.includes('Rescheduled'))) match = true;
+    else if (category === 'General' && (badgeText.includes('📢') || badgeText.includes('General') || badgeText.includes('PhD'))) match = true;
+    else if (badgeText.toLowerCase().includes(category.toLowerCase())) match = true; // Match custom filters!
 
     if (match) {
       rowEl.style.display = '';
@@ -439,13 +561,43 @@ function createGCalUrl(title: string, details: string, dueDateStr?: string): str
   return `${baseUrl}&${params.toString()}${datesParam}`;
 }
 
+// Quick toast notification on Gmail DOM
+function showToastNotification(message: string) {
+  const existing = document.getElementById('acadmail-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'acadmail-toast';
+  toast.innerText = message;
+  toast.setAttribute(
+    'style',
+    `
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    z-index: 9999999;
+    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
+    animation: fadeIn 0.15s ease-out;
+  `
+  );
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
 // =========================================================================
-// 1. INLINE MATERIAL 3 TOOLBAR CHIPS (Zero screen waste, sits in Gmail's bar)
+// 1. INLINE MATERIAL 3 TOOLBAR CHIPS (Supports Dynamic Custom Filters)
 // =========================================================================
 function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   if (uiMode !== 'blended') return;
 
-  // Locate Gmail's action bar container
   const targetBar =
     document.querySelector('div[gh="tm"]') ||
     document.querySelector('div.G-atb') ||
@@ -467,7 +619,7 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
     else if (item.category === 'Competitions & Tournaments') compCount++;
     else if (item.category === 'Workshops') workCount++;
     else if (item.category === 'Class Rescheduling') reschedCount++;
-    else genCount++;
+    else if (item.category === 'General') genCount++;
 
     const text = `${item.subject} ${item.snippet}`;
     const matches = [...text.matchAll(datePattern)];
@@ -539,9 +691,9 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   };
 
   bar.innerHTML = `
-    <!-- Left: Slim Material Chips -->
-    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto;">
-      <span style="font-weight: 700; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-size: 11px; margin-right: 4px; display: flex; align-items: center; gap: 3px;">
+    <!-- Left: Slim Material Chips (Defaults + Dynamic Custom Filters) -->
+    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-right: 8px;">
+      <span style="font-weight: 700; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-size: 11px; margin-right: 4px; display: flex; align-items: center; gap: 3px; white-space: nowrap;">
         <span>🎓</span>
         <span>AcadMail</span>
       </span>
@@ -569,6 +721,27 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
       <button class="m3-chip" data-cat="General" style="${getPillStyle('General')}">
         📜 PhD & General (${genCount})
       </button>
+
+      <!-- User-defined custom filters rendered here -->
+      ${customFiltersCache
+        .map((cf) => {
+          const cfCount = items.filter((it) => it.category === cf.name).length;
+          return `
+          <button class="m3-chip" data-cat="${cf.name}" style="${getPillStyle(cf.name)}">
+            🏷️ ${cf.name} (${cfCount})
+          </button>
+        `;
+        })
+        .join('')}
+
+      <!-- Add Custom Filter Button -->
+      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 24px; padding: 0 8px; border-radius: 9999px; border: 1px dashed ${
+        isDark ? 'rgba(255,255,255,0.25)' : '#94a3b8'
+      }; background: transparent; color: ${
+    isDark ? '#79c0ff' : '#1a73e8'
+  }; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; white-space: nowrap;">
+        <span>+ Filter</span>
+      </button>
     </div>
 
     <!-- Right: Mini Deadlines Dropdown & Instant Revert Button -->
@@ -583,7 +756,7 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
               isDark ? '#e3b341' : '#b45309'
             }; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
             <span>⏰</span>
-            <span>${deadlineList.length} Deadlines</span>
+            <span>${deadlineList.length} Due</span>
           </button>
 
           <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 28px; width: 300px; background: ${
@@ -624,7 +797,6 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
           : ''
       }
 
-      <!-- 1-Click Revert Button directly in Gmail -->
       <button id="acadmail-instant-revert-btn" title="Revert to standard clean Gmail (Disable in-page elements)" style="height: 24px; padding: 0 6px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: ${
         isDark ? '#8e918f' : '#94a3b8'
       }; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 2px;">
@@ -646,6 +818,12 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
       }
     };
   });
+
+  // + New Filter Chip Button
+  const addFilterChip = bar.querySelector('#m3-add-filter-chip') as HTMLElement;
+  if (addFilterChip) {
+    addFilterChip.onclick = () => openAddFilterModal();
+  }
 
   // Deadlines Popover
   const dlBtn = bar.querySelector('#m3-deadlines-btn') as HTMLElement;
@@ -680,6 +858,183 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   }
 }
 
+// In-Gmail Add Custom Filter Modal
+function openAddFilterModal() {
+  const existing = document.getElementById('acadmail-add-filter-modal');
+  if (existing) {
+    existing.remove();
+    return;
+  }
+
+  const isDark = isGmailDark();
+  const modal = document.createElement('div');
+  modal.id = 'acadmail-add-filter-modal';
+  modal.setAttribute(
+    'style',
+    `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+    background: ${isDark ? '#1e1f20' : '#ffffff'};
+    border: 1px solid ${isDark ? '#444746' : '#cbd5e1'};
+    border-radius: 16px;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.25);
+    padding: 16px;
+    z-index: 9999999;
+    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
+  `
+  );
+
+  modal.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <span style="font-weight: 700; font-size: 13px; color: ${isDark ? '#e3e3e3' : '#0f172a'};">
+        ✨ Create Custom Academic Filter
+      </span>
+      <button id="modal-close-btn" style="border: none; background: transparent; color: #94a3b8; font-size: 14px; cursor: pointer;">✕</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div>
+        <label style="font-size: 10.5px; font-weight: 600; color: ${isDark ? '#c4c7c5' : '#475569'}; display: block; margin-bottom: 3px;">
+          Filter / Bucket Name
+        </label>
+        <input id="new-filter-name" type="text" placeholder="e.g. Mess & Hostel, Library, Placements" style="width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; border: 1px solid ${
+          isDark ? '#444746' : '#cbd5e1'
+        }; background: ${isDark ? '#2b2c2f' : '#f8fafc'}; color: ${isDark ? '#e3e3e3' : '#0f172a'}; font-size: 12px; outline: none;" />
+      </div>
+
+      <div>
+        <label style="font-size: 10.5px; font-weight: 600; color: ${isDark ? '#c4c7c5' : '#475569'}; display: block; margin-bottom: 3px;">
+          Keywords (comma-separated)
+        </label>
+        <input id="new-filter-keywords" type="text" placeholder="e.g. mess, rebate, room, warden, hostel" style="width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; border: 1px solid ${
+          isDark ? '#444746' : '#cbd5e1'
+        }; background: ${isDark ? '#2b2c2f' : '#f8fafc'}; color: ${isDark ? '#e3e3e3' : '#0f172a'}; font-size: 12px; outline: none;" />
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+        <button id="modal-cancel-btn" style="padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: ${
+          isDark ? '#c4c7c5' : '#64748b'
+        }; font-size: 11px; cursor: pointer;">Cancel</button>
+        <button id="modal-save-btn" style="padding: 5px 14px; border-radius: 8px; border: none; background: #2563eb; color: #ffffff; font-size: 11px; font-weight: 600; cursor: pointer;">Save Filter</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeBtn = modal.querySelector('#modal-close-btn') as HTMLElement;
+  const cancelBtn = modal.querySelector('#modal-cancel-btn') as HTMLElement;
+  const saveBtn = modal.querySelector('#modal-save-btn') as HTMLElement;
+  const nameInput = modal.querySelector('#new-filter-name') as HTMLInputElement;
+  const kwInput = modal.querySelector('#new-filter-keywords') as HTMLInputElement;
+
+  closeBtn.onclick = () => modal.remove();
+  cancelBtn.onclick = () => modal.remove();
+
+  saveBtn.onclick = () => {
+    const name = nameInput.value.trim();
+    const keywords = kwInput.value.trim();
+    if (!name) return;
+    saveNewCustomFilter(name, keywords);
+    modal.remove();
+  };
+}
+
+// In-Gmail Re-label Dropdown Menu
+function openRelabelMenu(anchorEl: HTMLElement, subject: string, sender: string, currentCategory: string) {
+  const existing = document.getElementById('acadmail-relabel-popup');
+  if (existing) {
+    existing.remove();
+    return;
+  }
+
+  const isDark = isGmailDark();
+  const rect = anchorEl.getBoundingClientRect();
+
+  const menu = document.createElement('div');
+  menu.id = 'acadmail-relabel-popup';
+  menu.setAttribute(
+    'style',
+    `
+    position: fixed;
+    top: ${rect.bottom + 4}px;
+    left: ${Math.min(rect.left, window.innerWidth - 220)}px;
+    width: 210px;
+    background: ${isDark ? '#1e1f20' : '#ffffff'};
+    border: 1px solid ${isDark ? '#444746' : '#e0e2ec'};
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    padding: 6px;
+    z-index: 9999999;
+    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
+  `
+  );
+
+  const defaultCategories = [
+    'Academics',
+    'Competitions & Tournaments',
+    'Workshops',
+    'Class Rescheduling',
+    'General',
+  ];
+
+  const allCategories = [
+    ...defaultCategories,
+    ...customFiltersCache.map((cf) => cf.name).filter((n) => !defaultCategories.includes(n)),
+  ];
+
+  menu.innerHTML = `
+    <div style="padding: 4px 8px; font-size: 10px; font-weight: 700; color: ${
+      isDark ? '#8e918f' : '#64748b'
+    }; text-transform: uppercase; border-bottom: 1px solid ${isDark ? '#333537' : '#f1f5f9'};">
+      Change Category Label
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding-top: 4px; max-height: 200px; overflow-y: auto;">
+      ${allCategories
+        .map(
+          (cat) => `
+        <button class="relabel-opt" data-cat="${cat}" style="text-align: left; padding: 6px 8px; border-radius: 6px; border: none; background: ${
+            cat === currentCategory ? (isDark ? '#004a77' : '#c2e7ff') : 'transparent'
+          }; color: ${
+            cat === currentCategory
+              ? (isDark ? '#c2e7ff' : '#001d35')
+              : (isDark ? '#e3e3e3' : '#1f1f1f')
+          }; font-size: 11.5px; font-weight: ${
+            cat === currentCategory ? '600' : '400'
+          }; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+          <span>${cat}</span>
+          ${cat === currentCategory ? '<span>✓</span>' : ''}
+        </button>
+      `
+        )
+        .join('')}
+    </div>
+  `;
+
+  document.body.appendChild(menu);
+
+  menu.querySelectorAll('.relabel-opt').forEach((btn) => {
+    const b = btn as HTMLElement;
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const chosenCat = b.getAttribute('data-cat') || 'General';
+      saveEmailLabelOverride(subject, subject, sender, chosenCat);
+      menu.remove();
+    };
+  });
+
+  const closeMenuListener = (evt: MouseEvent) => {
+    if (!menu.contains(evt.target as Node) && !anchorEl.contains(evt.target as Node)) {
+      menu.remove();
+      document.removeEventListener('click', closeMenuListener);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeMenuListener), 50);
+}
+
 function updateToolbarChipsActiveState() {
   if (uiMode === 'blended' && scannedItemsCache.length > 0) {
     injectMaterial3ToolbarChips(scannedItemsCache);
@@ -687,7 +1042,7 @@ function updateToolbarChipsActiveState() {
 }
 
 // =========================================================================
-// 2. IN-EMAIL READING VIEW: ULTRA-COMPACT GEMINI SMART CHIP (Accordion)
+// 2. IN-EMAIL READING VIEW: ULTRA-COMPACT GEMINI SMART CHIP WITH RELABEL
 // =========================================================================
 function checkAndInjectEmailBrief() {
   if (uiMode === 'off') return;
@@ -716,7 +1071,7 @@ function checkAndInjectEmailBrief() {
     existingCard.remove();
   }
 
-  const classification = classifyInboxItem(emailData.subject, emailData.senderName, emailData.bodyText);
+  const classification = classifyInboxItem(emailData.subject, emailData.senderName, emailData.bodyText, emailData.id);
   const fullText = `${emailData.subject} ${emailData.bodyText}`;
 
   // Extract deadline
@@ -768,7 +1123,20 @@ function checkAndInjectEmailBrief() {
         </span>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 6px; shrink: 0;">
+      <div style="display: flex; align-items: center; gap: 5px; shrink: 0;">
+        <!-- Category Chip with Re-label button -->
+        <span style="padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; background: ${
+          isDark ? 'rgba(56, 139, 253, 0.2)' : '#e8f0fe'
+        }; color: ${isDark ? '#79c0ff' : '#1a73e8'};">
+          ${classification.category}
+        </span>
+
+        <button id="acadmail-brief-relabel-btn" title="Change this email's category label" style="cursor: pointer; padding: 2px 5px; border-radius: 4px; border: 1px dashed ${
+          isDark ? '#444746' : '#cbd5e1'
+        }; background: transparent; font-size: 10px; font-weight: 500; color: ${isDark ? '#a8c7fa' : '#1a73e8'};">
+          ✎ Relabel
+        </button>
+
         ${
           detectedDeadline
             ? `
@@ -844,6 +1212,15 @@ function checkAndInjectEmailBrief() {
       </div>
     </div>
   `;
+
+  // Relabel button handler
+  const relabelBtn = card.querySelector('#acadmail-brief-relabel-btn') as HTMLElement;
+  if (relabelBtn) {
+    relabelBtn.onclick = (e) => {
+      e.stopPropagation();
+      openRelabelMenu(relabelBtn, emailData.subject, emailData.senderName, classification.category);
+    };
+  }
 
   // Toggle expand/collapse
   const drawer = card.querySelector('#m3-brief-drawer') as HTMLElement;
@@ -1268,6 +1645,12 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
     } else if (message.type === 'SET_UI_MODE') {
       uiMode = message.mode;
       applyUiMode();
+      sendResponse({ success: true });
+    } else if (message.type === 'RELABEL_EMAIL') {
+      saveEmailLabelOverride(message.emailId, message.subject || '', message.sender || '', message.newCategory);
+      sendResponse({ success: true });
+    } else if (message.type === 'UPDATE_CUSTOM_FILTERS') {
+      loadSettings();
       sendResponse({ success: true });
     }
     return true;
