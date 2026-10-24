@@ -77,6 +77,35 @@ export interface AggregatedDeadline {
 
 export type PolishTone = 'formal' | 'extension' | 'doubt' | 'lor';
 
+export interface ChatEmailReference {
+  id: string;
+  subject: string;
+  sender: string;
+  date?: string;
+  category?: CategoryType;
+  snippet?: string;
+  rowIndex?: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp: string;
+  references?: ChatEmailReference[];
+}
+
+export interface GroundingEmailItem {
+  id: string;
+  subject: string;
+  sender: string;
+  bodyOrSnippet: string;
+  date: string;
+  category?: string;
+  courseCode?: string;
+  rowIndex?: number;
+}
+
 export type UiIntegrationMode = 'blended' | 'floating' | 'off';
 
 export interface UserSettings {

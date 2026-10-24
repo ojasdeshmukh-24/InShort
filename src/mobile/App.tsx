@@ -34,7 +34,9 @@ import {
   Tag,
   ChevronDown,
   Edit3,
-  Trash2
+  Trash2,
+  Bot,
+  MessageSquare
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -43,9 +45,12 @@ import {
   InboxRowItem,
   AggregatedDeadline,
   PolishTone,
-  CustomFilter
+  CustomFilter,
+  ChatMessage,
+  ChatEmailReference,
+  GroundingEmailItem
 } from '../types';
-import { analyzeAcademicEmail, polishAcademicDraft } from '../services/ai';
+import { analyzeAcademicEmail, polishAcademicDraft, askInboxCopilot } from '../services/ai';
 import { createGoogleCalendarUrl } from '../services/calendar';
 import { classifyInboxItem } from '../services/classifier';
 
@@ -105,7 +110,7 @@ const INITIAL_DEMO_EMAILS: ExtractedEmail[] = [
 
 export default function MobileApp() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [activeTab, setActiveTab] = useState<'inbox' | 'deadlines' | 'polish' | 'settings'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'deadlines' | 'chat' | 'polish' | 'settings'>('inbox');
   const [emails, setEmails] = useState<ExtractedEmail[]>(INITIAL_DEMO_EMAILS);
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,6 +120,49 @@ export default function MobileApp() {
 
   // Deadlines
   const [deadlines, setDeadlines] = useState<AggregatedDeadline[]>([]);
+
+  // Inbox Copilot Chatbot State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: 'msg-welcome',
+      role: 'assistant',
+      text: "Hey! I'm your **AcadMail AI Copilot** 🎓\n\nAsk me anything about your university emails — assignments, class shifts, hackathons, or club recruitments! Or pick one of the quick prompts below.",
+      timestamp: 'Just now',
+    },
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatThinking, setIsChatThinking] = useState(false);
+
+  const QUICK_PROMPTS = [
+    {
+      id: 'qp-assignment',
+      label: 'Next Assignment',
+      prompt: 'When is my next assignment due?',
+      icon: CalendarCheck2,
+      color: 'from-amber-500/10 to-orange-500/10 border-amber-300 dark:border-amber-700/50 text-amber-800 dark:text-amber-300',
+    },
+    {
+      id: 'qp-hackathon',
+      label: 'Hackathons',
+      prompt: 'Show all hackathons this month.',
+      icon: Trophy,
+      color: 'from-purple-500/10 to-indigo-500/10 border-purple-300 dark:border-purple-700/50 text-purple-800 dark:text-purple-300',
+    },
+    {
+      id: 'qp-cancelled',
+      label: 'Class Cancellations',
+      prompt: 'Did any professor cancel a class?',
+      icon: AlertTriangle,
+      color: 'from-rose-500/10 to-pink-500/10 border-rose-300 dark:border-rose-700/50 text-rose-800 dark:text-rose-300',
+    },
+    {
+      id: 'qp-club',
+      label: 'Club Interviews',
+      prompt: 'Which club interviews are coming up?',
+      icon: Briefcase,
+      color: 'from-emerald-500/10 to-teal-500/10 border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300',
+    },
+  ];
 
   // Custom Filters & Label Overrides State
   const [customFilters, setCustomFilters] = useState<CustomFilter[]>([
@@ -258,6 +306,63 @@ export default function MobileApp() {
       console.error(e);
     } finally {
       setAnalyzingEmailId(null);
+    }
+  };
+
+  const handleSendChatMessage = async (textToSend?: string) => {
+    const query = (textToSend || chatInput).trim();
+    if (!query || isChatThinking) return;
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      text: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatInput('');
+    setIsChatThinking(true);
+
+    try {
+      const groundingEmails: GroundingEmailItem[] = emails.map((item) => ({
+        id: item.id,
+        subject: item.subject,
+        sender: `${item.senderName} <${item.senderEmail}>`,
+        bodyOrSnippet: item.bodyText,
+        date: item.dateStr,
+      }));
+
+      const res = await askInboxCopilot(query, groundingEmails, apiKey, groqKey);
+
+      const assistantMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        text: res.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        references: res.references,
+      };
+
+      setChatMessages((prev) => [...prev, assistantMsg]);
+    } catch (err: any) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-err-${Date.now()}`,
+          role: 'assistant',
+          text: `Sorry, error answering query: ${err.message || 'Please retry.'}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    } finally {
+      setIsChatThinking(false);
+    }
+  };
+
+  const handleJumpToEmailFromReference = (ref: ChatEmailReference) => {
+    const target = emails.find((e) => e.id === ref.id);
+    if (target) {
+      handleInspectEmail(target);
     }
   };
 
@@ -784,7 +889,181 @@ export default function MobileApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* VIEW 3: POLISH FOR PROFESSOR MOBILE COMPOSER */}
+        {/* VIEW 3: INBOX COPILOT / CHATBOT */}
+        {/* ========================================================================= */}
+        {activeTab === 'chat' && (
+          <main className="p-4 flex flex-col h-[calc(100vh-130px)]">
+            {/* Header info */}
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-3.5 text-white shadow-xs space-y-1 shrink-0 mb-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-200 flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5" />
+                  Grounded Inbox Copilot
+                </span>
+                <button
+                  onClick={() => {
+                    setChatMessages([
+                      {
+                        id: 'msg-welcome',
+                        role: 'assistant',
+                        text: "Chat cleared! Ask me anything about your university emails or select a suggestion below.",
+                        timestamp: 'Just now',
+                      },
+                    ]);
+                  }}
+                  className="text-[10px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-lg transition"
+                >
+                  Clear
+                </button>
+              </div>
+              <h2 className="text-sm font-extrabold">Instant Campus Answers</h2>
+              <p className="text-[11px] text-blue-100">
+                Grounded on your university emails {apiKey || groqKey ? '• Powered by Cloud LLM' : '• Smart Local Engine'}
+              </p>
+            </div>
+
+            {/* Quick Questions Chips */}
+            <div className="mb-2 shrink-0">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
+                Suggested Questions
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {QUICK_PROMPTS.map((qp) => {
+                  const Icon = qp.icon;
+                  return (
+                    <button
+                      key={qp.id}
+                      onClick={() => handleSendChatMessage(qp.prompt)}
+                      disabled={isChatThinking}
+                      className={`p-2 rounded-xl text-left border bg-gradient-to-br ${qp.color} hover:scale-[1.01] active:scale-[0.98] transition flex flex-col justify-between gap-1 shadow-2xs group cursor-pointer`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Icon className="w-3.5 h-3.5 shrink-0 opacity-80" />
+                        <span className="text-[10px] font-bold line-clamp-1">{qp.label}</span>
+                      </div>
+                      <span className="text-[9px] opacity-75 line-clamp-1">"{qp.prompt}"</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Messages List */}
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-2 scrollbar-thin">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${
+                    msg.role === 'user' ? 'items-end' : 'items-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-[90%] rounded-2xl px-3 py-2 text-xs shadow-xs ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white rounded-br-xs'
+                        : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
+                    }`}
+                  >
+                    <div className="whitespace-pre-line leading-relaxed space-y-1 text-xs">
+                      {msg.text.split('\n').map((line, i) => {
+                        if (
+                          line.startsWith('📌 ') ||
+                          line.startsWith('🏆 ') ||
+                          line.startsWith('⚠️ ') ||
+                          line.startsWith('🎯 ') ||
+                          line.startsWith('✅ ') ||
+                          line.startsWith('🎉 ')
+                        ) {
+                          return (
+                            <div key={i} className="font-bold text-slate-900 dark:text-white pt-1">
+                              {line}
+                            </div>
+                          );
+                        }
+                        if (line.startsWith('• ') || line.startsWith('- ')) {
+                          return (
+                            <div key={i} className="pl-1 text-slate-700 dark:text-slate-300">
+                              {line}
+                            </div>
+                          );
+                        }
+                        return <div key={i}>{line}</div>;
+                      })}
+                    </div>
+
+                    {/* Referencing Emails Card */}
+                    {msg.references && msg.references.length > 0 && (
+                      <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1">
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          Referenced Emails:
+                        </span>
+                        <div className="space-y-1">
+                          {msg.references.map((ref) => (
+                            <button
+                              key={ref.id}
+                              onClick={() => handleJumpToEmailFromReference(ref)}
+                              className="w-full text-left p-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition flex items-center justify-between gap-1.5 group cursor-pointer"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                  {ref.subject}
+                                </div>
+                                <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
+                                  {ref.sender} • {ref.date}
+                                </div>
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[8px] text-slate-400 mt-0.5 px-1">
+                    {msg.timestamp}
+                  </span>
+                </div>
+              ))}
+
+              {isChatThinking && (
+                <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 w-fit">
+                  <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></div>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                    Reasoning over campus emails...
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendChatMessage();
+              }}
+              className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-1.5 shrink-0"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask about assignments, talks, classes..."
+                disabled={isChatThinking}
+                className="flex-1 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              />
+              <button
+                type="submit"
+                disabled={!chatInput.trim() || isChatThinking}
+                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
+              >
+                <SendHorizontal className="w-4 h-4" />
+              </button>
+            </form>
+          </main>
+        )}
+
+        {/* ========================================================================= */}
+        {/* VIEW 4: POLISH FOR PROFESSOR MOBILE COMPOSER */}
         {/* ========================================================================= */}
         {activeTab === 'polish' && (
           <main className="p-4 space-y-3.5">
@@ -1422,7 +1701,7 @@ export default function MobileApp() {
         {/* ========================================================================= */}
         {/* TOUCH-FRIENDLY BOTTOM NAVIGATION BAR */}
         {/* ========================================================================= */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 px-4 py-2 flex items-center justify-around">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 px-2 py-2 flex items-center justify-around">
           <button
             onClick={() => setActiveTab('inbox')}
             className={`flex flex-col items-center gap-1 transition ${
@@ -1448,6 +1727,19 @@ export default function MobileApp() {
             {deadlines.filter((d) => !d.completed).length > 0 && (
               <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-0 right-2" />
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`flex flex-col items-center gap-1 transition relative ${
+              activeTab === 'chat'
+                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Bot className="w-5 h-5" />
+            <span className="text-[10px]">Ask AI</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 absolute top-0 right-1.5 animate-pulse" />
           </button>
 
           <button

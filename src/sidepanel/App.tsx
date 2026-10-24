@@ -39,7 +39,9 @@ import {
   Trash2,
   Tag,
   ChevronDown,
-  Edit3
+  Edit3,
+  Bot,
+  MessageSquare
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -48,9 +50,12 @@ import {
   InboxRowItem,
   AggregatedDeadline,
   UiIntegrationMode,
-  CustomFilter
+  CustomFilter,
+  ChatMessage,
+  ChatEmailReference,
+  GroundingEmailItem
 } from '../types';
-import { analyzeAcademicEmail } from '../services/ai';
+import { analyzeAcademicEmail, askInboxCopilot } from '../services/ai';
 import { createGoogleCalendarUrl } from '../services/calendar';
 import {
   getSettings,
@@ -63,7 +68,7 @@ import {
 } from '../services/storage';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'buckets' | 'deadlines' | 'detail'>('buckets');
+  const [activeTab, setActiveTab] = useState<'buckets' | 'deadlines' | 'chat' | 'detail'>('buckets');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [email, setEmail] = useState<ExtractedEmail | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -109,6 +114,49 @@ export default function App() {
   // Aggregated Deadlines State
   const [deadlines, setDeadlines] = useState<AggregatedDeadline[]>([]);
   const [deadlineFilter, setDeadlineFilter] = useState<'all' | 'urgent' | 'academics' | 'competitions'>('all');
+
+  // Inbox Copilot Chatbot State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: 'msg-welcome',
+      role: 'assistant',
+      text: "Hi! I'm your **AcadMail AI Copilot** 🎓\n\nI can answer questions about your deadlines, classes, competitions, and club announcements grounded in your university emails. Try tapping one of the quick questions below or type your own!",
+      timestamp: 'Just now',
+    },
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatThinking, setIsChatThinking] = useState(false);
+
+  const QUICK_PROMPTS = [
+    {
+      id: 'qp-assignment',
+      label: 'Next Assignment',
+      prompt: 'When is my next assignment due?',
+      icon: CalendarCheck2,
+      color: 'from-amber-500/10 to-orange-500/10 border-amber-300 dark:border-amber-700/50 text-amber-800 dark:text-amber-300',
+    },
+    {
+      id: 'qp-hackathon',
+      label: 'Hackathons',
+      prompt: 'Show all hackathons this month.',
+      icon: Trophy,
+      color: 'from-purple-500/10 to-indigo-500/10 border-purple-300 dark:border-purple-700/50 text-purple-800 dark:text-purple-300',
+    },
+    {
+      id: 'qp-cancelled',
+      label: 'Class Cancellations',
+      prompt: 'Did any professor cancel a class?',
+      icon: AlertTriangle,
+      color: 'from-rose-500/10 to-pink-500/10 border-rose-300 dark:border-rose-700/50 text-rose-800 dark:text-rose-300',
+    },
+    {
+      id: 'qp-club',
+      label: 'Club Interviews',
+      prompt: 'Which club interviews are coming up?',
+      icon: Briefcase,
+      color: 'from-emerald-500/10 to-teal-500/10 border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300',
+    },
+  ];
 
   useEffect(() => {
     // Load theme
@@ -353,6 +401,88 @@ export default function App() {
     setDeadlines((prev) =>
       prev.map((dl) => (dl.id === id ? { ...dl, completed: !dl.completed } : dl))
     );
+  };
+
+  const handleSendChatMessage = async (textToSend?: string) => {
+    const query = (textToSend || chatInput).trim();
+    if (!query || isChatThinking) return;
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      text: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatInput('');
+    setIsChatThinking(true);
+
+    try {
+      const groundingEmails: GroundingEmailItem[] = inboxItems.map((item) => ({
+        id: item.id,
+        subject: item.subject,
+        sender: item.sender,
+        bodyOrSnippet: item.snippet,
+        date: item.date,
+        category: item.category,
+        courseCode: item.courseCode,
+        rowIndex: item.index,
+      }));
+
+      if (email) {
+        const existingIdx = groundingEmails.findIndex((e) => e.id === email.id);
+        const fullItem: GroundingEmailItem = {
+          id: email.id,
+          subject: email.subject,
+          sender: `${email.senderName} <${email.senderEmail}>`,
+          bodyOrSnippet: email.bodyText,
+          date: email.dateStr,
+          category: analysis?.category || 'Academics',
+          courseCode: analysis?.detectedCourseCode,
+        };
+        if (existingIdx >= 0) {
+          groundingEmails[existingIdx] = fullItem;
+        } else {
+          groundingEmails.unshift(fullItem);
+        }
+      }
+
+      const res = await askInboxCopilot(query, groundingEmails, apiKey, groqKey);
+
+      const assistantMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        text: res.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        references: res.references,
+      };
+
+      setChatMessages((prev) => [...prev, assistantMsg]);
+    } catch (err: any) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-err-${Date.now()}`,
+          role: 'assistant',
+          text: `Sorry, I encountered an issue analyzing your emails: ${err.message || 'Please try again.'}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    } finally {
+      setIsChatThinking(false);
+    }
+  };
+
+  const handleJumpToEmailFromReference = async (ref: ChatEmailReference) => {
+    if (ref.rowIndex !== undefined) {
+      const tab = await getGmailTab();
+      if (tab?.id) {
+        chrome.tabs.sendMessage(tab.id, { type: 'CLICK_ROW', index: ref.rowIndex });
+      }
+    }
+    setActiveTab('detail');
+    setTimeout(() => fetchEmailFromActiveTab(), 600);
   };
 
   const fetchEmailFromActiveTab = async (retryCount = 0) => {
@@ -742,18 +872,18 @@ export default function App() {
           </div>
         </header>
 
-        {/* 3-Tab Segmented Switcher Bar */}
-        <div className="px-3 pt-2 pb-1 bg-white dark:bg-[#0f172a] border-b border-slate-200/60 dark:border-slate-800/80 grid grid-cols-3 gap-1 transition-colors">
+        {/* 4-Tab Segmented Switcher Bar */}
+        <div className="px-2 pt-2 pb-1 bg-white dark:bg-[#0f172a] border-b border-slate-200/60 dark:border-slate-800/80 grid grid-cols-4 gap-1 transition-colors">
           <button
             onClick={() => setActiveTab('buckets')}
-            className={`py-1.5 px-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
+            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
               activeTab === 'buckets'
                 ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
             <Layers className="w-3.5 h-3.5 shrink-0" />
-            <span>Buckets</span>
+            <span className="truncate">Buckets</span>
             {inboxItems.length > 0 && (
               <span
                 className={`px-1 py-0.2 rounded-full text-[8px] font-extrabold ${
@@ -769,14 +899,14 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('deadlines')}
-            className={`py-1.5 px-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
+            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
               activeTab === 'deadlines'
                 ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
             <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
-            <span>Deadlines</span>
+            <span className="truncate">Deadlines</span>
             {pendingDeadlinesCount > 0 && (
               <span
                 className={`px-1 py-0.2 rounded-full text-[8px] font-extrabold ${
@@ -791,16 +921,29 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab('chat')}
+            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition relative ${
+              activeTab === 'chat'
+                ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+            <span className="truncate">Ask AI</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0"></span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('detail')}
-            className={`py-1.5 px-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
+            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
               activeTab === 'detail'
                 ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-400" />
-            <span>AI Detail</span>
-            {email && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>}
+            <span className="truncate">Detail</span>
+            {email && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>}
           </button>
         </div>
 
@@ -1537,7 +1680,187 @@ export default function App() {
           )}
 
           {/* ========================================================================= */}
-          {/* VIEW 3: ACTIVE EMAIL DETAIL (AI BREAKDOWN) */}
+          {/* VIEW 3: INBOX COPILOT (CHATBOT) */}
+          {/* ========================================================================= */}
+          {activeTab === 'chat' && (
+            <div className="flex flex-col h-[calc(100vh-125px)] animate-in fade-in duration-200">
+              {/* Copilot Header */}
+              <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-blue-200/60 dark:border-blue-900/40 rounded-xl mb-2.5 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 leading-none">
+                      Inbox Copilot
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                        Grounded AI
+                      </span>
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-none">
+                      {inboxItems.length} emails loaded {apiKey || groqKey ? '• Cloud LLM' : '• Local Engine'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setChatMessages([
+                      {
+                        id: 'msg-welcome',
+                        role: 'assistant',
+                        text: "Chat cleared! Ask me anything about your university emails or pick a prompt below.",
+                        timestamp: 'Just now',
+                      },
+                    ]);
+                  }}
+                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  Clear
+                </button>
+              </div>
+
+              {/* Quick Prompt Suggestions */}
+              <div className="mb-2 shrink-0">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
+                  Suggested Questions
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {QUICK_PROMPTS.map((qp) => {
+                    const Icon = qp.icon;
+                    return (
+                      <button
+                        key={qp.id}
+                        onClick={() => handleSendChatMessage(qp.prompt)}
+                        disabled={isChatThinking}
+                        className={`p-2 rounded-xl text-left border bg-gradient-to-br ${qp.color} hover:scale-[1.01] active:scale-[0.98] transition flex flex-col justify-between gap-1 shadow-2xs group cursor-pointer`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <Icon className="w-3.5 h-3.5 shrink-0 opacity-80 group-hover:opacity-100" />
+                          <span className="text-[10px] font-bold line-clamp-1">{qp.label}</span>
+                        </div>
+                        <span className="text-[9px] opacity-75 line-clamp-1">"{qp.prompt}"</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Messages Scroll Area */}
+              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-2 scrollbar-thin">
+                {chatMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${
+                      msg.role === 'user' ? 'items-end' : 'items-start'
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[92%] rounded-2xl px-3 py-2 text-xs shadow-xs ${
+                        msg.role === 'user'
+                          ? 'bg-blue-600 text-white rounded-br-xs'
+                          : 'bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
+                      }`}
+                    >
+                      <div className="whitespace-pre-line leading-relaxed space-y-1 text-[11px]">
+                        {msg.text.split('\n').map((line, i) => {
+                          if (
+                            line.startsWith('📌 ') ||
+                            line.startsWith('🏆 ') ||
+                            line.startsWith('⚠️ ') ||
+                            line.startsWith('🎯 ') ||
+                            line.startsWith('✅ ') ||
+                            line.startsWith('🎉 ')
+                          ) {
+                            return (
+                              <div key={i} className="font-bold text-slate-900 dark:text-white pt-0.5">
+                                {line}
+                              </div>
+                            );
+                          }
+                          if (line.startsWith('• ') || line.startsWith('- ')) {
+                            return (
+                              <div key={i} className="pl-1 text-slate-700 dark:text-slate-300">
+                                {line}
+                              </div>
+                            );
+                          }
+                          return <div key={i}>{line}</div>;
+                        })}
+                      </div>
+
+                      {/* Grounded Email References */}
+                      {msg.references && msg.references.length > 0 && (
+                        <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                            Matched Emails:
+                          </span>
+                          <div className="space-y-1">
+                            {msg.references.map((ref) => (
+                              <button
+                                key={ref.id}
+                                onClick={() => handleJumpToEmailFromReference(ref)}
+                                className="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition flex items-center justify-between gap-1.5 group cursor-pointer"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                    {ref.subject}
+                                  </div>
+                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
+                                    {ref.sender} • {ref.date}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[8px] text-slate-400 mt-0.5 px-1">
+                      {msg.timestamp}
+                    </span>
+                  </div>
+                ))}
+
+                {isChatThinking && (
+                  <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200/80 dark:border-slate-800 w-fit">
+                    <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></div>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                      Scanning campus emails & reasoning...
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendChatMessage();
+                }}
+                className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-1.5 shrink-0"
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask a question about your emails..."
+                  disabled={isChatThinking}
+                  className="flex-1 bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim() || isChatThinking}
+                  className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
+                >
+                  <SendHorizontal className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW 4: ACTIVE EMAIL DETAIL (AI BREAKDOWN) */}
           {/* ========================================================================= */}
           {activeTab === 'detail' && (
             <div className="space-y-3">

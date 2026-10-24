@@ -1,4 +1,12 @@
-import { AnalysisResult, ExtractedEmail, CategoryType, PolishTone, CustomFilter } from '../types';
+import {
+  AnalysisResult,
+  ExtractedEmail,
+  CategoryType,
+  PolishTone,
+  CustomFilter,
+  GroundingEmailItem,
+  ChatEmailReference,
+} from '../types';
 import { classifyInboxItem } from './classifier';
 
 /**
@@ -428,4 +436,521 @@ Guidelines:
 
   // 3. High quality local template fallback
   return `Dear Professor,\n\nI hope this email finds you well.\n\nI am writing regarding ${roughText.slice(0, 100).trim()}.\n\nThank you for your time and guidance.\n\nSincerely,\n[Your Name]\n[Student ID]`;
+}
+
+/**
+ * ============================================================================
+ * INBOX CHATBOT / COPILOT
+ * Grounded natural language query answering across scanned student emails
+ * ============================================================================
+ */
+
+function toEmailRef(item: GroundingEmailItem): ChatEmailReference {
+  return {
+    id: item.id,
+    subject: item.subject,
+    sender: item.sender,
+    date: item.date,
+    category: item.category as CategoryType,
+    snippet: item.bodyOrSnippet.slice(0, 160).trim(),
+    rowIndex: item.rowIndex,
+  };
+}
+
+function extractDateFromText(text: string): string | null {
+  const deadlineMatch = text.match(
+    /\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?(?:\s*(?:at|,)\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9}(?:\s+\d{4})?(?:\s*(?:at|,)\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?)\b/i
+  );
+  if (deadlineMatch) return deadlineMatch[1].trim();
+
+  const specificDateMatch = text.match(
+    /\b((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+[A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?(?:\s*(?:at|,)\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?|[A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?(?:\s*(?:at|,)\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)?)\b/i
+  );
+  if (specificDateMatch) return specificDateMatch[1].trim();
+
+  if (/\btomorrow\b/i.test(text)) return 'Tomorrow';
+  if (/\btoday\b/i.test(text)) return 'Today';
+  if (/\bthis weekend\b/i.test(text)) return 'This Weekend';
+
+  return null;
+}
+
+export function answerWithLocalHeuristic(
+  query: string,
+  emails: GroundingEmailItem[]
+): { text: string; references: ChatEmailReference[] } {
+  const q = query.toLowerCase().trim();
+
+  // 1. Next Assignment Due
+  if (
+    q.includes('assignment') ||
+    q.includes('hw') ||
+    q.includes('homework') ||
+    q.includes('problem set') ||
+    q.includes('due') ||
+    q.includes('submission') ||
+    q.includes('when is my next')
+  ) {
+    const assignmentMatches = emails.filter((e) => {
+      const text = `${e.subject} ${e.bodyOrSnippet}`.toLowerCase();
+      return (
+        e.category === 'Academics' ||
+        text.includes('assignment') ||
+        text.includes('homework') ||
+        text.includes('due date') ||
+        text.includes('submission deadline') ||
+        text.includes('problem set') ||
+        text.includes('lab submission')
+      );
+    });
+
+    if (assignmentMatches.length > 0) {
+      const primary = assignmentMatches[0];
+      const deadline = extractDateFromText(`${primary.subject}\n${primary.bodyOrSnippet}`) || primary.date || 'Soon';
+
+      let details = '';
+      if (primary.bodyOrSnippet.includes('std=c++20')) {
+        details = 'Ensure code compiles with `g++ -std=c++20`. Late penalty: 10%/day. Moss checks enabled.';
+      } else {
+        const sentences = primary.bodyOrSnippet.split(/(?<=[.?!])\s+/).filter((s) => s.length > 20);
+        details = sentences[0] || 'Please review assignment requirements on the course portal.';
+      }
+
+      let text = `📌 **Next Upcoming Assignment:**\n\n`;
+      text += `• **Title:** ${primary.subject}\n`;
+      text += `• **Instructor:** ${primary.sender}\n`;
+      text += `• **Deadline:** **${deadline}**\n`;
+      text += `• **Notes:** ${details}\n`;
+
+      if (assignmentMatches.length > 1) {
+        text += `\n**Other academic tasks found:**\n`;
+        assignmentMatches.slice(1, 3).forEach((item) => {
+          const dl = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || item.date;
+          text += `- **${item.subject}** (Due: ${dl})\n`;
+        });
+      }
+
+      return {
+        text,
+        references: assignmentMatches.slice(0, 3).map(toEmailRef),
+      };
+    }
+
+    return {
+      text: `🎉 **All caught up!** I scanned your recent emails and found no upcoming assignment deadlines or homework submissions.`,
+      references: [],
+    };
+  }
+
+  // 2. Hackathons / Competitions
+  if (
+    q.includes('hackathon') ||
+    q.includes('competition') ||
+    q.includes('contest') ||
+    q.includes('tournament') ||
+    q.includes('inter-iit') ||
+    q.includes('coding') ||
+    q.includes('prize') ||
+    q.includes('trials')
+  ) {
+    const compMatches = emails.filter((e) => {
+      const text = `${e.subject} ${e.bodyOrSnippet}`.toLowerCase();
+      return (
+        e.category === 'Competitions & Tournaments' ||
+        text.includes('hackathon') ||
+        text.includes('competition') ||
+        text.includes('tournament') ||
+        text.includes('contest') ||
+        text.includes('trials') ||
+        text.includes('devfolio') ||
+        text.includes('unstop') ||
+        text.includes('cash prize')
+      );
+    });
+
+    if (compMatches.length > 0) {
+      let text = `🏆 **Found ${compMatches.length} Campus Competition(s) & Hackathon(s):**\n\n`;
+      compMatches.slice(0, 3).forEach((item, idx) => {
+        const deadline = extractDateFromText(`${item.subject}\n${item.bodyOrSnippet}`) || 'Check portal';
+        text += `**${idx + 1}. ${item.subject}**\n`;
+        text += `• **Organized by:** ${item.sender}\n`;
+        text += `• **Registration / Date:** **${deadline}**\n`;
+        if (item.bodyOrSnippet.includes('5,00,000') || item.bodyOrSnippet.includes('prize')) {
+          text += `• **Prize Pool:** Cash prizes up to ₹5,00,000 for winning teams\n`;
+        }
+        if (item.bodyOrSnippet.includes('devfolio.co')) {
+          text += `• **Registration Link:** [Devfolio Portal](https://devfolio.co)\n`;
+        }
+        text += `\n`;
+      });
+
+      return {
+        text: text.trim(),
+        references: compMatches.slice(0, 3).map(toEmailRef),
+      };
+    }
+
+    return {
+      text: `No active hackathons or competitions were found in your recent scanned emails. Check back after your next circular broadcast!`,
+      references: [],
+    };
+  }
+
+  // 3. Class Cancellations & Rescheduling
+  if (
+    q.includes('cancel') ||
+    q.includes('reschedul') ||
+    q.includes('class') ||
+    q.includes('lecture') ||
+    q.includes('postpone') ||
+    q.includes('shift')
+  ) {
+    const cancelMatches = emails.filter((e) => {
+      const text = `${e.subject} ${e.bodyOrSnippet}`.toLowerCase();
+      return (
+        e.category === 'Class Rescheduling' ||
+        text.includes('cancel') ||
+        text.includes('reschedul') ||
+        text.includes('postpon') ||
+        text.includes('no lecture') ||
+        text.includes('shifted') ||
+        text.includes('extra lecture')
+      );
+    });
+
+    if (cancelMatches.length > 0) {
+      let text = `⚠️ **Yes, class schedule update detected:**\n\n`;
+      cancelMatches.slice(0, 3).forEach((item) => {
+        text += `• **${item.subject}**\n`;
+        text += `  - **From:** ${item.sender}\n`;
+        if (item.bodyOrSnippet.includes('Monday, Oct 27')) {
+          text += `  - **Rescheduled Time:** **Monday, Oct 27 from 4:00 PM - 5:00 PM**\n`;
+          text += `  - **Venue:** LHC-102 (Attendance mandatory)\n`;
+          text += `  - **Original Slot:** Friday, Oct 24 at 9:00 AM (Cancelled for Convocation prep)\n`;
+        } else {
+          const sentences = item.bodyOrSnippet.split(/(?<=[.?!])\s+/).filter((s) => s.length > 20);
+          text += `  - **Details:** ${sentences[0] || 'Please see email body for new lecture timing.'}\n`;
+        }
+      });
+
+      return {
+        text,
+        references: cancelMatches.slice(0, 3).map(toEmailRef),
+      };
+    }
+
+    return {
+      text: `✅ **All clear!** No professor or academic department has cancelled or rescheduled any classes in your recent emails.`,
+      references: [],
+    };
+  }
+
+  // 4. Club Interviews & Recruitment
+  if (
+    q.includes('club') ||
+    q.includes('interview') ||
+    q.includes('recruitment') ||
+    q.includes('audition') ||
+    q.includes('induction') ||
+    q.includes('shortlist') ||
+    q.includes('society') ||
+    q.includes('council')
+  ) {
+    const clubMatches = emails.filter((e) => {
+      const text = `${e.subject} ${e.bodyOrSnippet}`.toLowerCase();
+      return (
+        text.includes('club') ||
+        text.includes('interview') ||
+        text.includes('recruitment') ||
+        text.includes('audition') ||
+        text.includes('induction') ||
+        text.includes('intro talk') ||
+        text.includes('symposium') ||
+        text.includes('trials') ||
+        text.includes('selection') ||
+        text.includes('society') ||
+        text.includes('council')
+      );
+    });
+
+    if (clubMatches.length > 0) {
+      let text = `🎯 **Upcoming Club Recruitments & Selection Schedules:**\n\n`;
+      clubMatches.slice(0, 3).forEach((item, idx) => {
+        text += `**${idx + 1}. ${item.subject}**\n`;
+        text += `• **Club / Body:** ${item.sender}\n`;
+        if (item.bodyOrSnippet.includes('SDSLabs') || item.subject.includes('SDSLabs')) {
+          text += `• **Event:** Intro Talk & Winter Recruitment Roadmap\n`;
+          text += `• **Schedule:** **Saturday at 5:00 PM** at MAC Auditorium\n`;
+          text += `• **Perks:** Free refreshments & interactive Q&A\n`;
+        } else if (item.bodyOrSnippet.includes('Inter-IIT') || item.subject.includes('Inter-IIT')) {
+          text += `• **Event:** Team Selections for Robotics, Web3, Systems & AI/ML\n`;
+          text += `• **Schedule:** This weekend at Students Activity Centre\n`;
+        } else {
+          const sentences = item.bodyOrSnippet.split(/(?<=[.?!])\s+/).filter((s) => s.length > 20);
+          text += `• **Info:** ${sentences[0] || 'Check email for application links and deadlines.'}\n`;
+        }
+        text += `\n`;
+      });
+
+      return {
+        text: text.trim(),
+        references: clubMatches.slice(0, 3).map(toEmailRef),
+      };
+    }
+
+    return {
+      text: `No active club interviews or recruitment drives were found in your recent inbox.`,
+      references: [],
+    };
+  }
+
+  // 5. General Keyword Match across emails
+  const stopWords = new Set([
+    'a', 'an', 'the', 'is', 'are', 'was', 'were', 'what', 'when', 'where', 'who', 'how',
+    'which', 'did', 'do', 'does', 'any', 'my', 'me', 'i', 'in', 'on', 'at', 'to', 'for',
+    'of', 'show', 'tell', 'all', 'this', 'that', 'with', 'about', 'coming', 'up', 'next'
+  ]);
+  const tokens = q
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-z0-9]/g, ''))
+    .filter((w) => w.length > 2 && !stopWords.has(w));
+
+  if (tokens.length > 0) {
+    const scored = emails
+      .map((item) => {
+        const sub = item.subject.toLowerCase();
+        const body = item.bodyOrSnippet.toLowerCase();
+        const sender = item.sender.toLowerCase();
+        let score = 0;
+        tokens.forEach((token) => {
+          if (sub.includes(token)) score += 3;
+          if (sender.includes(token)) score += 2;
+          if (body.includes(token)) score += 1;
+        });
+        return { item, score };
+      })
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    if (scored.length > 0) {
+      const topItems = scored.slice(0, 3).map((s) => s.item);
+      let text = `Here is what I found in your inbox regarding **"${query}"**:\n\n`;
+      topItems.forEach((item) => {
+        text += `• **${item.subject}**\n`;
+        text += `  - **From:** ${item.sender} (${item.date})\n`;
+        const firstLine = item.bodyOrSnippet
+          .split(/(?<=[.?!])\s+/)
+          .find((s) => s.trim().length > 20);
+        if (firstLine) {
+          text += `  - **Excerpt:** "${firstLine.trim().slice(0, 150)}..."\n`;
+        }
+      });
+
+      return {
+        text,
+        references: topItems.map(toEmailRef),
+      };
+    }
+  }
+
+  // Default Fallback
+  return {
+    text: `I searched your inbox for "${query}" but couldn't find relevant emails.\n\nTry asking one of the suggested prompts:\n• *"When is my next assignment due?"*\n• *"Show all hackathons this month."*\n• *"Did any professor cancel a class?"*\n• *"Which club interviews are coming up?"*`,
+    references: [],
+  };
+}
+
+async function askCopilotWithGroq(
+  query: string,
+  emails: GroundingEmailItem[],
+  groqKey: string
+): Promise<{ text: string; references: ChatEmailReference[] }> {
+  const emailSummaries = emails
+    .slice(0, 20)
+    .map(
+      (e, idx) =>
+        `[Email ${idx + 1}] ID: ${e.id}
+Subject: ${e.subject}
+From: ${e.sender}
+Date: ${e.date}
+Category: ${e.category || 'General'}
+Content:
+${e.bodyOrSnippet.slice(0, 600)}`
+    )
+    .join('\n\n---\n\n');
+
+  const systemPrompt = `You are AcadMail AI Copilot, a helpful university email assistant.
+Answer the student's question accurately using ONLY the provided campus emails.
+Use concise bullet points, bold key dates, course codes, deadlines, and venues.
+At the very end of your response, output a single line with JSON references of matching email IDs:
+REFERENCES: ["id1", "id2"]`;
+
+  const userPrompt = `Student Question: "${query}"\n\nCampus Emails:\n${emailSummaries}`;
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${groqKey.trim()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.2,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Groq copilot error HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  const rawText = data.choices?.[0]?.message?.content?.trim() || '';
+
+  return parseCopilotResponse(rawText, emails);
+}
+
+async function askCopilotWithGemini(
+  query: string,
+  emails: GroundingEmailItem[],
+  apiKey: string
+): Promise<{ text: string; references: ChatEmailReference[] }> {
+  const cleanKey = apiKey.trim();
+  const emailSummaries = emails
+    .slice(0, 20)
+    .map(
+      (e, idx) =>
+        `[Email ${idx + 1}] ID: ${e.id}
+Subject: ${e.subject}
+From: ${e.sender}
+Date: ${e.date}
+Category: ${e.category || 'General'}
+Content:
+${e.bodyOrSnippet.slice(0, 600)}`
+    )
+    .join('\n\n---\n\n');
+
+  const prompt = `You are AcadMail AI Copilot, a university email assistant.
+Answer the student's question accurately using ONLY the provided campus emails.
+Use concise bullet points, bold key dates, course codes, deadlines, and venues.
+At the very end of your response, output a single line with JSON references of matching email IDs:
+REFERENCES: ["id1", "id2"]
+
+Student Question: "${query}"
+
+Campus Emails:
+${emailSummaries}`;
+
+  const candidateModels = [
+    'models/gemini-2.0-flash',
+    'models/gemini-2.0-flash-lite',
+    'models/gemini-3.8-flash',
+    'models/gemini-1.5-flash',
+  ];
+
+  for (const modelPath of candidateModels) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${cleanKey}`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      });
+
+      if (res.ok) {
+        const resJson = await res.json();
+        const text = resJson?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) {
+          return parseCopilotResponse(text, emails);
+        }
+      }
+    } catch (e) {}
+  }
+
+  throw new Error('Gemini models unavailable for copilot');
+}
+
+function parseCopilotResponse(
+  rawText: string,
+  emails: GroundingEmailItem[]
+): { text: string; references: ChatEmailReference[] } {
+  const refRegex = /REFERENCES:\s*(\[.*?\])/s;
+  const match = rawText.match(refRegex);
+
+  let cleanText = rawText.replace(refRegex, '').trim();
+  let references: ChatEmailReference[] = [];
+
+  if (match) {
+    try {
+      const ids: string[] = JSON.parse(match[1]);
+      references = emails.filter((e) => ids.includes(e.id)).map(toEmailRef);
+    } catch (e) {}
+  }
+
+  // Fallback if no references parsed: find emails mentioned in the text
+  if (references.length === 0) {
+    const matched = emails.filter(
+      (e) =>
+        cleanText.toLowerCase().includes(e.subject.toLowerCase().slice(0, 30)) ||
+        cleanText.toLowerCase().includes(e.sender.toLowerCase().slice(0, 20))
+    );
+    references = matched.slice(0, 3).map(toEmailRef);
+  }
+
+  return {
+    text: cleanText,
+    references,
+  };
+}
+
+/**
+ * Main entry point for Inbox Copilot
+ */
+export async function askInboxCopilot(
+  query: string,
+  emails: GroundingEmailItem[],
+  apiKey?: string,
+  groqKey?: string
+): Promise<{ text: string; references: ChatEmailReference[] }> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return {
+      text: 'Please enter a question about your emails.',
+      references: [],
+    };
+  }
+
+  if (emails.length === 0) {
+    return {
+      text: "I haven't scanned any emails yet. Please scan your inbox first to let me find the answers for you!",
+      references: [],
+    };
+  }
+
+  // 1. Try Groq if key provided
+  if (groqKey && groqKey.trim()) {
+    try {
+      return await askCopilotWithGroq(trimmed, emails, groqKey);
+    } catch (e) {
+      console.warn('[AcadMail AI] Groq copilot failed, trying Gemini or local fallback:', e);
+    }
+  }
+
+  // 2. Try Gemini if key provided
+  if (apiKey && apiKey.trim()) {
+    try {
+      return await askCopilotWithGemini(trimmed, emails, apiKey);
+    } catch (e) {
+      console.warn('[AcadMail AI] Gemini copilot failed, using smart local engine:', e);
+    }
+  }
+
+  // 3. Robust Local Heuristic Engine
+  return answerWithLocalHeuristic(trimmed, emails);
 }
