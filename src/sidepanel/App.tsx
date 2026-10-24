@@ -830,10 +830,10 @@ export default function App() {
               <GraduationCap className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[13px] font-semibold tracking-[-0.01em] text-[#1f1f1f] dark:text-[#e3e3e3]">
+              <span className="text-[13px] font-semibold text-[#1f1f1f] dark:text-[#e3e3e3]">
                 AcadMail
               </span>
-              <span className="font-mono text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-[#eaeff8] dark:bg-[#1e1f20] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">
+              <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-[#eaeff8] dark:bg-[#1e1f20] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">
                 v1.0
               </span>
             </div>
@@ -880,10 +880,10 @@ export default function App() {
 
         {/* Google M3 Style Segmented Switcher */}
         <div className="px-3 pt-2.5 pb-2 bg-[#f6f8fc] dark:bg-[#111318] border-b border-[#e0e2ec] dark:border-[#282a2d]">
-          <div className="p-1 bg-[#eaeff8] dark:bg-[#1e1f20] rounded-xl flex items-center gap-1 border border-[#d3e3fd]/60 dark:border-[#2c2d30]">
+          <div className="p-1 bg-[#eaeff8] dark:bg-[#1e1f20] rounded-full flex items-center gap-1 border border-[#d3e3fd]/60 dark:border-[#2c2d30]">
             <button
               onClick={() => setActiveTab('buckets')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'buckets'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -892,7 +892,7 @@ export default function App() {
               <Layers className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Buckets</span>
               {inboxItems.length > 0 && (
-                <span className="font-mono text-[9px] font-semibold opacity-75">
+                <span className="text-[9px] font-medium opacity-75">
                   {inboxItems.length}
                 </span>
               )}
@@ -900,7 +900,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('deadlines')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'deadlines'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -909,7 +909,7 @@ export default function App() {
               <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
               <span className="truncate">Deadlines</span>
               {pendingDeadlinesCount > 0 && (
-                <span className="font-mono text-[9px] font-bold text-amber-700 dark:text-amber-400">
+                <span className="text-[9px] font-semibold text-amber-700 dark:text-amber-400">
                   {pendingDeadlinesCount}
                 </span>
               )}
@@ -917,7 +917,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'chat'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -929,7 +929,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('detail')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'detail'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -1180,7 +1180,7 @@ export default function App() {
                 >
                   <span>All</span>
                   <span
-                    className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
                       selectedCategory === 'ALL'
                         ? 'bg-[#001d35]/12 text-[#001d35] dark:bg-[#c2e7ff]/20 dark:text-[#c2e7ff]'
                         : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-[#28292a] dark:text-[#8e918f]'
@@ -1204,7 +1204,7 @@ export default function App() {
                     <button
                       key={cat.id}
                       onClick={() => handleCategoryFilterChange(cat.id as CategoryType)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] transition shrink-0 flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
                         isSelected
                           ? `${theme.activeBtn}`
                           : 'bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] border border-[#c4c7c5] dark:border-[#444746] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
@@ -1213,7 +1213,7 @@ export default function App() {
                       <Icon className={`w-3 h-3 ${isSelected ? 'opacity-90' : 'text-[#5f6368] dark:text-[#8e918f]'}`} />
                       <span>{cat.label}</span>
                       <span
-                        className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
                           isSelected
                             ? `${theme.countBadge}`
                             : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-[#28292a] dark:text-[#8e918f]'
@@ -1242,7 +1242,7 @@ export default function App() {
                       <Tag className="w-3 h-3" />
                       <span>{filter.name}</span>
                       <span
-                        className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
                           isSelected
                             ? `${theme.countBadge}`
                             : 'bg-[#f3e8ff] text-[#7e22ce] dark:bg-[#321c4d] dark:text-[#d8b4fe]'
@@ -1349,13 +1349,13 @@ export default function App() {
                           <span className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs truncate">
                             {item.sender}
                           </span>
-                          <span className="font-mono text-[10px] text-[#5f6368] dark:text-[#8e918f] shrink-0 tabular-nums">
+                          <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f] shrink-0 font-normal">
                             {item.date}
                           </span>
                         </div>
 
                         {/* Subject */}
-                        <div className="font-medium text-xs text-[#3c4043] dark:text-[#c4c7c5] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] transition-colors line-clamp-1 leading-snug">
+                        <div className="font-normal text-xs text-[#1f1f1f] dark:text-[#e3e3e3] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] transition-colors line-clamp-1 leading-snug">
                           {item.subject}
                         </div>
 
@@ -1370,14 +1370,14 @@ export default function App() {
                         <div className="flex items-center justify-between pt-1 gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${theme.chip}`}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${theme.chip}`}
                             >
                               <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
                               <span>{item.category}</span>
                             </span>
 
                             {item.courseCode && (
-                              <span className="font-mono px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">
+                              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">
                                 {item.courseCode}
                               </span>
                             )}
@@ -1556,7 +1556,7 @@ export default function App() {
                     <span className="text-[12px] font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] tracking-tight">
                       Inbox Copilot
                     </span>
-                    <span className="font-mono text-[9px] text-[#5f6368] dark:text-[#8e918f]">
+                    <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f]">
                       • {inboxItems.length} emails grounded
                     </span>
                   </div>
@@ -1565,7 +1565,7 @@ export default function App() {
                   <button
                     onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
                     title="Click to toggle between Instant Local Engine and Cloud LLM"
-                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                    className={`text-[9px] font-medium px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
                       copilotMode === 'instant'
                         ? 'bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] border-[#d3e3fd] dark:border-[#3c4043]'
                         : 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#001d35] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93]'
@@ -1594,10 +1594,10 @@ export default function App() {
               {/* Quick Prompt Queries */}
               <div className="mb-2.5 shrink-0 space-y-1">
                 <div className="flex items-center justify-between px-0.5">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-[#5f6368] dark:text-[#8e918f] font-semibold">
+                  <span className="text-[9px] uppercase tracking-wider text-[#5f6368] dark:text-[#8e918f] font-semibold">
                     Quick Queries
                   </span>
-                  <span className="font-mono text-[9px] text-[#5f6368] dark:text-[#8e918f]">1-tap</span>
+                  <span className="text-[9px] text-[#5f6368] dark:text-[#8e918f]">1-tap</span>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {QUICK_PROMPTS.map((qp) => {
@@ -1617,7 +1617,7 @@ export default function App() {
                             <div className="text-[11px] font-medium text-[#1f1f1f] dark:text-[#e3e3e3] truncate">
                               {qp.label}
                             </div>
-                            <div className="font-mono text-[8px] text-[#5f6368] dark:text-[#8e918f] truncate">
+                            <div className="text-[9px] text-[#5f6368] dark:text-[#8e918f] truncate">
                               "{qp.prompt.slice(0, 24)}..."
                             </div>
                           </div>
@@ -1702,7 +1702,7 @@ export default function App() {
                         </div>
                       )}
                     </div>
-                    <span className="text-[8px] text-[#5f6368] dark:text-[#8e918f] mt-0.5 px-1 font-mono">
+                    <span className="text-[8px] text-[#5f6368] dark:text-[#8e918f] mt-0.5 px-1 font-normal">
                       {msg.timestamp}
                     </span>
                   </div>

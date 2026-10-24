@@ -461,10 +461,10 @@ function injectRowBadge(
     padding: 0 6px;
     height: 16px;
     margin-right: 6px;
-    border-radius: 4px;
-    font-size: 10px;
+    border-radius: 6px;
+    font-size: 10.5px;
     font-weight: 500;
-    font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
+    font-family: Roboto, "Google Sans", "Google Sans Text", sans-serif;
     vertical-align: middle;
     cursor: pointer;
     ${badgeColor}
@@ -622,13 +622,14 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
         flex-shrink: 0 !important;
         height: 32px !important;
         box-sizing: border-box !important;
-        padding: 0 12px !important;
-        border-radius: 8px !important;
+        padding: 0 14px !important;
+        border-radius: 16px !important;
         display: inline-flex !important;
         align-items: center !important;
         gap: 6px !important;
-        font-family: "Google Sans", Roboto, -apple-system, BlinkMacSystemFont, sans-serif !important;
-        font-size: 12.5px !important;
+        font-family: Roboto, "Google Sans", "Google Sans Text", -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
         line-height: 1 !important;
         cursor: pointer !important;
         user-select: none !important;
@@ -640,9 +641,10 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
       }
       .m3-chip-count {
         font-size: 11px !important;
-        font-weight: 700 !important;
+        font-weight: 500 !important;
+        font-family: Roboto, "Google Sans", sans-serif !important;
         padding: 2px 7px !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         line-height: 1 !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -693,8 +695,8 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
       box-sizing: border-box;
       background: ${isDark ? '#141517' : '#ffffff'};
       border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e0e2ec'};
-      font-family: "Google Sans", Roboto, -apple-system, sans-serif;
-      font-size: 12.5px;
+      font-family: Roboto, "Google Sans", "Google Sans Text", -apple-system, sans-serif;
+      font-size: 12px;
       z-index: 10;
     `
     );
@@ -738,13 +740,13 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
     <div id="acadmail-chip-scroll-track" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; flex: 1; min-width: 0; padding: 2px 0;">
       
       <!-- Brand Pill -->
-      <div style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 8px; background: ${
+      <div style="display: inline-flex; align-items: center; gap: 5px; height: 32px; box-sizing: border-box; padding: 0 12px; border-radius: 16px; background: ${
         isDark ? 'rgba(56, 139, 253, 0.12)' : 'rgba(26, 115, 232, 0.08)'
-      }; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-weight: 700; font-size: 12px; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${
-    isDark ? 'rgba(56, 139, 253, 0.25)' : 'rgba(26, 115, 232, 0.2)'
-  };">
-        <span style="font-weight: 800; font-family: monospace; font-size: 11px; letter-spacing: -0.5px;">AM</span>
-        <span>AcadMail</span>
+      }; color: ${isDark ? '#79c0ff' : '#1a73e8'}; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${
+        isDark ? 'rgba(56, 139, 253, 0.25)' : 'rgba(26, 115, 232, 0.2)'
+      }; font-family: Roboto, 'Google Sans', 'Google Sans Text', sans-serif;">
+        <span style="font-weight: 700; font-size: 11.5px; letter-spacing: 0.2px;">AM</span>
+        <span style="font-weight: 600; font-size: 12px;">AcadMail</span>
       </div>
 
       <!-- 1. All Emails -->
@@ -797,12 +799,12 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
         .join('')}
 
       <!-- 8. Add Custom Filter Button -->
-      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px dashed ${
+      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px dashed ${
         isDark ? 'rgba(255,255,255,0.25)' : '#94a3b8'
       }; background: transparent; color: ${
-    isDark ? '#79c0ff' : '#1a73e8'
-  }; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
-        <span style="font-size: 14px; font-weight: 700; line-height: 1;">+</span>
+        isDark ? '#79c0ff' : '#1a73e8'
+      }; font-size: 12px; font-weight: 500; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
+        <span style="font-size: 14px; font-weight: 600; line-height: 1;">+</span>
         <span>Filter</span>
       </button>
     </div>
@@ -813,12 +815,12 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
         deadlineList.length > 0
           ? `
         <div style="position: relative; flex-shrink: 0;">
-          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid ${
+          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid ${
             isDark ? 'rgba(210,153,34,0.4)' : '#fde68a'
           }; background: ${isDark ? 'rgba(210,153,34,0.15)' : '#fffbeb'}; color: ${
               isDark ? '#e3b341' : '#b45309'
-            }; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
-            <span style="font-weight: 700; font-family: monospace; font-size: 11px;">DUE</span>
+            }; font-size: 12px; font-weight: 600; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
+            <span style="font-weight: 700; font-family: Roboto, 'Google Sans', sans-serif; font-size: 11px;">DUE</span>
             <span>${deadlineList.length}</span>
           </button>
 
@@ -826,7 +828,7 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
             isDark ? '#1e1f20' : '#ffffff'
           }; border: 1px solid ${
               isDark ? '#3c4043' : '#e0e2ec'
-            }; border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999;">
+            }; border-radius: 16px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999; font-family: Roboto, 'Google Sans', sans-serif;">
             <div style="font-weight: 600; color: ${
               isDark ? '#e3e3e3' : '#1f1f1f'
             }; font-size: 11.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
@@ -839,7 +841,7 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
                   (d) => `
                 <div style="padding: 8px 10px; background: ${
                   isDark ? '#2b2c2f' : '#f8fafd'
-                }; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                }; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                   <div style="overflow: hidden; flex: 1;">
                     <div style="font-size: 11.5px; font-weight: 500; color: ${
                       isDark ? '#e3e3e3' : '#1f1f1f'
@@ -848,7 +850,7 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
                   </div>
                   <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; flex-shrink: 0; padding: 3px 8px; background: ${
                     isDark ? '#004a77' : '#c2e7ff'
-                  }; color: ${isDark ? '#c2e7ff' : '#001d35'}; border-radius: 6px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
+                  }; color: ${isDark ? '#c2e7ff' : '#001d35'}; border-radius: 8px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
                 </div>
               `
                 )
@@ -860,9 +862,9 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
           : ''
       }
 
-      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: ${
+      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid transparent; background: transparent; color: ${
         isDark ? '#8e918f' : '#64748b'
-      }; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
+      }; font-size: 12px; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
         <span style="font-size: 13px; line-height: 1;">✕</span>
         <span>Hide</span>
       </button>
