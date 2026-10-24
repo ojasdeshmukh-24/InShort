@@ -880,10 +880,10 @@ export default function App() {
 
         {/* Google M3 Style Segmented Switcher */}
         <div className="px-3 pt-2.5 pb-2 bg-[#f6f8fc] dark:bg-[#111318] border-b border-[#e0e2ec] dark:border-[#282a2d]">
-          <div className="p-1 bg-[#eaeff8] dark:bg-[#1e1f20] rounded-full flex items-center gap-1 border border-[#d3e3fd]/60 dark:border-[#2c2d30]">
+          <div className="p-1 bg-[#eaeff8] dark:bg-[#1e1f20] rounded-lg flex items-center gap-1 border border-[#d3e3fd]/60 dark:border-[#2c2d30]">
             <button
               onClick={() => setActiveTab('buckets')}
-              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'buckets'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -900,7 +900,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('deadlines')}
-              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'deadlines'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -917,7 +917,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'chat'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -929,7 +929,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('detail')}
-              className={`flex-1 py-1.5 px-2 rounded-full text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'detail'
                   ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
@@ -946,7 +946,7 @@ export default function App() {
         <main className="flex-1 p-3.5 space-y-3">
           {/* Settings Drawer */}
           {showSettings && (
-            <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-xs space-y-3 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-xs space-y-3 animate-in fade-in duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-[#1f1f1f] dark:text-[#e3e3e3] font-bold text-xs">
                   <Key className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
@@ -1172,7 +1172,7 @@ export default function App() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-0.5">
                 <button
                   onClick={() => handleCategoryFilterChange('ALL')}
-                  className={`px-3 py-1.5 rounded-full text-[11px] transition shrink-0 flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
                     selectedCategory === 'ALL'
                       ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold border border-[#7fcfff] dark:border-[#005c93] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] border border-[#c4c7c5] dark:border-[#444746] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
@@ -1180,7 +1180,7 @@ export default function App() {
                 >
                   <span>All</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                    className={`text-[10px] px-1.5 py-0.2 rounded-md font-medium ${
                       selectedCategory === 'ALL'
                         ? 'bg-[#001d35]/12 text-[#001d35] dark:bg-[#c2e7ff]/20 dark:text-[#c2e7ff]'
                         : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-[#28292a] dark:text-[#8e918f]'
@@ -1204,7 +1204,7 @@ export default function App() {
                     <button
                       key={cat.id}
                       onClick={() => handleCategoryFilterChange(cat.id as CategoryType)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
                         isSelected
                           ? `${theme.activeBtn}`
                           : 'bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] border border-[#c4c7c5] dark:border-[#444746] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
@@ -1213,7 +1213,7 @@ export default function App() {
                       <Icon className={`w-3 h-3 ${isSelected ? 'opacity-90' : 'text-[#5f6368] dark:text-[#8e918f]'}`} />
                       <span>{cat.label}</span>
                       <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                        className={`text-[10px] px-1.5 py-0.2 rounded-md font-medium ${
                           isSelected
                             ? `${theme.countBadge}`
                             : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-[#28292a] dark:text-[#8e918f]'
@@ -1233,7 +1233,7 @@ export default function App() {
                     <button
                       key={filter.id}
                       onClick={() => handleCategoryFilterChange(filter.name)}
-                      className={`px-3 py-1.5 rounded-full text-[11px] transition shrink-0 flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
                         isSelected
                           ? `${theme.activeBtn}`
                           : 'bg-white dark:bg-[#1e1f20] text-[#7e22ce] dark:text-[#d8b4fe] border border-[#e9d5ff] dark:border-[#582987] hover:bg-[#f3e8ff]/50 dark:hover:bg-[#321c4d]/50'
@@ -1242,7 +1242,7 @@ export default function App() {
                       <Tag className="w-3 h-3" />
                       <span>{filter.name}</span>
                       <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                        className={`text-[10px] px-1.5 py-0.2 rounded-md font-medium ${
                           isSelected
                             ? `${theme.countBadge}`
                             : 'bg-[#f3e8ff] text-[#7e22ce] dark:bg-[#321c4d] dark:text-[#d8b4fe]'
@@ -1258,7 +1258,7 @@ export default function App() {
                 <button
                   onClick={() => setShowAddFilterModal(true)}
                   title="Add custom academic filter"
-                  className="px-2.5 py-1.5 rounded-full text-[11px] font-medium text-[#444746] dark:text-[#c4c7c5] border border-dashed border-[#c4c7c5] dark:border-[#444746] hover:border-[#747775] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0 flex items-center gap-1"
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#444746] dark:text-[#c4c7c5] border border-dashed border-[#c4c7c5] dark:border-[#444746] hover:border-[#747775] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0 flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
                   <span>Filter</span>
@@ -1274,7 +1274,7 @@ export default function App() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={`Search in ${selectedCategory === 'ALL' ? 'all emails' : selectedCategory}...`}
-                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#eaeff8] dark:bg-[#1e1f20] border border-transparent focus:border-[#0b57d0] dark:focus:border-[#a8c7fa] rounded-full focus:outline-none focus:bg-white dark:focus:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] shadow-2xs transition-colors"
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#eaeff8] dark:bg-[#1e1f20] border border-transparent focus:border-[#0b57d0] dark:focus:border-[#a8c7fa] rounded-lg focus:outline-none focus:bg-white dark:focus:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] shadow-2xs transition-colors"
                   />
                   {searchQuery && (
                     <button
@@ -1289,7 +1289,7 @@ export default function App() {
                 <button
                   onClick={() => handleToggleSyncDom(!syncGmailDom)}
                   title="Dim non-matching rows on Gmail"
-                  className={`py-1.5 px-3 rounded-full border text-[11px] font-medium flex items-center gap-1.5 transition shrink-0 ${
+                  className={`py-1.5 px-2.5 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
                     syncGmailDom
                       ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93] shadow-2xs font-semibold'
                       : 'bg-white dark:bg-[#1e1f20] border-[#c4c7c5] dark:border-[#444746] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
@@ -1303,7 +1303,7 @@ export default function App() {
                   onClick={() => scanInbox()}
                   disabled={isScanningInbox}
                   title="Refresh & scan visible inbox rows"
-                  className="p-1.5 rounded-full border border-[#c4c7c5] dark:border-[#444746] bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0"
+                  className="p-1.5 rounded-lg border border-[#c4c7c5] dark:border-[#444746] bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0 cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isScanningInbox ? 'animate-spin text-[#0b57d0] dark:text-[#a8c7fa]' : ''}`} />
                 </button>
@@ -1311,8 +1311,8 @@ export default function App() {
 
               {/* Email List */}
               {filteredInbox.length === 0 ? (
-                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-8 text-center space-y-3 shadow-2xs">
-                  <div className="w-10 h-10 mx-auto rounded-full bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-8 text-center space-y-3 shadow-2xs">
+                  <div className="w-10 h-10 mx-auto rounded-lg bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
@@ -1328,14 +1328,14 @@ export default function App() {
                   <button
                     onClick={() => scanInbox()}
                     disabled={isScanningInbox}
-                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] font-semibold text-xs rounded-full transition shadow-xs inline-flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] font-semibold text-xs rounded-lg transition shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCw className={`w-3 h-3 ${isScanningInbox ? 'animate-spin' : ''}`} />
                     <span>Scan Visible Inbox</span>
                   </button>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-[#e0e2ec] dark:border-[#2c2d30] bg-white dark:bg-[#1e1f20] divide-y divide-[#f1f3f4] dark:divide-[#28292a] overflow-hidden shadow-2xs">
+                <div className="rounded-xl border border-[#e0e2ec] dark:border-[#2c2d30] bg-white dark:bg-[#1e1f20] divide-y divide-[#f1f3f4] dark:divide-[#28292a] overflow-hidden shadow-2xs">
                   {filteredInbox.map((item) => {
                     const theme = getCategoryTheme(item.category);
                     return (
@@ -1404,7 +1404,7 @@ export default function App() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 <button
                   onClick={() => setDeadlineFilter('all')}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 cursor-pointer ${
                     deadlineFilter === 'all'
                       ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold border border-[#7fcfff] dark:border-[#005c93] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
@@ -1414,7 +1414,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('urgent')}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1 ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1 cursor-pointer ${
                     deadlineFilter === 'urgent'
                       ? 'bg-[#fce8e6] text-[#c5221f] dark:bg-[#3d1417] dark:text-[#f29e99] font-semibold border border-[#fad2cf] dark:border-[#66272c] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#c5221f] dark:text-[#f29e99] hover:bg-[#fce8e6]/40 dark:hover:bg-[#3d1417]/40'
@@ -1424,7 +1424,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('academics')}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1 ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1 cursor-pointer ${
                     deadlineFilter === 'academics'
                       ? 'bg-[#edf5fd] text-[#1a73e8] dark:bg-[#1a2d48] dark:text-[#a8c7fa] font-semibold border border-[#d2e3fc] dark:border-[#2b4c7e] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#1a73e8] dark:text-[#a8c7fa] hover:bg-[#edf5fd]/40 dark:hover:bg-[#1a2d48]/40'
@@ -1434,7 +1434,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('competitions')}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1 ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1 cursor-pointer ${
                     deadlineFilter === 'competitions'
                       ? 'bg-[#fef7e0] text-[#b06000] dark:bg-[#3e2c0e] dark:text-[#f8d070] font-semibold border border-[#fce8b2] dark:border-[#63481b] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#b06000] dark:text-[#f8d070] hover:bg-[#fef7e0]/40 dark:hover:bg-[#3e2c0e]/40'
@@ -1445,7 +1445,7 @@ export default function App() {
               </div>
 
               {filteredDeadlines.length === 0 ? (
-                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-6 text-center space-y-2 shadow-2xs">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-6 text-center space-y-2 shadow-2xs">
                   <CalendarCheck2 className="w-8 h-8 mx-auto text-[#5f6368] dark:text-[#8e918f]" />
                   <h4 className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                     No pending deadlines found
@@ -1461,7 +1461,7 @@ export default function App() {
                     return (
                       <div
                         key={dl.id}
-                        className={`p-3 bg-white dark:bg-[#1e1f20] border rounded-2xl transition space-y-2 shadow-2xs ${
+                        className={`p-3 bg-white dark:bg-[#1e1f20] border rounded-xl transition space-y-2 shadow-2xs ${
                           dl.completed
                             ? 'opacity-60 bg-[#f6f8fc]/60 dark:bg-[#111318]/60 border-[#e0e2ec] dark:border-[#2c2d30]'
                             : 'border-[#e0e2ec] dark:border-[#2c2d30] hover:border-[#0b57d0] dark:hover:border-[#a8c7fa]'
@@ -1470,7 +1470,7 @@ export default function App() {
                         <div className="flex items-start gap-2.5">
                           <button
                             onClick={() => toggleDeadlineComplete(dl.id)}
-                            className="mt-0.5 text-[#5f6368] hover:text-[#0b57d0] dark:text-[#8e918f] dark:hover:text-[#a8c7fa] transition shrink-0"
+                            className="mt-0.5 text-[#5f6368] hover:text-[#0b57d0] dark:text-[#8e918f] dark:hover:text-[#a8c7fa] transition shrink-0 cursor-pointer"
                           >
                             {dl.completed ? (
                               <CheckCircle2 className="w-4 h-4 text-[#137333] dark:text-[#85e0a3]" />
@@ -1501,7 +1501,7 @@ export default function App() {
 
                             <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#f1f3f4] dark:border-[#282a2d]">
                               <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-medium border ${theme.chip}`}
+                                className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-md text-[9px] font-medium border ${theme.chip}`}
                               >
                                 <span className={`w-1 h-1 rounded-full ${theme.dot}`} />
                                 {dl.courseCode
@@ -1639,7 +1639,7 @@ export default function App() {
                     }`}
                   >
                     <div
-                      className={`max-w-[92%] rounded-2xl px-3 py-2 text-xs shadow-2xs ${
+                      className={`max-w-[92%] rounded-xl px-3 py-2 text-xs shadow-2xs ${
                         msg.role === 'user'
                           ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] rounded-br-xs font-medium'
                           : 'bg-white dark:bg-[#1e1f20] text-[#1f1f1f] dark:text-[#e3e3e3] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-bl-xs'
@@ -1709,7 +1709,7 @@ export default function App() {
                 ))}
 
                 {isChatThinking && (
-                  <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#1e1f20] rounded-2xl border border-[#e0e2ec] dark:border-[#2c2d30] w-fit">
+                  <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#1e1f20] rounded-xl border border-[#e0e2ec] dark:border-[#2c2d30] w-fit">
                     <div className="w-2 h-2 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] animate-ping"></div>
                     <span className="text-[11px] text-[#5f6368] dark:text-[#8e918f] italic">
                       Scanning campus emails & reasoning...
@@ -1732,12 +1732,12 @@ export default function App() {
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Ask a question about your emails..."
                   disabled={isChatThinking}
-                  className="flex-1 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-full px-3.5 py-2 text-xs text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa]"
+                  className="flex-1 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-lg px-3 py-2 text-xs text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa]"
                 />
                 <button
                   type="submit"
                   disabled={!chatInput.trim() || isChatThinking}
-                  className="p-2 rounded-full bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] disabled:opacity-50 text-white dark:text-[#001d35] font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
+                  className="p-2 rounded-lg bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] disabled:opacity-50 text-white dark:text-[#001d35] font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
                 >
                   <SendHorizontal className="w-4 h-4" />
                 </button>
@@ -1759,8 +1759,8 @@ export default function App() {
               </button>
 
               {!email && !loading && (
-                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-6 text-center space-y-2.5">
-                  <div className="w-10 h-10 mx-auto rounded-2xl bg-[#f0f4f9] dark:bg-[#28292c] text-[#5f6368] dark:text-[#8e918f] flex items-center justify-center">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-6 text-center space-y-2.5">
+                  <div className="w-10 h-10 mx-auto rounded-lg bg-[#f0f4f9] dark:bg-[#28292c] text-[#5f6368] dark:text-[#8e918f] flex items-center justify-center">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
@@ -1776,7 +1776,7 @@ export default function App() {
               )}
 
               {email && (
-                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <h2
@@ -1796,7 +1796,7 @@ export default function App() {
                     <button
                       onClick={() => triggerAnalysis(email)}
                       disabled={loading}
-                      className="shrink-0 p-1.5 px-2 bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 text-[#1f1f1f] dark:text-[#e3e3e3] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-full transition flex items-center gap-1 font-semibold text-[10px] cursor-pointer"
+                      className="shrink-0 p-1.5 px-2 bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 text-[#1f1f1f] dark:text-[#e3e3e3] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-lg transition flex items-center gap-1 font-semibold text-[10px] cursor-pointer"
                     >
                       <Sparkles className="w-3 h-3 text-[#0b57d0] dark:text-[#a8c7fa]" />
                       <span>Re-analyze</span>
@@ -1811,7 +1811,7 @@ export default function App() {
                           <div className="relative">
                             <button
                               onClick={() => setShowRelabelMenu(!showRelabelMenu)}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold border text-[10px] transition hover:shadow-xs cursor-pointer ${theme.chip}`}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold border text-[10px] transition hover:shadow-xs cursor-pointer ${theme.chip}`}
                               title="Click to manually change or override this email label"
                             >
                               <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
@@ -1820,7 +1820,7 @@ export default function App() {
                             </button>
 
                             {showRelabelMenu && (
-                              <div className="absolute left-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl shadow-xl p-1.5 space-y-1 animate-in fade-in duration-150">
+                              <div className="absolute left-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl shadow-xl p-1.5 space-y-1 animate-in fade-in duration-150">
                                 <div className="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-[#5f6368] dark:text-[#8e918f]">
                                   Change Email Category
                                 </div>
@@ -1905,7 +1905,7 @@ export default function App() {
 
               {/* Skeleton Loader */}
               {loading && (
-                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-4 space-y-3 animate-pulse shadow-2xs">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-4 space-y-3 animate-pulse shadow-2xs">
                   <div className="h-4 bg-[#eaeff8] dark:bg-[#28292c] rounded-lg w-1/3"></div>
                   <div className="space-y-1.5">
                     <div className="h-3 bg-[#f0f4f9] dark:bg-[#28292c] rounded w-full"></div>
@@ -1920,7 +1920,7 @@ export default function App() {
               {analysis && !loading && (
                 <div className="space-y-3">
                   {/* 1. Bulleted Executive Summary */}
-                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2">
+                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                         <Sparkles className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
@@ -1958,13 +1958,13 @@ export default function App() {
                   </div>
 
                   {/* 2. Action Items & Deadlines */}
-                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                         <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                         <span>Action Items & Deadlines</span>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 bg-[#eaeff8] dark:bg-[#28292c] text-[#1f1f1f] dark:text-[#c4c7c5] rounded-full font-bold">
+                      <span className="text-[10px] px-2 py-0.5 bg-[#eaeff8] dark:bg-[#28292c] text-[#1f1f1f] dark:text-[#c4c7c5] rounded-md font-bold">
                         {analysis.actionItems.filter((i) => !i.completed).length} pending
                       </span>
                     </div>
@@ -1978,7 +1978,7 @@ export default function App() {
                         {analysis.actionItems.map((item) => (
                           <div
                             key={item.id}
-                            className={`p-2.5 rounded-xl border transition ${
+                            className={`p-2.5 rounded-lg border transition ${
                               item.completed
                                 ? 'bg-[#f6f8fc]/70 dark:bg-[#111318]/50 border-[#f1f3f4] dark:border-[#2c2d30] opacity-60'
                                 : 'bg-white dark:bg-[#1e1f20] border-[#e0e2ec] dark:border-[#2c2d30] hover:border-[#0b57d0]/40 shadow-2xs'
@@ -2039,7 +2039,7 @@ export default function App() {
 
                   {/* 3. Event & Registration Links */}
                   {analysis.meetingLinks && analysis.meetingLinks.length > 0 && (
-                    <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2">
+                    <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2">
                       <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                         <Video className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
                         <span>Event & Registration Links</span>
@@ -2051,7 +2051,7 @@ export default function App() {
                             href={link.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex items-center justify-between p-2.5 rounded-xl bg-[#edf5fd] dark:bg-[#1a2d48] hover:bg-[#d2e3fc]/60 dark:hover:bg-[#2b4c7e]/60 border border-[#d2e3fc] dark:border-[#2b4c7e] text-[#1a73e8] dark:text-[#a8c7fa] transition group"
+                            className="flex items-center justify-between p-2.5 rounded-lg bg-[#edf5fd] dark:bg-[#1a2d48] hover:bg-[#d2e3fc]/60 dark:hover:bg-[#2b4c7e]/60 border border-[#d2e3fc] dark:border-[#2b4c7e] text-[#1a73e8] dark:text-[#a8c7fa] transition group"
                           >
                             <div className="flex items-center gap-2 truncate">
                               <span className="font-bold text-[11px] truncate">
@@ -2068,7 +2068,7 @@ export default function App() {
                   )}
 
                   {/* 4. Smart Academic Quick Replies */}
-                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                         <SendHorizontal className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
@@ -2084,7 +2084,7 @@ export default function App() {
                         <button
                           key={idx}
                           onClick={() => handleCopyReplyPreset(reply.text, idx)}
-                          className={`p-2 rounded-xl border text-center transition font-semibold text-[10px] flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                          className={`p-2 rounded-lg border text-center transition font-semibold text-[10px] flex flex-col items-center justify-center gap-1 cursor-pointer ${
                             copiedReplyIndex === idx
                               ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
                               : 'bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 border-[#e0e2ec] dark:border-[#2c2d30] text-[#1f1f1f] dark:text-[#e3e3e3]'
@@ -2106,7 +2106,7 @@ export default function App() {
                     </div>
 
                     {analysis.suggestedReply && (
-                      <div className="p-2.5 bg-[#f0f4f9] dark:bg-[#28292c] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl text-[#444746] dark:text-[#c4c7c5] text-[11px] italic leading-relaxed">
+                      <div className="p-2.5 bg-[#f0f4f9] dark:bg-[#28292c] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-lg text-[#444746] dark:text-[#c4c7c5] text-[11px] italic leading-relaxed">
                         "{analysis.suggestedReply}"
                       </div>
                     )}
@@ -2120,7 +2120,7 @@ export default function App() {
         {/* Add Filter Modal */}
         {showAddFilterModal && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
-            <div className="bg-white dark:bg-[#1e1f20] rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl border border-[#e0e2ec] dark:border-[#2c2d30] animate-in zoom-in-95 duration-150">
+            <div className="bg-white dark:bg-[#1e1f20] rounded-xl w-full max-w-xs p-4 space-y-3 shadow-2xl border border-[#e0e2ec] dark:border-[#2c2d30] animate-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-xs text-[#1f1f1f] dark:text-[#e3e3e3] flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-purple-600" />
@@ -2145,7 +2145,7 @@ export default function App() {
                     value={newFilterName}
                     onChange={(e) => setNewFilterName(e.target.value)}
                     placeholder="e.g. Placements, Library, Hostel"
-                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl focus:outline-none focus:border-[#0b57d0] text-[#1f1f1f] dark:text-[#e3e3e3]"
+                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-lg focus:outline-none focus:border-[#0b57d0] text-[#1f1f1f] dark:text-[#e3e3e3]"
                   />
                 </div>
 
@@ -2159,7 +2159,7 @@ export default function App() {
                     value={newFilterKeywords}
                     onChange={(e) => setNewFilterKeywords(e.target.value)}
                     placeholder="e.g. interview, ctc, tpo, offer"
-                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl focus:outline-none focus:border-[#0b57d0] text-[#1f1f1f] dark:text-[#e3e3e3]"
+                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-lg focus:outline-none focus:border-[#0b57d0] text-[#1f1f1f] dark:text-[#e3e3e3]"
                   />
                   <p className="text-[9px] text-[#5f6368] dark:text-[#8e918f] mt-1">
                     Emails containing these words in their subject or body will be auto-categorized here.
@@ -2176,7 +2176,7 @@ export default function App() {
                   </button>
                   <button
                     type="submit"
-                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] rounded-full text-xs font-bold shadow-xs transition cursor-pointer"
+                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
                   >
                     Create Filter
                   </button>

@@ -39,8 +39,8 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
         flex-shrink: 0 !important;
         height: 32px !important;
         box-sizing: border-box !important;
-        padding: 0 14px !important;
-        border-radius: 16px !important;
+        padding: 0 12px !important;
+        border-radius: 6px !important;
         display: inline-flex !important;
         align-items: center !important;
         gap: 6px !important;
@@ -60,8 +60,8 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
         font-size: 11px !important;
         font-weight: 500 !important;
         font-family: Roboto, "Google Sans", sans-serif !important;
-        padding: 2px 7px !important;
-        border-radius: 10px !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
         line-height: 1 !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -96,7 +96,7 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
     <div id="acadmail-chip-scroll-track" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; flex: 1; min-width: 0; padding: 2px 0;">
       
       <!-- Brand Pill -->
-      <div style="display: inline-flex; align-items: center; gap: 5px; height: 32px; box-sizing: border-box; padding: 0 12px; border-radius: 16px; background: ${i?"rgba(56, 139, 253, 0.12)":"rgba(26, 115, 232, 0.08)"}; color: ${i?"#79c0ff":"#1a73e8"}; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${i?"rgba(56, 139, 253, 0.25)":"rgba(26, 115, 232, 0.2)"}; font-family: Roboto, 'Google Sans', 'Google Sans Text', sans-serif;">
+      <div style="display: inline-flex; align-items: center; gap: 5px; height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: ${i?"rgba(56, 139, 253, 0.12)":"rgba(26, 115, 232, 0.08)"}; color: ${i?"#79c0ff":"#1a73e8"}; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${i?"rgba(56, 139, 253, 0.25)":"rgba(26, 115, 232, 0.2)"}; font-family: Roboto, 'Google Sans', 'Google Sans Text', sans-serif;">
         <span style="font-weight: 700; font-size: 11.5px; letter-spacing: 0.2px;">AM</span>
         <span style="font-weight: 600; font-size: 12px;">AcadMail</span>
       </div>
@@ -146,7 +146,7 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
         `}).join("")}
 
       <!-- 8. Add Custom Filter Button -->
-      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px dashed ${i?"rgba(255,255,255,0.25)":"#94a3b8"}; background: transparent; color: ${i?"#79c0ff":"#1a73e8"}; font-size: 12px; font-weight: 500; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
+      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px dashed ${i?"rgba(255,255,255,0.25)":"#94a3b8"}; background: transparent; color: ${i?"#79c0ff":"#1a73e8"}; font-size: 12px; font-weight: 500; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
         <span style="font-size: 14px; font-weight: 600; line-height: 1;">+</span>
         <span>Filter</span>
       </button>
@@ -156,24 +156,24 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
       ${l.length>0?`
         <div style="position: relative; flex-shrink: 0;">
-          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid ${i?"rgba(210,153,34,0.4)":"#fde68a"}; background: ${i?"rgba(210,153,34,0.15)":"#fffbeb"}; color: ${i?"#e3b341":"#b45309"}; font-size: 12px; font-weight: 600; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
+          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid ${i?"rgba(210,153,34,0.4)":"#fde68a"}; background: ${i?"rgba(210,153,34,0.15)":"#fffbeb"}; color: ${i?"#e3b341":"#b45309"}; font-size: 12px; font-weight: 600; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
             <span style="font-weight: 700; font-family: Roboto, 'Google Sans', sans-serif; font-size: 11px;">DUE</span>
             <span>${l.length}</span>
           </button>
 
-          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 310px; background: ${i?"#1e1f20":"#ffffff"}; border: 1px solid ${i?"#3c4043":"#e0e2ec"}; border-radius: 16px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999; font-family: Roboto, 'Google Sans', sans-serif;">
+          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 310px; background: ${i?"#1e1f20":"#ffffff"}; border: 1px solid ${i?"#3c4043":"#e0e2ec"}; border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999; font-family: Roboto, 'Google Sans', sans-serif;">
             <div style="font-weight: 600; color: ${i?"#e3e3e3":"#1f1f1f"}; font-size: 11.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
               <span>Detected Due Dates</span>
               <span style="font-size: 10px; color: #1a73e8; font-weight: 600;">+ Google Calendar</span>
             </div>
             <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
               ${l.map(d=>`
-                <div style="padding: 8px 10px; background: ${i?"#2b2c2f":"#f8fafd"}; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="padding: 8px 10px; background: ${i?"#2b2c2f":"#f8fafd"}; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                   <div style="overflow: hidden; flex: 1;">
                     <div style="font-size: 11.5px; font-weight: 500; color: ${i?"#e3e3e3":"#1f1f1f"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
                     <div style="font-size: 10.5px; color: ${i?"#e3b341":"#b45309"}; font-weight: 600; margin-top: 2px;">⏰ ${d.deadline}</div>
                   </div>
-                  <a href="${Y(d.title,"Course deadline from email",d.deadline)}" target="_blank" style="text-decoration: none; flex-shrink: 0; padding: 3px 8px; background: ${i?"#004a77":"#c2e7ff"}; color: ${i?"#c2e7ff":"#001d35"}; border-radius: 8px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
+                  <a href="${Y(d.title,"Course deadline from email",d.deadline)}" target="_blank" style="text-decoration: none; flex-shrink: 0; padding: 3px 8px; background: ${i?"#004a77":"#c2e7ff"}; color: ${i?"#c2e7ff":"#001d35"}; border-radius: 4px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
                 </div>
               `).join("")}
             </div>
@@ -181,7 +181,7 @@ console.log("[AcadMail AI] Ultra-Clean Material 3 Gmail Script with Custom Filte
         </div>
       `:""}
 
-      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid transparent; background: transparent; color: ${i?"#8e918f":"#64748b"}; font-size: 12px; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
+      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: ${i?"#8e918f":"#64748b"}; font-size: 12px; font-family: Roboto, 'Google Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
         <span style="font-size: 13px; line-height: 1;">✕</span>
         <span>Hide</span>
       </button>
