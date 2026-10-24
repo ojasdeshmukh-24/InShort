@@ -514,6 +514,44 @@ export default function MobileApp() {
     }
   };
 
+  const getDeadlineBadgeStyle = (deadlineStr: string) => {
+    const lower = deadlineStr.toLowerCase();
+
+    // Urgent: Today or Overdue (subtle Material 3 Red tone)
+    if (lower.includes('today') || lower.includes('overdue')) {
+      return {
+        chip: 'bg-[#fce8e6] dark:bg-[#3c1e1e] text-[#b3261e] dark:text-[#f28b82] border-[#f8c9c6] dark:border-[#5c2b29]',
+        icon: 'text-[#b3261e] dark:text-[#f28b82]',
+        isTime: true,
+      };
+    }
+
+    // Due Soon: Tomorrow (subtle Google Blue container)
+    if (lower.includes('tomorrow')) {
+      return {
+        chip: 'bg-[#e8f0fe] dark:bg-[#004a77]/30 text-[#0b57d0] dark:text-[#c2e7ff] border-[#c2e7ff] dark:border-[#005c93]',
+        icon: 'text-[#0b57d0] dark:text-[#c2e7ff]',
+        isTime: true,
+      };
+    }
+
+    // Has explicit time
+    if (/\b(?:am|pm)\b/i.test(lower)) {
+      return {
+        chip: 'bg-[#edf2fa] dark:bg-[#1a2e40] text-[#044377] dark:text-[#b4d6ff] border-[#d3e3fd] dark:border-[#22476d]',
+        icon: 'text-[#044377] dark:text-[#b4d6ff]',
+        isTime: true,
+      };
+    }
+
+    // Standard upcoming calendar date
+    return {
+      chip: 'bg-[#f1f3f4] dark:bg-[#282a2d] text-[#1f1f1f] dark:text-[#e3e3e3] border-[#dadce0] dark:border-[#3c4043]',
+      icon: 'text-[#5f6368] dark:text-[#8e918f]',
+      isTime: false,
+    };
+  };
+
   // Filter Emails
   const filteredEmails = emails.filter((item) => {
     const classification = classifyInboxItem(
@@ -845,10 +883,19 @@ export default function MobileApp() {
 
                       <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80">
                         <div className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 text-[10px] font-bold">
-                            <Clock className="w-3 h-3" />
-                            <span>{dl.deadline}</span>
-                          </span>
+                          {(() => {
+                            const badge = getDeadlineBadgeStyle(dl.deadline);
+                            return (
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-[10px] font-semibold ${badge.chip}`}>
+                                {badge.isTime ? (
+                                  <Clock className={`w-3 h-3 ${badge.icon}`} />
+                                ) : (
+                                  <Calendar className={`w-3 h-3 ${badge.icon}`} />
+                                )}
+                                <span>{dl.deadline}</span>
+                              </span>
+                            );
+                          })()}
 
                           <span
                             className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border ${styles.chip}`}

@@ -246,23 +246,49 @@ export default function App() {
     }
   };
 
-  // Extract deadlines automatically from scanned inbox items
+  // Extract deadlines automatically from scanned inbox items with robust date & time detection
   useEffect(() => {
     if (inboxItems.length === 0) return;
 
     const extracted: AggregatedDeadline[] = [];
     const datePattern = /\b(?:due|deadline|by|on|date:|till)\s+([A-Za-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2}\s+[A-Za-z]{3,9})\b/gi;
+    const standaloneDatePattern = /\b(\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)(?:\s*,?\s*\d{4})?|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*,?\s*\d{4})?)\b/i;
 
     inboxItems.forEach((item) => {
-      const combined = `${item.subject} ${item.snippet}`;
-      const matches = [...combined.matchAll(datePattern)];
+      const combined = `${item.subject} ${item.snippet || ''}`;
+      const lower = combined.toLowerCase();
 
+      // Extract explicit time if present (e.g. 9:00 AM, 6:00 PM, 11:59 PM)
+      const timeMatch = combined.match(/\b(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))\b/);
+      const timeStr = timeMatch ? timeMatch[1].toUpperCase() : null;
+
+      // 1. Check relative days first (Tomorrow, Today)
+      if (lower.includes('tomorrow') || lower.includes('today')) {
+        const relDay = lower.includes('tomorrow') ? 'Tomorrow' : 'Today';
+        extracted.push({
+          id: `dl-${item.id}-rel`,
+          title: item.subject,
+          deadline: timeStr ? `${relDay}, ${timeStr}` : relDay,
+          sourceSubject: item.subject,
+          sourceSender: item.sender,
+          category: item.category,
+          courseCode: item.courseCode,
+          completed: false,
+          rowIndex: item.index,
+        });
+        return;
+      }
+
+      // 2. Explicit date pattern matches (e.g. "due Nov 5th, 2026")
+      const matches = [...combined.matchAll(datePattern)];
       if (matches.length > 0) {
         matches.forEach((m, idx) => {
+          const rawDate = m[1];
+          const formattedDeadline = timeStr && !rawDate.includes(timeStr) ? `${rawDate}, ${timeStr}` : rawDate;
           extracted.push({
             id: `dl-${item.id}-${idx}`,
             title: item.subject,
-            deadline: m[1],
+            deadline: formattedDeadline,
             sourceSubject: item.subject,
             sourceSender: item.sender,
             category: item.category,
@@ -271,21 +297,45 @@ export default function App() {
             rowIndex: item.index,
           });
         });
-      } else if (
+        return;
+      }
+
+      // 3. Standalone date pattern (e.g. "23 October", "November 5th, 2026")
+      const standaloneMatch = combined.match(standaloneDatePattern);
+      if (standaloneMatch) {
+        const rawDate = standaloneMatch[1];
+        const formattedDeadline = timeStr && !rawDate.includes(timeStr) ? `${rawDate}, ${timeStr}` : rawDate;
+        extracted.push({
+          id: `dl-${item.id}-date`,
+          title: item.subject,
+          deadline: formattedDeadline,
+          sourceSubject: item.subject,
+          sourceSender: item.sender,
+          category: item.category,
+          courseCode: item.courseCode,
+          completed: false,
+          rowIndex: item.index,
+        });
+        return;
+      }
+
+      // 4. Academic categories with reminders / submissions
+      if (
         item.category === 'Academics' ||
         item.category === 'Competitions & Tournaments' ||
         item.category === 'Class Rescheduling'
       ) {
         if (
-          combined.toLowerCase().includes('tomorrow') ||
-          combined.toLowerCase().includes('today') ||
-          combined.toLowerCase().includes('final reminder') ||
-          combined.toLowerCase().includes('submission')
+          lower.includes('final reminder') ||
+          lower.includes('submission') ||
+          lower.includes('deadline') ||
+          lower.includes('due') ||
+          lower.includes('reminder:')
         ) {
           extracted.push({
             id: `dl-${item.id}-auto`,
             title: item.subject,
-            deadline: combined.toLowerCase().includes('tomorrow') ? 'Tomorrow' : item.date,
+            deadline: timeStr ? `${item.date}, ${timeStr}` : item.date,
             sourceSubject: item.subject,
             sourceSender: item.sender,
             category: item.category,
@@ -705,6 +755,44 @@ export default function App() {
       dot: 'bg-[#747775] dark:bg-[#9aa0a6]',
       activeBtn: 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#001d35] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93] shadow-2xs font-semibold',
       countBadge: 'bg-[#001d35]/12 dark:bg-[#c2e7ff]/20 text-[#001d35] dark:text-[#c2e7ff]',
+    };
+  };
+
+  const getDeadlineBadgeStyle = (deadlineStr: string) => {
+    const lower = deadlineStr.toLowerCase();
+
+    // Urgent: Today or Overdue (subtle Material 3 Red tone)
+    if (lower.includes('today') || lower.includes('overdue')) {
+      return {
+        chip: 'bg-[#fce8e6] dark:bg-[#3c1e1e] text-[#b3261e] dark:text-[#f28b82] border-[#f8c9c6] dark:border-[#5c2b29]',
+        icon: 'text-[#b3261e] dark:text-[#f28b82]',
+        isTime: true,
+      };
+    }
+
+    // Due Soon: Tomorrow (subtle Google Blue container)
+    if (lower.includes('tomorrow')) {
+      return {
+        chip: 'bg-[#e8f0fe] dark:bg-[#004a77]/30 text-[#0b57d0] dark:text-[#c2e7ff] border-[#c2e7ff] dark:border-[#005c93]',
+        icon: 'text-[#0b57d0] dark:text-[#c2e7ff]',
+        isTime: true,
+      };
+    }
+
+    // Has explicit time (e.g. 9:00 AM, 6:00 PM, 11:59 PM)
+    if (/\b(?:am|pm)\b/i.test(lower)) {
+      return {
+        chip: 'bg-[#edf2fa] dark:bg-[#1a2e40] text-[#044377] dark:text-[#b4d6ff] border-[#d3e3fd] dark:border-[#22476d]',
+        icon: 'text-[#044377] dark:text-[#b4d6ff]',
+        isTime: true,
+      };
+    }
+
+    // Standard upcoming calendar date (clean Google neutral surface)
+    return {
+      chip: 'bg-[#f1f3f4] dark:bg-[#282a2d] text-[#1f1f1f] dark:text-[#e3e3e3] border-[#dadce0] dark:border-[#3c4043]',
+      icon: 'text-[#5f6368] dark:text-[#8e918f]',
+      isTime: false,
     };
   };
 
@@ -1382,6 +1470,7 @@ export default function App() {
                 <div className="space-y-2">
                   {filteredDeadlines.map((dl) => {
                     const theme = getCategoryTheme(dl.category);
+                    const deadlineBadge = getDeadlineBadgeStyle(dl.deadline);
                     return (
                       <div
                         key={dl.id}
@@ -1414,12 +1503,25 @@ export default function App() {
                               {dl.title}
                             </p>
 
-                            <div className="flex items-center gap-1.5 mt-1 text-xs text-[#5f6368] dark:text-[#8e918f]">
-                              <span className="truncate">{dl.sourceSender}</span>
-                              <span>•</span>
-                              <span className="font-medium text-[#444746] dark:text-[#c4c7c5] flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />{' '}
-                                {dl.deadline}
+                            {/* Highlighted Date & Time + Sender */}
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-all ${
+                                  dl.completed
+                                    ? 'bg-[#f1f3f4]/70 dark:bg-[#282a2d]/70 text-[#80868b] dark:text-[#6e716e] border-[#dadce0]/60 dark:border-[#3c4043]/60 line-through'
+                                    : deadlineBadge.chip
+                                }`}
+                              >
+                                {deadlineBadge.isTime ? (
+                                  <Clock className={`w-3.5 h-3.5 shrink-0 ${dl.completed ? 'text-[#80868b]' : deadlineBadge.icon}`} />
+                                ) : (
+                                  <Calendar className={`w-3.5 h-3.5 shrink-0 ${dl.completed ? 'text-[#80868b]' : deadlineBadge.icon}`} />
+                                )}
+                                <span>{dl.deadline}</span>
+                              </span>
+
+                              <span className="text-xs text-[#5f6368] dark:text-[#8e918f] truncate max-w-[170px]">
+                                {dl.sourceSender}
                               </span>
                             </div>
 
@@ -1933,9 +2035,15 @@ export default function App() {
 
                                 {item.deadline && (
                                   <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#f1f3f4] dark:border-[#2c2d30]">
-                                    <span className="text-xs text-[#444746] dark:text-[#c4c7c5] font-medium flex items-center gap-1">
-                                      <Calendar className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
-                                      {item.deadline}
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold border ${getDeadlineBadgeStyle(item.deadline).chip}`}
+                                    >
+                                      {getDeadlineBadgeStyle(item.deadline).isTime ? (
+                                        <Clock className={`w-3.5 h-3.5 shrink-0 ${getDeadlineBadgeStyle(item.deadline).icon}`} />
+                                      ) : (
+                                        <Calendar className={`w-3.5 h-3.5 shrink-0 ${getDeadlineBadgeStyle(item.deadline).icon}`} />
+                                      )}
+                                      <span>{item.deadline}</span>
                                     </span>
 
                                     <a
