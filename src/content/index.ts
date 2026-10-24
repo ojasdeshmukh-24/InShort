@@ -593,7 +593,7 @@ function showToastNotification(message: string) {
 }
 
 // =========================================================================
-// 1. INLINE MATERIAL 3 TOOLBAR CHIPS (Supports Dynamic Custom Filters)
+// 1. INLINE MATERIAL 3 TOOLBAR CHIPS (Pixel-Perfect, Zero-Clipping, Native Google Design)
 // =========================================================================
 function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
   if (uiMode !== 'blended') return;
@@ -604,6 +604,50 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
     document.querySelector('div.aeF');
 
   if (!targetBar) return;
+
+  // Inject or update stylesheet for pristine, non-clipping M3 styling
+  if (!document.getElementById('acadmail-m3-css')) {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'acadmail-m3-css';
+    styleEl.textContent = `
+      #acadmail-chip-scroll-track::-webkit-scrollbar {
+        display: none !important;
+        height: 0 !important;
+      }
+      .m3-chip {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        height: 32px !important;
+        box-sizing: border-box !important;
+        padding: 0 12px !important;
+        border-radius: 8px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-family: "Google Sans", Roboto, -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-size: 12.5px !important;
+        line-height: 1 !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        outline: none !important;
+        transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+      }
+      .m3-chip:hover {
+        filter: brightness(0.97);
+      }
+      .m3-chip-count {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        padding: 2px 7px !important;
+        border-radius: 12px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }
 
   let acadCount = 0;
   let compCount = 0;
@@ -640,13 +684,14 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      padding: 4px 16px;
-      margin: 0;
-      background: transparent;
-      border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'};
-      font-family: -apple-system, BlinkMacSystemFont, "Google Sans", Roboto, sans-serif;
-      font-size: 12px;
+      gap: 10px;
+      padding: 6px 16px;
+      min-height: 44px;
+      box-sizing: border-box;
+      background: ${isDark ? '#141517' : '#ffffff'};
+      border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e0e2ec'};
+      font-family: "Google Sans", Roboto, -apple-system, sans-serif;
+      font-size: 12.5px;
       z-index: 10;
     `
     );
@@ -658,134 +703,155 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
     const isActive = currentActiveFilter === cat;
     if (isActive) {
       return `
-        height: 26px;
-        padding: 0 10px;
-        border-radius: 9999px;
-        border: none;
         background: ${isDark ? '#004a77' : '#c2e7ff'};
         color: ${isDark ? '#c2e7ff' : '#001d35'};
+        border: 1px solid ${isDark ? '#005f9e' : '#7fcfff'};
         font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 11.5px;
-        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       `;
     }
     return `
-      height: 26px;
-      padding: 0 10px;
-      border-radius: 9999px;
-      border: 1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'};
-      background: ${isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'};
-      color: ${isDark ? '#c4c7c5' : '#444746'};
+      background: ${isDark ? 'rgba(255,255,255,0.04)' : '#f8fafd'};
+      color: ${isDark ? '#e3e3e3' : '#3c4043'};
+      border: 1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#dadce0'};
       font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11.5px;
-      transition: all 0.15s ease;
     `;
   };
 
+  const renderCountBadge = (cat: CategoryType | 'ALL', count: number) => {
+    const isActive = currentActiveFilter === cat;
+    const badgeBg = isActive
+      ? isDark
+        ? 'rgba(194, 231, 255, 0.22)'
+        : 'rgba(0, 29, 53, 0.12)'
+      : isDark
+      ? 'rgba(255, 255, 255, 0.1)'
+      : 'rgba(0, 0, 0, 0.06)';
+    return `<span class="m3-chip-count" style="background: ${badgeBg}; color: inherit;">${count}</span>`;
+  };
+
   bar.innerHTML = `
-    <!-- Left: Slim Material Chips (Defaults + Dynamic Custom Filters) -->
-    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-right: 8px;">
-      <span style="font-weight: 700; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-size: 11px; margin-right: 4px; display: flex; align-items: center; gap: 3px; white-space: nowrap;">
-        <span>🎓</span>
+    <!-- Left: Slim Google Material 3 Chips (Defaults + Dynamic Custom Filters) -->
+    <div id="acadmail-chip-scroll-track" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; flex: 1; min-width: 0; padding: 2px 0;">
+      
+      <!-- Brand Pill -->
+      <div style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 8px; background: ${
+        isDark ? 'rgba(56, 139, 253, 0.12)' : 'rgba(26, 115, 232, 0.08)'
+      }; color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-weight: 700; font-size: 12px; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${
+    isDark ? 'rgba(56, 139, 253, 0.25)' : 'rgba(26, 115, 232, 0.2)'
+  };">
+        <span style="font-size: 13px; line-height: 1;">🎓</span>
         <span>AcadMail</span>
-      </span>
+      </div>
 
+      <!-- 1. All Emails -->
       <button class="m3-chip" data-cat="ALL" style="${getPillStyle('ALL')}">
-        All (${items.length})
+        <span>All</span>
+        ${renderCountBadge('ALL', items.length)}
       </button>
 
+      <!-- 2. Academics -->
       <button class="m3-chip" data-cat="Academics" style="${getPillStyle('Academics')}">
-        🎓 Acads (${acadCount})
+        <span style="font-size: 13px; line-height: 1;">🎓</span>
+        <span>Academics</span>
+        ${renderCountBadge('Academics', acadCount)}
       </button>
 
+      <!-- 3. Competitions -->
       <button class="m3-chip" data-cat="Competitions & Tournaments" style="${getPillStyle('Competitions & Tournaments')}">
-        🏆 Contests (${compCount})
+        <span style="font-size: 13px; line-height: 1;">🏆</span>
+        <span>Contests</span>
+        ${renderCountBadge('Competitions & Tournaments', compCount)}
       </button>
 
+      <!-- 4. Workshops -->
       <button class="m3-chip" data-cat="Workshops" style="${getPillStyle('Workshops')}">
-        🛠️ Workshops (${workCount})
+        <span style="font-size: 13px; line-height: 1;">🛠️</span>
+        <span>Workshops</span>
+        ${renderCountBadge('Workshops', workCount)}
       </button>
 
+      <!-- 5. Reschedules -->
       <button class="m3-chip" data-cat="Class Rescheduling" style="${getPillStyle('Class Rescheduling')}">
-        ⏰ Rescheduled (${reschedCount})
+        <span style="font-size: 13px; line-height: 1;">⏰</span>
+        <span>Rescheduled</span>
+        ${renderCountBadge('Class Rescheduling', reschedCount)}
       </button>
 
+      <!-- 6. General -->
       <button class="m3-chip" data-cat="General" style="${getPillStyle('General')}">
-        📜 PhD & General (${genCount})
+        <span style="font-size: 13px; line-height: 1;">📢</span>
+        <span>General & PhD</span>
+        ${renderCountBadge('General', genCount)}
       </button>
 
-      <!-- User-defined custom filters rendered here -->
+      <!-- 7. Dynamic User-Defined Custom Filters -->
       ${customFiltersCache
         .map((cf) => {
           const cfCount = items.filter((it) => it.category === cf.name).length;
           return `
           <button class="m3-chip" data-cat="${cf.name}" style="${getPillStyle(cf.name)}">
-            🏷️ ${cf.name} (${cfCount})
+            <span style="font-size: 12px; line-height: 1;">🏷️</span>
+            <span>${cf.name}</span>
+            ${renderCountBadge(cf.name, cfCount)}
           </button>
         `;
         })
         .join('')}
 
-      <!-- Add Custom Filter Button -->
-      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 24px; padding: 0 8px; border-radius: 9999px; border: 1px dashed ${
+      <!-- 8. Add Custom Filter Button -->
+      <button id="m3-add-filter-chip" title="Create your own custom academic filter" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px dashed ${
         isDark ? 'rgba(255,255,255,0.25)' : '#94a3b8'
       }; background: transparent; color: ${
     isDark ? '#79c0ff' : '#1a73e8'
-  }; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; white-space: nowrap;">
-        <span>+ Filter</span>
+  }; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: all 0.15s ease;">
+        <span style="font-size: 14px; font-weight: 700; line-height: 1;">+</span>
+        <span>Filter</span>
       </button>
     </div>
 
-    <!-- Right: Mini Deadlines Dropdown & Instant Revert Button -->
-    <div style="display: flex; align-items: center; gap: 6px; shrink: 0;">
+    <!-- Right: Mini Deadlines Dropdown & Instant Hide Button -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
       ${
         deadlineList.length > 0
           ? `
-        <div style="position: relative;">
-          <button id="m3-deadlines-btn" style="height: 24px; padding: 0 8px; border-radius: 6px; border: 1px solid ${
+        <div style="position: relative; flex-shrink: 0;">
+          <button id="m3-deadlines-btn" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid ${
             isDark ? 'rgba(210,153,34,0.4)' : '#fde68a'
-          }; background: ${isDark ? 'rgba(210,153,34,0.1)' : '#fffbeb'}; color: ${
+          }; background: ${isDark ? 'rgba(210,153,34,0.15)' : '#fffbeb'}; color: ${
               isDark ? '#e3b341' : '#b45309'
-            }; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-            <span>⏰</span>
+            }; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
+            <span style="font-size: 12px; line-height: 1;">📅</span>
             <span>${deadlineList.length} Due</span>
           </button>
 
-          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 28px; width: 300px; background: ${
+          <div id="m3-deadlines-popover" style="display: none; position: absolute; right: 0; top: 38px; width: 310px; background: ${
             isDark ? '#1e1f20' : '#ffffff'
           }; border: 1px solid ${
               isDark ? '#3c4043' : '#e0e2ec'
-            }; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.16); padding: 10px; z-index: 99999;">
+            }; border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,0.2); padding: 12px; z-index: 99999;">
             <div style="font-weight: 600; color: ${
               isDark ? '#e3e3e3' : '#1f1f1f'
-            }; font-size: 11px; margin-bottom: 6px; display: flex; justify-content: space-between;">
+            }; font-size: 11.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
               <span>Detected Due Dates</span>
-              <span style="font-size: 9px; color: #1a73e8;">+ Add to Google Calendar</span>
+              <span style="font-size: 10px; color: #1a73e8; font-weight: 600;">+ Google Calendar</span>
             </div>
-            <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+            <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
               ${deadlineList
                 .map(
                   (d) => `
-                <div style="padding: 6px 8px; background: ${
+                <div style="padding: 8px 10px; background: ${
                   isDark ? '#2b2c2f' : '#f8fafd'
-                }; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-                  <div style="overflow: hidden;">
-                    <div style="font-size: 11px; font-weight: 500; color: ${
+                }; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div style="overflow: hidden; flex: 1;">
+                    <div style="font-size: 11.5px; font-weight: 500; color: ${
                       isDark ? '#e3e3e3' : '#1f1f1f'
                     }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.title}</div>
-                    <div style="font-size: 10px; color: ${isDark ? '#e3b341' : '#b45309'}; font-weight: 600;">⏰ ${d.deadline}</div>
+                    <div style="font-size: 10.5px; color: ${isDark ? '#e3b341' : '#b45309'}; font-weight: 600; margin-top: 2px;">⏰ ${d.deadline}</div>
                   </div>
-                  <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; shrink: 0; padding: 2px 6px; background: ${
+                  <a href="${createGCalUrl(d.title, 'Course deadline from email', d.deadline)}" target="_blank" style="text-decoration: none; flex-shrink: 0; padding: 3px 8px; background: ${
                     isDark ? '#004a77' : '#c2e7ff'
-                  }; color: ${isDark ? '#c2e7ff' : '#001d35'}; border-radius: 4px; font-size: 10px; font-weight: 600;">+ GCal</a>
+                  }; color: ${isDark ? '#c2e7ff' : '#001d35'}; border-radius: 6px; font-size: 10.5px; font-weight: 600;">+ GCal</a>
                 </div>
               `
                 )
@@ -797,11 +863,11 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
           : ''
       }
 
-      <button id="acadmail-instant-revert-btn" title="Revert to standard clean Gmail (Disable in-page elements)" style="height: 24px; padding: 0 6px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: ${
-        isDark ? '#8e918f' : '#94a3b8'
-      }; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 2px;">
-        <span>✕</span>
-        <span>Revert</span>
+      <button id="acadmail-instant-revert-btn" title="Hide AcadMail toolbar" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: ${
+        isDark ? '#8e918f' : '#64748b'
+      }; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; transition: color 0.15s ease;">
+        <span style="font-size: 13px; line-height: 1;">✕</span>
+        <span>Hide</span>
       </button>
     </div>
   `;
