@@ -9,7 +9,8 @@ const DEFAULT_SETTINGS: UserSettings = {
   inPageIntegration: true,
   uiMode: 'blended',
   hasCompletedSetup: false,
-  preferredLabels: ['Academics', 'Competitions & Tournaments'],
+  priorityList: ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'],
+  preferredLabels: ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'],
   customFilters: [
     {
       id: 'filter-placements',

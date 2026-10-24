@@ -38,6 +38,7 @@ import {
   Trash2,
   Tag,
   ChevronDown,
+  ChevronUp,
   Edit3,
   Bot,
   MessageSquare
@@ -110,12 +111,13 @@ export default function App() {
   const [newFilterKeywords, setNewFilterKeywords] = useState('');
   const [newFilterColor, setNewFilterColor] = useState('#8b5cf6');
 
-  // First-Time Setup & Preferential Labels State
+  // First-Time Setup & Priority List State
   const [hasCompletedSetup, setHasCompletedSetup] = useState<boolean>(true);
   const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
-  const [preferredLabels, setPreferredLabels] = useState<string[]>([
+  const [priorityList, setPriorityList] = useState<string[]>([
     'Academics',
     'Competitions & Tournaments',
+    'Class Rescheduling',
   ]);
 
   const AVAILABLE_PRIORITY_CATEGORIES = [
@@ -237,8 +239,10 @@ export default function App() {
       if (settings.labelOverrides) {
         setLabelOverrides(settings.labelOverrides);
       }
-      if (Array.isArray(settings.preferredLabels) && settings.preferredLabels.length > 0) {
-        setPreferredLabels(settings.preferredLabels);
+      if (Array.isArray(settings.priorityList) && settings.priorityList.length > 0) {
+        setPriorityList(settings.priorityList);
+      } else if (Array.isArray(settings.preferredLabels) && settings.preferredLabels.length > 0) {
+        setPriorityList(settings.preferredLabels);
       }
       const completed = settings.hasCompletedSetup ?? false;
       setHasCompletedSetup(completed);
@@ -760,36 +764,65 @@ export default function App() {
     }
   };
 
-  const togglePreferredLabel = (catId: string) => {
-    setPreferredLabels((prev) => {
-      if (prev.includes(catId)) {
-        if (prev.length <= 1) return prev; // Keep at least one priority
-        return prev.filter((id) => id !== catId);
-      }
+  const movePriorityUp = (index: number) => {
+    if (index <= 0) return;
+    setPriorityList((prev) => {
+      const next = [...prev];
+      const temp = next[index - 1];
+      next[index - 1] = next[index];
+      next[index] = temp;
+      return next;
+    });
+  };
+
+  const movePriorityDown = (index: number) => {
+    setPriorityList((prev) => {
+      if (index >= prev.length - 1) return prev;
+      const next = [...prev];
+      const temp = next[index + 1];
+      next[index + 1] = next[index];
+      next[index] = temp;
+      return next;
+    });
+  };
+
+  const removeFromPriorityList = (catId: string) => {
+    setPriorityList((prev) => {
+      if (prev.length <= 1) return prev; // Keep at least one
+      return prev.filter((id) => id !== catId);
+    });
+  };
+
+  const addToPriorityList = (catId: string) => {
+    setPriorityList((prev) => {
+      if (prev.includes(catId)) return prev;
       return [...prev, catId];
     });
   };
 
-  const handleSaveFirstTimeSetup = async (selected: string[]) => {
-    const finalSelected = selected.length > 0 ? selected : ['Academics', 'Class Rescheduling'];
-    setPreferredLabels(finalSelected);
+  const handleSaveFirstTimeSetup = async (finalList: string[]) => {
+    const validList = finalList && finalList.length > 0
+      ? finalList
+      : ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
+    setPriorityList(validList);
     setHasCompletedSetup(true);
     setShowSetupModal(false);
 
     await saveSettings({
       hasCompletedSetup: true,
-      preferredLabels: finalSelected,
+      priorityList: validList,
+      preferredLabels: validList,
     });
 
     const tab = await getGmailTab();
     if (tab?.id) {
       chrome.tabs.sendMessage(tab.id, {
         type: 'UPDATE_SETTINGS',
-        preferredLabels: finalSelected,
+        priorityList: validList,
       }).catch(() => {});
     }
 
-    setTimeout(scanInbox, 300);
+    setTimeout(scanInbox, 250);
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -800,7 +833,8 @@ export default function App() {
       inPageIntegration: uiMode !== 'off',
       uiMode,
       customFilters,
-      preferredLabels,
+      priorityList,
+      preferredLabels: priorityList,
     });
     setShowSettings(false);
     setError(null);
@@ -809,14 +843,14 @@ export default function App() {
     if (tab?.id) {
       chrome.tabs.sendMessage(tab.id, {
         type: 'UPDATE_SETTINGS',
-        preferredLabels,
+        priorityList,
       }).catch(() => {});
     }
 
     if (email) {
       triggerAnalysis(email, apiKey.trim(), groqKey.trim());
     }
-    setTimeout(scanInbox, 300);
+    setTimeout(scanInbox, 250);
   };
 
   const toggleActionItem = (id: string) => {
@@ -1264,49 +1298,116 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Priority Labels (Preferential Routing) */}
+                {/* Priority List (Rank-Weighted Routing) */}
                 <div className="pt-2 border-t border-[#f1f3f4] dark:border-[#2c2d30] space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
-                      Priority Labels (Preferential Routing)
+                    <div>
+                      <div className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
+                        Priority List (Rank-Weighted Routing)
+                      </div>
+                      <p className="text-[11px] text-[#5f6368] dark:text-[#8e918f] leading-tight mt-0.5">
+                        Emails are evaluated in this order (Rank 1 first). Subtle keyword signals route directly into higher priorities.
+                      </p>
                     </div>
-                    <span className="text-xs text-[#5f6368] dark:text-[#8e918f] font-medium">
-                      {preferredLabels.length} selected
+                    <span className="text-xs text-[#0b57d0] dark:text-[#a8c7fa] font-semibold">
+                      {priorityList.length} ranked
                     </span>
                   </div>
-                  <p className="text-xs text-[#5f6368] dark:text-[#8e918f] leading-tight">
-                    AcadMail prioritizes routing incoming emails into these chosen buckets even when keyword probability is low.
-                  </p>
 
-                  <div className="grid grid-cols-2 gap-1.5 pt-1">
-                    {AVAILABLE_PRIORITY_CATEGORIES.map((cat) => {
-                      const isSelected = preferredLabels.includes(cat.id);
+                  {/* Ranked Priority Items */}
+                  <div className="space-y-1.5 pt-1">
+                    {priorityList.map((catId, index) => {
+                      const catInfo = AVAILABLE_PRIORITY_CATEGORIES.find((c) => c.id === catId);
+                      const Icon = catInfo?.icon || Tag;
                       return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => togglePreferredLabel(cat.id)}
-                          className={`p-2 rounded-lg border text-left transition flex items-start gap-2 cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#c2e7ff]/30 dark:bg-[#004a77]/30 border-[#7fcfff] dark:border-[#005c93] text-[#001d35] dark:text-[#c2e7ff]'
-                              : 'bg-white dark:bg-[#1e1f20] border-[#dadce0] dark:border-[#3c4043] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f8fafd] dark:hover:bg-[#28292c]'
-                          }`}
+                        <div
+                          key={catId}
+                          className="flex items-center justify-between p-2 rounded-xl border bg-white dark:bg-[#1e1f20] border-[#dadce0] dark:border-[#3c4043] shadow-2xs"
                         >
-                          <div className="mt-0.5 shrink-0">
-                            {isSelected ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
-                            ) : (
-                              <Circle className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
-                            )}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                                index === 0
+                                  ? 'bg-[#0b57d0] text-white'
+                                  : 'bg-[#e8f0fe] dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff]'
+                              }`}
+                            >
+                              {index + 1}
+                            </div>
+                            <Icon className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f] shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate flex items-center gap-1.5">
+                                <span>{catInfo?.label || catId}</span>
+                                {index === 0 && (
+                                  <span className="text-[9.5px] px-1.5 py-0.2 rounded font-medium bg-[#c2e7ff]/80 dark:bg-[#004a77]/80 text-[#001d35] dark:text-[#c2e7ff]">
+                                    Top Priority
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold truncate">{cat.label}</div>
-                            <div className="text-[10px] opacity-70 truncate">{cat.desc}</div>
+
+                          <div className="flex items-center gap-0.5 shrink-0 ml-2">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => movePriorityUp(index)}
+                              className="p-1 rounded text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-white disabled:opacity-20 hover:bg-[#f1f3f4] dark:hover:bg-[#282a2d] transition cursor-pointer"
+                              title="Move Up"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === priorityList.length - 1}
+                              onClick={() => movePriorityDown(index)}
+                              className="p-1 rounded text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-white disabled:opacity-20 hover:bg-[#f1f3f4] dark:hover:bg-[#282a2d] transition cursor-pointer"
+                              title="Move Down"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={priorityList.length <= 1}
+                              onClick={() => removeFromPriorityList(catId)}
+                              className="p-1 rounded text-[#5f6368] hover:text-[#c5221f] dark:text-[#8e918f] dark:hover:text-[#f28b82] disabled:opacity-20 hover:bg-[#fce8e6] dark:hover:bg-[#3c1e1e] transition cursor-pointer ml-0.5"
+                              title="Remove"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
+
+                  {/* Add Unranked Categories */}
+                  {(() => {
+                    const unranked = AVAILABLE_PRIORITY_CATEGORIES.filter(
+                      (c) => !priorityList.includes(c.id)
+                    );
+                    if (unranked.length === 0) return null;
+                    return (
+                      <div className="pt-1.5">
+                        <div className="text-[11px] font-medium text-[#5f6368] dark:text-[#8e918f] mb-1">
+                          Add category to priority list:
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {unranked.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => addToPriorityList(cat.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border border-dashed border-[#dadce0] dark:border-[#3c4043] text-[#444746] dark:text-[#c4c7c5] hover:border-[#0b57d0] hover:text-[#0b57d0] dark:hover:border-[#a8c7fa] dark:hover:text-[#a8c7fa] hover:bg-[#f0f4f9] dark:hover:bg-[#282a2d] transition cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>{cat.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex justify-end pt-1">
@@ -1322,73 +1423,128 @@ export default function App() {
           )}
 
           {/* ========================================================================= */}
-          {/* FIRST-TIME SETUP MODAL: USER LABELING PREFERENCES */}
+          {/* FIRST-TIME SETUP MODAL: USER PRIORITY LIST */}
           {/* ========================================================================= */}
           {showSetupModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
-              <div className="w-full max-w-sm bg-white dark:bg-[#1e1f20] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl shadow-xl p-5 space-y-4">
-                <div className="text-center space-y-1.5">
+              <div className="w-full max-w-sm bg-white dark:bg-[#1e1f20] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl shadow-xl p-5 space-y-3.5">
+                <div className="text-center space-y-1">
                   <div className="w-10 h-10 rounded-xl bg-[#c2e7ff] dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] flex items-center justify-center mx-auto mb-1 shadow-2xs">
                     <Mail className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-[17px] text-[#1f1f1f] dark:text-[#e3e3e3] font-['Batangas',serif]">
-                    Welcome to AcadMail
+                    Set Your Label Priorities
                   </h3>
                   <p className="text-xs text-[#5f6368] dark:text-[#8e918f] leading-relaxed">
-                    Choose your high-priority categories. AcadMail prioritizes organizing emails into these labels even with subtle keywords.
+                    Rank your academic categories. Emails are classified in priority order—even when keywords are subtle or probability is low.
                   </p>
                 </div>
 
-                {/* Priority Label Cards */}
-                <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
-                  {AVAILABLE_PRIORITY_CATEGORIES.map((cat) => {
-                    const isSelected = preferredLabels.includes(cat.id);
-                    const Icon = cat.icon;
+                {/* Priority List Display */}
+                <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
+                  {priorityList.map((catId, index) => {
+                    const catInfo = AVAILABLE_PRIORITY_CATEGORIES.find((c) => c.id === catId);
+                    const Icon = catInfo?.icon || Tag;
                     return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => togglePreferredLabel(cat.id)}
-                        className={`w-full p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#c2e7ff]/35 dark:bg-[#004a77]/35 border-[#7fcfff] dark:border-[#005c93] text-[#001d35] dark:text-[#c2e7ff]'
-                            : 'bg-white dark:bg-[#1e1f20] border-[#dadce0] dark:border-[#3c4043] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f8fafd] dark:hover:bg-[#28292c]'
-                        }`}
+                      <div
+                        key={catId}
+                        className="flex items-center justify-between p-2.5 rounded-xl border bg-white dark:bg-[#1e1f20] border-[#dadce0] dark:border-[#3c4043] shadow-2xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div
-                            className={`p-1.5 rounded-lg shrink-0 ${
-                              isSelected
-                                ? 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff]'
-                                : 'bg-[#f1f3f4] dark:bg-[#282a2d] text-[#5f6368] dark:text-[#8e918f]'
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                              index === 0
+                                ? 'bg-[#0b57d0] text-white shadow-2xs'
+                                : 'bg-[#e8f0fe] dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff]'
                             }`}
                           >
-                            <Icon className="w-4 h-4" />
+                            {index + 1}
                           </div>
+                          <Icon className="w-4 h-4 text-[#5f6368] dark:text-[#8e918f] shrink-0" />
                           <div className="min-w-0">
-                            <div className="text-xs font-semibold truncate">{cat.label}</div>
-                            <div className="text-[10.5px] opacity-70 truncate">{cat.desc}</div>
+                            <div className="text-xs font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate flex items-center gap-1.5">
+                              <span>{catInfo?.label || catId}</span>
+                              {index === 0 && (
+                                <span className="text-[9.5px] px-1.5 py-0.2 rounded font-medium bg-[#c2e7ff]/80 dark:bg-[#004a77]/80 text-[#001d35] dark:text-[#c2e7ff]">
+                                  Top Priority
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10.5px] text-[#5f6368] dark:text-[#8e918f] truncate">
+                              {catInfo?.desc || 'Academic category'}
+                            </div>
                           </div>
                         </div>
-                        <div className="ml-2 shrink-0">
-                          {isSelected ? (
-                            <CheckCircle2 className="w-4 h-4 text-[#0b57d0] dark:text-[#a8c7fa]" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-[#dadce0] dark:text-[#444746]" />
-                          )}
+
+                        <div className="flex items-center gap-0.5 shrink-0 ml-2">
+                          <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={() => movePriorityUp(index)}
+                            className="p-1 rounded text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-white disabled:opacity-20 hover:bg-[#f1f3f4] dark:hover:bg-[#282a2d] transition cursor-pointer"
+                            title="Move Up in Priority"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === priorityList.length - 1}
+                            onClick={() => movePriorityDown(index)}
+                            className="p-1 rounded text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-white disabled:opacity-20 hover:bg-[#f1f3f4] dark:hover:bg-[#282a2d] transition cursor-pointer"
+                            title="Move Down in Priority"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={priorityList.length <= 1}
+                            onClick={() => removeFromPriorityList(catId)}
+                            className="p-1 rounded text-[#5f6368] hover:text-[#c5221f] dark:text-[#8e918f] dark:hover:text-[#f28b82] disabled:opacity-20 hover:bg-[#fce8e6] dark:hover:bg-[#3c1e1e] transition cursor-pointer ml-0.5"
+                            title="Remove"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
 
+                {/* Available Categories to Add */}
+                {(() => {
+                  const unranked = AVAILABLE_PRIORITY_CATEGORIES.filter(
+                    (c) => !priorityList.includes(c.id)
+                  );
+                  if (unranked.length === 0) return null;
+                  return (
+                    <div>
+                      <div className="text-[11px] font-medium text-[#5f6368] dark:text-[#8e918f] mb-1">
+                        Add to priority list:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {unranked.map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => addToPriorityList(cat.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border border-dashed border-[#dadce0] dark:border-[#3c4043] text-[#444746] dark:text-[#c4c7c5] hover:border-[#0b57d0] hover:text-[#0b57d0] dark:hover:border-[#a8c7fa] dark:hover:text-[#a8c7fa] hover:bg-[#f0f4f9] dark:hover:bg-[#282a2d] transition cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>{cat.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="pt-2 border-t border-[#f1f3f4] dark:border-[#282a2d] space-y-2">
                   <button
                     type="button"
-                    onClick={() => handleSaveFirstTimeSetup(preferredLabels)}
+                    onClick={() => handleSaveFirstTimeSetup(priorityList)}
                     className="w-full py-2.5 px-4 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] font-semibold rounded-xl text-xs transition shadow-xs cursor-pointer text-center"
                   >
-                    Save Preferences & Start ({preferredLabels.length} selected)
+                    Save Priority List & Start ({priorityList.length} ranked)
                   </button>
 
                   <button
@@ -1402,7 +1558,7 @@ export default function App() {
                     }
                     className="w-full py-1 text-xs text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-white font-medium transition cursor-pointer text-center"
                   >
-                    Use Smart Defaults
+                    Reset to Recommended Order
                   </button>
                 </div>
               </div>

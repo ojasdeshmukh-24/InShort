@@ -22,7 +22,8 @@ let customFiltersCache: CustomFilter[] = [
   }
 ];
 let labelOverridesCache: Record<string, string> = {};
-let preferredLabelsCache: string[] = ['Academics', 'Class Rescheduling'];
+let priorityListCache: string[] = ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
+let preferredLabelsCache: string[] = ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
 
 // Safe message sender
 function safeSendMessage(message: any) {
@@ -77,7 +78,11 @@ function loadSettings() {
         if (res.acadmail_settings.labelOverrides) {
           labelOverridesCache = res.acadmail_settings.labelOverrides;
         }
-        if (Array.isArray(res.acadmail_settings.preferredLabels)) {
+        if (Array.isArray(res.acadmail_settings.priorityList)) {
+          priorityListCache = res.acadmail_settings.priorityList;
+          preferredLabelsCache = res.acadmail_settings.priorityList;
+        } else if (Array.isArray(res.acadmail_settings.preferredLabels)) {
+          priorityListCache = res.acadmail_settings.preferredLabels;
           preferredLabelsCache = res.acadmail_settings.preferredLabels;
         }
       }
@@ -271,38 +276,49 @@ function classifyInboxItem(
     });
   }
 
-  // 3. User Preferential Weighting
-  // "even if prob is low then too add it in high prefernceial labels"
-  const userPreferences = preferredLabelsCache && preferredLabelsCache.length > 0
-    ? preferredLabelsCache
-    : ['Academics', 'Class Rescheduling'];
+  // 3. User Priority List Evaluation (Hierarchical Rank-Weighted Routing)
+  const rankedPriorities = priorityListCache && priorityListCache.length > 0
+    ? priorityListCache
+    : (preferredLabelsCache && preferredLabelsCache.length > 0
+        ? preferredLabelsCache
+        : ['Academics', 'Competitions & Tournaments', 'Class Rescheduling']);
 
   const boostedScores: Record<string, number> = {};
   const categories = Object.keys(scoreMap);
 
   categories.forEach((cat) => {
     const raw = scoreMap[cat];
-    const isPreferred = userPreferences.includes(cat);
-    if (isPreferred && raw > 0) {
-      // 4.5x boost + 4.0 base prior bonus: routes to preferred label even on subtle keywords
-      boostedScores[cat] = raw * 4.5 + 4.0;
+    if (raw <= 0) {
+      boostedScores[cat] = 0;
+      return;
+    }
+
+    const rankIndex = rankedPriorities.indexOf(cat);
+    if (rankIndex !== -1) {
+      // Rank 0 (Priority 1): multiplier 12.0 + bonus 30.0
+      // Rank 1 (Priority 2): multiplier 8.0 + bonus 18.0
+      // Rank 2 (Priority 3): multiplier 5.0 + bonus 10.0
+      const rankMultiplier = Math.max(2.5, 12.0 - rankIndex * 3.5);
+      const rankBonus = Math.max(4.0, 30.0 - rankIndex * 8.0);
+      boostedScores[cat] = raw * rankMultiplier + rankBonus;
     } else {
       boostedScores[cat] = raw;
     }
   });
 
-  let topCategory: CategoryType = 'General';
-  let maxScore = -1;
-
-  categories.forEach((cat) => {
-    if (boostedScores[cat] > maxScore) {
-      maxScore = boostedScores[cat];
-      topCategory = cat;
-    }
-  });
-
   const anyMatched = categories.some((cat) => cat !== 'General' && scoreMap[cat] > 0);
-  if (!anyMatched && !courseCode) {
+
+  let topCategory: CategoryType = 'General';
+  let maxScore = 0;
+
+  if (anyMatched || courseCode) {
+    categories.forEach((cat) => {
+      if (boostedScores[cat] > maxScore) {
+        maxScore = boostedScores[cat];
+        topCategory = cat;
+      }
+    });
+  } else {
     topCategory = 'General';
   }
 
@@ -1703,8 +1719,12 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
       saveEmailLabelOverride(message.emailId, message.subject || '', message.sender || '', message.newCategory);
       sendResponse({ success: true });
     } else if (message.type === 'UPDATE_CUSTOM_FILTERS' || message.type === 'UPDATE_SETTINGS') {
+      if (Array.isArray(message.priorityList)) {
+        priorityListCache = message.priorityList;
+        preferredLabelsCache = message.priorityList;
+      }
       loadSettings();
-      setTimeout(scanVisibleInbox, 300);
+      setTimeout(scanVisibleInbox, 150);
       sendResponse({ success: true });
     }
     return true;

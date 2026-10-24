@@ -167,8 +167,10 @@ const PHD_VIVA_KEYWORDS = [
 
 /**
  * Calculates internal keyword match scores and probabilistic distribution across categories.
- * Incorporates User Preferential Labels: if an email contains even a low-probability signal
- * for a user's high-preference category, it is strongly boosted into that preferred label.
+ * Incorporates User Ordered Priority List:
+ * Evaluates categories in strict rank order (Priority 1, 2, 3...).
+ * If an email contains keyword evidence for Priority 1, it routes to Priority 1 even with
+ * low raw probability signals. If not, it falls through to Priority 2, then Priority 3, etc.
  *
  * NOTE: Probabilities are calculated strictly under the hood and never shown to the user in the UI.
  */
@@ -177,7 +179,7 @@ export function calculateKeywordProbabilities(
   sender: string,
   snippet: string,
   customFilters?: CustomFilter[],
-  preferredLabels?: string[]
+  priorityList?: string[]
 ): {
   topCategory: CategoryType;
   courseCode?: string;
@@ -205,13 +207,13 @@ export function calculateKeywordProbabilities(
     };
   }
 
-  // 2. Score candidate categories
+  // 2. Score candidate categories based on genuine keyword evidence
   const scoreMap: Record<string, { rawScore: number; matches: string[] }> = {
     'Class Rescheduling': { rawScore: 0, matches: [] },
     'Competitions & Tournaments': { rawScore: 0, matches: [] },
     'Workshops': { rawScore: 0, matches: [] },
     'Academics': { rawScore: courseCode ? 6.0 : 0, matches: courseCode ? [`course:${courseCode}`] : [] },
-    'General': { rawScore: 1.0, matches: [] }, // Small baseline floor for General
+    'General': { rawScore: 0, matches: [] },
   };
 
   // Add custom filters
@@ -278,84 +280,75 @@ export function calculateKeywordProbabilities(
     });
   }
 
-  // 3. Compute baseline probability distribution P_raw(c)
   const categoryNames = Object.keys(scoreMap);
-  const priorFloor: Record<string, number> = {};
-  categoryNames.forEach((cat) => {
-    priorFloor[cat] = cat === 'General' ? 1.0 : 0.2;
-  });
 
-  const rawTotalMass = categoryNames.reduce(
-    (sum, cat) => sum + scoreMap[cat].rawScore + priorFloor[cat],
-    0
-  );
-
-  const rawProbabilities: Record<string, number> = {};
-  categoryNames.forEach((cat) => {
-    rawProbabilities[cat] = Number(
-      ((scoreMap[cat].rawScore + priorFloor[cat]) / rawTotalMass).toFixed(4)
-    );
-  });
-
-  // 4. Apply User Preferential Weighting (Requirement 2):
+  // 3. User Priority List Evaluation (Hierarchical Rank-Weighted Routing)
+  // "priority list is not working properly try again more refined way"
   // "even if prob is low then too add it in high prefernceial labels"
-  // If the user prioritized this label during first-time setup (or in settings),
-  // and there is any keyword/feature evidence, boost it decisively over default buckets.
-  const userPreferences = preferredLabels && preferredLabels.length > 0
-    ? preferredLabels
-    : ['Academics', 'Class Rescheduling'];
+  const rankedPriorities = priorityList && priorityList.length > 0
+    ? priorityList
+    : ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
 
   const boostedScores: Record<string, number> = {};
 
   categoryNames.forEach((cat) => {
-    const isPreferred = userPreferences.includes(cat);
-    const hasSignal = scoreMap[cat].rawScore > 0 || rawProbabilities[cat] >= 0.08;
+    const raw = scoreMap[cat].rawScore;
 
-    if (isPreferred && hasSignal) {
-      // Preferential Multiplier: 4.5x boost + 4.0 base prior bonus
-      // This guarantees that even with a single faint keyword match (low raw probability),
-      // the email lands in the user's high-preference bucket!
-      boostedScores[cat] = scoreMap[cat].rawScore * 4.5 + 4.0;
+    // Strict invariant: A category with ZERO keyword matches gets 0 boosted score.
+    // It NEVER receives false boosts if there is no signal!
+    if (raw <= 0) {
+      boostedScores[cat] = 0;
+      return;
+    }
+
+    const rankIndex = rankedPriorities.indexOf(cat);
+    if (rankIndex !== -1) {
+      // Category is in the user's Priority List!
+      // Rank 0 (Priority 1): multiplier 12.0 + bonus 30.0
+      // Rank 1 (Priority 2): multiplier 8.0 + bonus 18.0
+      // Rank 2 (Priority 3): multiplier 5.0 + bonus 10.0
+      // Lower ranks: multiplier 3.0 + bonus 5.0
+      const rankMultiplier = Math.max(2.5, 12.0 - rankIndex * 3.5);
+      const rankBonus = Math.max(4.0, 30.0 - rankIndex * 8.0);
+      boostedScores[cat] = raw * rankMultiplier + rankBonus;
     } else {
-      boostedScores[cat] = scoreMap[cat].rawScore;
+      // Unprioritized category with keyword match
+      boostedScores[cat] = raw;
     }
   });
 
-  // Re-normalize adjusted probabilities
-  const adjustedTotalMass = categoryNames.reduce(
-    (sum, cat) => sum + boostedScores[cat] + priorFloor[cat],
-    0
-  );
+  // 4. Compute Normalized Probability Distribution (Kept internal, not shown in user UI)
+  const anyMatched = categoryNames.some((cat) => cat !== 'General' && scoreMap[cat].rawScore > 0);
 
-  const finalProbabilities: Record<string, number> = {};
-  categoryNames.forEach((cat) => {
-    finalProbabilities[cat] = Number(
-      ((boostedScores[cat] + priorFloor[cat]) / adjustedTotalMass).toFixed(4)
-    );
-  });
-
-  // 5. Determine top category
   let topCategory: CategoryType = 'General';
-  let highestScore = -1;
+  let maxScore = 0;
 
-  categoryNames.forEach((cat) => {
-    // Only choose categories with positive evidence, or General if none
-    const effectiveScore = boostedScores[cat];
-    if (effectiveScore > highestScore) {
-      highestScore = effectiveScore;
-      topCategory = cat;
-    }
-  });
-
-  // If no category had any keyword match whatsoever, default cleanly to General
-  const anyKeywordMatched = categoryNames.some(
-    (cat) => cat !== 'General' && scoreMap[cat].rawScore > 0
-  );
-  if (!anyKeywordMatched && !courseCode) {
+  if (anyMatched || courseCode) {
+    categoryNames.forEach((cat) => {
+      if (boostedScores[cat] > maxScore) {
+        maxScore = boostedScores[cat];
+        topCategory = cat;
+      }
+    });
+  } else {
     topCategory = 'General';
   }
 
-  const confidence = finalProbabilities[topCategory] || 0.5;
+  // Calculate clean normalized probabilities
+  const finalProbabilities: Record<string, number> = {};
+  if (anyMatched || courseCode) {
+    const totalMass = categoryNames.reduce((sum, cat) => sum + boostedScores[cat] + 0.1, 0);
+    categoryNames.forEach((cat) => {
+      finalProbabilities[cat] = Number(((boostedScores[cat] + 0.1) / totalMass).toFixed(4));
+    });
+  } else {
+    // Unrelated email default to General
+    categoryNames.forEach((cat) => {
+      finalProbabilities[cat] = cat === 'General' ? 0.88 : 0.02;
+    });
+  }
+
+  const confidence = finalProbabilities[topCategory] || 0.75;
 
   return {
     topCategory,
@@ -368,7 +361,7 @@ export function calculateKeywordProbabilities(
 
 /**
  * High-speed academic classifier for sorting batch emails in milliseconds.
- * Includes user overrides, custom filters, and probabilistic keyword weighting.
+ * Includes user overrides, custom filters, and ordered priority list weighting.
  */
 export function classifyInboxItem(
   subject: string,
@@ -377,7 +370,7 @@ export function classifyInboxItem(
   customFilters?: CustomFilter[],
   labelOverrides?: Record<string, string>,
   emailId?: string,
-  preferredLabels?: string[]
+  priorityList?: string[]
 ): ClassificationResult {
   const courseMatch = subject.match(/\b([A-Z]{2,4}\s?[-_]?\s?\d{3,4}[A-Z]?)\b/i);
   const courseCode = courseMatch ? courseMatch[1].toUpperCase() : undefined;
@@ -400,13 +393,13 @@ export function classifyInboxItem(
     };
   }
 
-  // 1. Run probabilistic keyword separation with user preference weighting
+  // 1. Run probabilistic keyword separation with ordered priority list weighting
   const result = calculateKeywordProbabilities(
     subject,
     sender,
     snippet,
     customFilters,
-    preferredLabels
+    priorityList
   );
 
   return {
