@@ -613,61 +613,56 @@ export default function MobileApp() {
 
               <button
                 onClick={() => setSelectedCategory('Academics')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Academics'
                     ? 'bg-blue-600 text-white border-transparent'
                     : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/50'
                 }`}
               >
-                <BookOpen className="w-3 h-3" />
                 <span>Academics</span>
               </button>
 
               <button
                 onClick={() => setSelectedCategory('Competitions & Tournaments')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Competitions & Tournaments'
                     ? 'bg-amber-600 text-white border-transparent'
                     : 'bg-amber-50/60 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50'
                 }`}
               >
-                <Trophy className="w-3 h-3" />
                 <span>Competitions</span>
               </button>
 
               <button
                 onClick={() => setSelectedCategory('Workshops')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Workshops'
                     ? 'bg-emerald-600 text-white border-transparent'
                     : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
                 }`}
               >
-                <Briefcase className="w-3 h-3" />
                 <span>Workshops</span>
               </button>
 
               <button
                 onClick={() => setSelectedCategory('Class Rescheduling')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Class Rescheduling'
                     ? 'bg-rose-600 text-white border-transparent'
                     : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50'
                 }`}
               >
-                <AlertTriangle className="w-3 h-3" />
                 <span>Rescheduled</span>
               </button>
 
               <button
                 onClick={() => setSelectedCategory('General')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'General'
                     ? 'bg-slate-700 text-white border-transparent'
                     : 'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                 }`}
               >
-                <Mail className="w-3 h-3" />
                 <span>PhD & General</span>
               </button>
 
@@ -680,13 +675,12 @@ export default function MobileApp() {
                   <button
                     key={f.id}
                     onClick={() => setSelectedCategory(f.name)}
-                    className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border flex items-center gap-1 ${
+                    className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                       isSelected
                         ? 'bg-purple-600 text-white border-transparent shadow-xs'
                         : `${styles.chip}`
                     }`}
                   >
-                    <Tag className="w-3 h-3" />
                     <span>{f.name}</span>
                   </button>
                 );
@@ -695,10 +689,9 @@ export default function MobileApp() {
               {/* + Add Filter Pill */}
               <button
                 onClick={() => setShowAddFilterModal(true)}
-                className="px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border border-dashed border-purple-300 dark:border-purple-800 text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100 flex items-center gap-1 shrink-0"
+                className="px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border border-dashed border-purple-300 dark:border-purple-800 text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100 shrink-0"
               >
-                <Plus className="w-3 h-3" />
-                <span>Filter</span>
+                <span>+ Filter</span>
               </button>
             </div>
 

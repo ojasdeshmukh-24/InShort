@@ -105,25 +105,20 @@ export default function PopupApp() {
             Active Academic Buckets
           </div>
           <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40 font-medium">
-              <BookOpen className="w-3 h-3 shrink-0" />
+            <div className="flex items-center justify-center p-1.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40 font-medium">
               <span className="truncate">Academics</span>
             </div>
-            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-100 dark:border-amber-900/40 font-medium">
-              <Trophy className="w-3 h-3 shrink-0" />
+            <div className="flex items-center justify-center p-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-100 dark:border-amber-900/40 font-medium">
               <span className="truncate">Competitions</span>
             </div>
-            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/40 font-medium">
-              <Briefcase className="w-3 h-3 shrink-0" />
+            <div className="flex items-center justify-center p-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/40 font-medium">
               <span className="truncate">Workshops</span>
             </div>
-            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 font-medium">
-              <AlertTriangle className="w-3 h-3 shrink-0" />
+            <div className="flex items-center justify-center p-1.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 font-medium">
               <span className="truncate">Rescheduling</span>
             </div>
-            <div className="col-span-2 flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 font-medium">
-              <Mail className="w-3 h-3 shrink-0" />
-              <span className="truncate">General & Campus (PhD / Viva)</span>
+            <div className="col-span-2 flex items-center justify-center p-1.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 font-medium">
+              <span className="truncate">General & Campus</span>
             </div>
           </div>
         </div>

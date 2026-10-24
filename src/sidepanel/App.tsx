@@ -890,7 +890,6 @@ export default function App() {
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Buckets</span>
               {inboxItems.length > 0 && (
                 <span className="text-[9px] font-medium opacity-75">
@@ -907,7 +906,6 @@ export default function App() {
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
               <span className="truncate">Deadlines</span>
               {pendingDeadlinesCount > 0 && (
                 <span className="text-[9px] font-semibold text-amber-700 dark:text-amber-400">
@@ -924,7 +922,6 @@ export default function App() {
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Bot className="w-3.5 h-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
               <span className="truncate">Copilot</span>
             </button>
 
@@ -936,7 +933,6 @@ export default function App() {
                   : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
               <span className="truncate">Detail</span>
               {email && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>}
             </button>
@@ -1192,15 +1188,14 @@ export default function App() {
                 </button>
 
                 {[
-                  { id: 'Academics', label: 'Academics', count: counts.academics, icon: BookOpen },
-                  { id: 'Competitions & Tournaments', label: 'Competitions', count: counts.competitions, icon: Trophy },
-                  { id: 'Workshops', label: 'Workshops', count: counts.workshops, icon: Briefcase },
-                  { id: 'Class Rescheduling', label: 'Reschedules', count: counts.rescheduling, icon: AlertTriangle },
-                  { id: 'General', label: 'General', count: counts.general, icon: ScrollText },
+                  { id: 'Academics', label: 'Academics', count: counts.academics },
+                  { id: 'Competitions & Tournaments', label: 'Competitions', count: counts.competitions },
+                  { id: 'Workshops', label: 'Workshops', count: counts.workshops },
+                  { id: 'Class Rescheduling', label: 'Reschedules', count: counts.rescheduling },
+                  { id: 'General', label: 'General', count: counts.general },
                 ].map((cat) => {
                   const isSelected = selectedCategory === cat.id;
                   const theme = getCategoryTheme(cat.id as CategoryType);
-                  const Icon = cat.icon;
                   return (
                     <button
                       key={cat.id}
@@ -1211,7 +1206,6 @@ export default function App() {
                           : 'bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] border border-[#c4c7c5] dark:border-[#444746] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                       }`}
                     >
-                      <Icon className={`w-3 h-3 ${isSelected ? 'opacity-90' : 'text-[#5f6368] dark:text-[#8e918f]'}`} />
                       <span>{cat.label}</span>
                       <span
                         className={`text-[10px] px-1.5 py-0.2 rounded-md font-medium ${
@@ -1240,7 +1234,6 @@ export default function App() {
                           : 'bg-white dark:bg-[#1e1f20] text-[#7e22ce] dark:text-[#d8b4fe] border border-[#e9d5ff] dark:border-[#582987] hover:bg-[#f3e8ff]/50 dark:hover:bg-[#321c4d]/50'
                       }`}
                     >
-                      <Tag className="w-3 h-3" />
                       <span>{filter.name}</span>
                       <span
                         className={`text-[10px] px-1.5 py-0.2 rounded-md font-medium ${
@@ -1261,8 +1254,7 @@ export default function App() {
                   title="Add custom academic filter"
                   className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#444746] dark:text-[#c4c7c5] border border-dashed border-[#c4c7c5] dark:border-[#444746] hover:border-[#747775] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0 flex items-center gap-1 cursor-pointer"
                 >
-                  <Plus className="w-3 h-3" />
-                  <span>Filter</span>
+                  <span>+ Filter</span>
                 </button>
               </div>
 
@@ -1415,33 +1407,33 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('urgent')}
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1 cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 cursor-pointer ${
                     deadlineFilter === 'urgent'
                       ? 'bg-[#fce8e6] text-[#c5221f] dark:bg-[#3d1417] dark:text-[#f29e99] font-semibold border border-[#fad2cf] dark:border-[#66272c] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#c5221f] dark:text-[#f29e99] hover:bg-[#fce8e6]/40 dark:hover:bg-[#3d1417]/40'
                   }`}
                 >
-                  <Flame className="w-3 h-3 text-[#c5221f] dark:text-[#f29e99]" /> Due Soon / Urgent
+                  <span>Due Soon / Urgent</span>
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('academics')}
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1 cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 cursor-pointer ${
                     deadlineFilter === 'academics'
                       ? 'bg-[#edf5fd] text-[#1a73e8] dark:bg-[#1a2d48] dark:text-[#a8c7fa] font-semibold border border-[#d2e3fc] dark:border-[#2b4c7e] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#1a73e8] dark:text-[#a8c7fa] hover:bg-[#edf5fd]/40 dark:hover:bg-[#1a2d48]/40'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5 text-[#1a73e8] dark:text-[#a8c7fa]" /> Coursework
+                  <span>Coursework</span>
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('competitions')}
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1 cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition shrink-0 cursor-pointer ${
                     deadlineFilter === 'competitions'
                       ? 'bg-[#fef7e0] text-[#b06000] dark:bg-[#3e2c0e] dark:text-[#f8d070] font-semibold border border-[#fce8b2] dark:border-[#63481b] shadow-2xs'
                       : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#b06000] dark:text-[#f8d070] hover:bg-[#fef7e0]/40 dark:hover:bg-[#3e2c0e]/40'
                   }`}
                 >
-                  <Trophy className="w-3.5 h-3.5 text-[#b06000] dark:text-[#f8d070]" /> Contests
+                  <span>Contests</span>
                 </button>
               </div>
 
