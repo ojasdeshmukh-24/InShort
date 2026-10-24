@@ -160,11 +160,13 @@ export default function App() {
   ];
 
   useEffect(() => {
-    // Load theme
+    // Load theme - sync with Gmail's active theme if no manual override
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      chrome.storage.local.get(['acadmail_theme'], (res) => {
+      chrome.storage.local.get(['acadmail_theme', 'acadmail_gmail_theme'], (res) => {
         if (res.acadmail_theme) {
           setTheme(res.acadmail_theme);
+        } else if (res.acadmail_gmail_theme) {
+          setTheme(res.acadmail_gmail_theme);
         } else {
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           setTheme(prefersDark ? 'dark' : 'light');
@@ -198,6 +200,13 @@ export default function App() {
     fetchEmailFromActiveTab();
 
     const listener = (message: any) => {
+      if (message.type === 'GMAIL_THEME_DETECTED' && message.theme) {
+        chrome.storage.local.get(['acadmail_theme'], (res) => {
+          if (!res.acadmail_theme) {
+            setTheme(message.theme);
+          }
+        });
+      }
       if (message.type === 'EMAIL_CHANGED' || message.type === 'SETTINGS_CHANGED') {
         getSettings().then((s) => {
           if (Array.isArray(s.customFilters) && s.customFilters.length > 0) {
@@ -222,11 +231,11 @@ export default function App() {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
-      document.body.style.backgroundColor = '#090d16';
+      document.body.style.backgroundColor = '#111318';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
-      document.body.style.backgroundColor = '#f8fafc';
+      document.body.style.backgroundColor = '#f6f8fc';
     }
   }, [theme]);
 
@@ -696,69 +705,69 @@ export default function App() {
       case 'Academics':
         return {
           icon: <BookOpen className="w-3.5 h-3.5" />,
-          chip: 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60',
-          dot: 'bg-blue-600 dark:bg-blue-400',
-          activeBtn: 'bg-blue-600 dark:bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20',
-          countBadge: 'bg-blue-100 dark:bg-blue-900/80 text-blue-800 dark:text-blue-200',
+          chip: 'bg-[#edf5fd] dark:bg-[#1a2d48] text-[#1a73e8] dark:text-[#a8c7fa] border-[#d2e3fc] dark:border-[#2b4c7e]',
+          dot: 'bg-[#1a73e8] dark:bg-[#a8c7fa]',
+          activeBtn: 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#001d35] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93] shadow-2xs font-semibold',
+          countBadge: 'bg-[#001d35]/12 dark:bg-[#c2e7ff]/20 text-[#001d35] dark:text-[#c2e7ff]',
         };
       case 'Competitions & Tournaments':
         return {
           icon: <Trophy className="w-3.5 h-3.5" />,
-          chip: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60',
-          dot: 'bg-amber-600 dark:bg-amber-400',
-          activeBtn: 'bg-amber-600 dark:bg-amber-600 text-white border-amber-600 shadow-sm shadow-amber-500/20',
-          countBadge: 'bg-amber-100 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200',
+          chip: 'bg-[#fef7e0] dark:bg-[#3e2c0e] text-[#b06000] dark:text-[#f8d070] border-[#fce8b2] dark:border-[#63481b]',
+          dot: 'bg-[#b06000] dark:bg-[#f8d070]',
+          activeBtn: 'bg-[#fef7e0] dark:bg-[#3e2c0e] text-[#b06000] dark:text-[#f8d070] border-[#fce8b2] dark:border-[#63481b] shadow-2xs font-semibold',
+          countBadge: 'bg-[#b06000]/12 dark:bg-[#f8d070]/20 text-[#b06000] dark:text-[#f8d070]',
         };
       case 'Workshops':
         return {
           icon: <Briefcase className="w-3.5 h-3.5" />,
-          chip: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60',
-          dot: 'bg-emerald-600 dark:bg-emerald-400',
-          activeBtn: 'bg-emerald-600 dark:bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/20',
-          countBadge: 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200',
+          chip: 'bg-[#e6f4ea] dark:bg-[#0f331e] text-[#137333] dark:text-[#85e0a3] border-[#ceead6] dark:border-[#1c5534]',
+          dot: 'bg-[#137333] dark:bg-[#85e0a3]',
+          activeBtn: 'bg-[#e6f4ea] dark:bg-[#0f331e] text-[#137333] dark:text-[#85e0a3] border-[#ceead6] dark:border-[#1c5534] shadow-2xs font-semibold',
+          countBadge: 'bg-[#137333]/12 dark:bg-[#85e0a3]/20 text-[#137333] dark:text-[#85e0a3]',
         };
       case 'Class Rescheduling':
         return {
           icon: <AlertTriangle className="w-3.5 h-3.5" />,
-          chip: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60',
-          dot: 'bg-rose-600 dark:bg-rose-400',
-          activeBtn: 'bg-rose-600 dark:bg-rose-600 text-white border-rose-600 shadow-sm shadow-rose-500/20',
-          countBadge: 'bg-rose-100 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200',
+          chip: 'bg-[#fce8e6] dark:bg-[#3d1417] text-[#c5221f] dark:text-[#f29e99] border-[#fad2cf] dark:border-[#66272c]',
+          dot: 'bg-[#c5221f] dark:bg-[#f29e99]',
+          activeBtn: 'bg-[#fce8e6] dark:bg-[#3d1417] text-[#c5221f] dark:text-[#f29e99] border-[#fad2cf] dark:border-[#66272c] shadow-2xs font-semibold',
+          countBadge: 'bg-[#c5221f]/12 dark:bg-[#f29e99]/20 text-[#c5221f] dark:text-[#f29e99]',
         };
       case 'General':
         return {
           icon: <ScrollText className="w-3.5 h-3.5" />,
-          chip: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/60',
-          dot: 'bg-slate-600 dark:bg-slate-400',
-          activeBtn: 'bg-slate-800 dark:bg-slate-700 text-white border-slate-700 shadow-sm',
-          countBadge: 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+          chip: 'bg-[#f1f3f4] dark:bg-[#282a2d] text-[#444746] dark:text-[#c4c7c5] border-[#dadce0] dark:border-[#3c4043]',
+          dot: 'bg-[#5f6368] dark:bg-[#c4c7c5]',
+          activeBtn: 'bg-[#e9eef6] dark:bg-[#282a2d] text-[#1f1f1f] dark:text-[#e3e3e3] border-[#dadce0] dark:border-[#3c4043] shadow-2xs font-semibold',
+          countBadge: 'bg-[#5f6368]/12 dark:bg-[#c4c7c5]/20 text-[#5f6368] dark:text-[#c4c7c5]',
         };
       default:
         // Custom user-defined categories
         if (cat.toLowerCase().includes('placement') || cat.toLowerCase().includes('intern')) {
           return {
             icon: <Tag className="w-3.5 h-3.5" />,
-            chip: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60',
-            dot: 'bg-purple-600 dark:bg-purple-400',
-            activeBtn: 'bg-purple-600 dark:bg-purple-600 text-white border-purple-600 shadow-sm shadow-purple-500/20',
-            countBadge: 'bg-purple-100 dark:bg-purple-900/80 text-purple-800 dark:text-purple-200',
+            chip: 'bg-[#f3e8ff] dark:bg-[#321c4d] text-[#7e22ce] dark:text-[#d8b4fe] border-[#e9d5ff] dark:border-[#582987]',
+            dot: 'bg-[#7e22ce] dark:bg-[#d8b4fe]',
+            activeBtn: 'bg-[#f3e8ff] dark:bg-[#321c4d] text-[#7e22ce] dark:text-[#d8b4fe] border-[#e9d5ff] dark:border-[#582987] shadow-2xs font-semibold',
+            countBadge: 'bg-[#7e22ce]/12 dark:bg-[#d8b4fe]/20 text-[#7e22ce] dark:text-[#d8b4fe]',
           };
         }
         if (cat.toLowerCase().includes('hostel') || cat.toLowerCase().includes('mess')) {
           return {
             icon: <Tag className="w-3.5 h-3.5" />,
-            chip: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-200/80 dark:border-cyan-800/60',
-            dot: 'bg-cyan-600 dark:bg-cyan-400',
-            activeBtn: 'bg-cyan-600 dark:bg-cyan-600 text-white border-cyan-600 shadow-sm shadow-cyan-500/20',
-            countBadge: 'bg-cyan-100 dark:bg-cyan-900/80 text-cyan-800 dark:text-cyan-200',
+            chip: 'bg-[#e0f7fa] dark:bg-[#00363a] text-[#006064] dark:text-[#80deea] border-[#b2ebf2] dark:border-[#006064]',
+            dot: 'bg-[#00838f] dark:bg-[#80deea]',
+            activeBtn: 'bg-[#e0f7fa] dark:bg-[#00363a] text-[#006064] dark:text-[#80deea] border-[#b2ebf2] dark:border-[#006064] shadow-2xs font-semibold',
+            countBadge: 'bg-[#00838f]/12 dark:bg-[#80deea]/20 text-[#006064] dark:text-[#80deea]',
           };
         }
         return {
           icon: <Tag className="w-3.5 h-3.5" />,
-          chip: 'bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-200/80 dark:border-violet-800/60',
-          dot: 'bg-violet-600 dark:bg-violet-400',
-          activeBtn: 'bg-violet-600 dark:bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-500/20',
-          countBadge: 'bg-violet-100 dark:bg-violet-900/80 text-violet-800 dark:text-violet-200',
+          chip: 'bg-[#f3e8ff] dark:bg-[#321c4d] text-[#7e22ce] dark:text-[#d8b4fe] border-[#e9d5ff] dark:border-[#582987]',
+          dot: 'bg-[#7e22ce] dark:bg-[#d8b4fe]',
+          activeBtn: 'bg-[#f3e8ff] dark:bg-[#321c4d] text-[#7e22ce] dark:text-[#d8b4fe] border-[#e9d5ff] dark:border-[#582987] shadow-2xs font-semibold',
+          countBadge: 'bg-[#7e22ce]/12 dark:bg-[#d8b4fe]/20 text-[#7e22ce] dark:text-[#d8b4fe]',
         };
     }
   };
@@ -813,31 +822,31 @@ export default function App() {
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
-      <div className="flex flex-col min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans antialiased text-xs selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-200">
+      <div className="flex flex-col min-h-screen bg-[#f6f8fc] dark:bg-[#111318] text-[#1f1f1f] dark:text-[#e3e3e3] font-sans antialiased text-xs selection:bg-[#c2e7ff] dark:selection:bg-[#004a77] transition-colors duration-150">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#0e1526]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-3.5 py-2.5 flex items-center justify-between transition-colors">
+        <header className="sticky top-0 z-30 bg-[#f6f8fc] dark:bg-[#111318] border-b border-[#e0e2ec] dark:border-[#282a2d] px-3.5 py-2.5 flex items-center justify-between transition-colors">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs">
+            <div className="w-6 h-6 rounded-md bg-[#0b57d0] dark:bg-[#a8c7fa] text-white dark:text-[#001d35] flex items-center justify-center font-bold shadow-2xs">
               <GraduationCap className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[13px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+              <span className="text-[13px] font-semibold tracking-[-0.01em] text-[#1f1f1f] dark:text-[#e3e3e3]">
                 AcadMail
               </span>
-              <span className="font-mono text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+              <span className="font-mono text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-[#eaeff8] dark:bg-[#1e1f20] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">
                 v1.0
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-0.5">
-            {/* Dark Mode Toggle */}
+            {/* Gmail Theme Switcher */}
             <button
               onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-md transition"
+              title={theme === 'dark' ? 'Switch to Gmail Light Theme' : 'Switch to Gmail Dark Theme'}
+              className="p-1.5 text-[#444746] hover:text-[#1f1f1f] dark:text-[#c4c7c5] dark:hover:text-[#e3e3e3] hover:bg-[#eaebef] dark:hover:bg-[#28292c] rounded-full transition"
             >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-[#f8d070]" /> : <Moon className="w-3.5 h-3.5 text-[#444746]" />}
             </button>
 
             <button
@@ -847,21 +856,21 @@ export default function App() {
               }}
               disabled={isScanningInbox || loading}
               title="Refresh current mailbox"
-              className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-md transition"
+              className="p-1.5 text-[#444746] hover:text-[#1f1f1f] dark:text-[#c4c7c5] dark:hover:text-[#e3e3e3] hover:bg-[#eaebef] dark:hover:bg-[#28292c] rounded-full transition"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${
-                  isScanningInbox || loading ? 'animate-spin text-blue-600 dark:text-blue-400' : ''
+                  isScanningInbox || loading ? 'animate-spin text-[#0b57d0] dark:text-[#a8c7fa]' : ''
                 }`}
               />
             </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
               title="AI Configuration"
-              className={`p-1.5 rounded-md transition ${
+              className={`p-1.5 rounded-full transition ${
                 showSettings
-                  ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70'
+                  ? 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#001d35] dark:text-[#c2e7ff]'
+                  : 'text-[#444746] hover:text-[#1f1f1f] dark:text-[#c4c7c5] dark:hover:text-[#e3e3e3] hover:bg-[#eaebef] dark:hover:bg-[#28292c]'
               }`}
             >
               <Settings className="w-3.5 h-3.5" />
@@ -869,21 +878,21 @@ export default function App() {
           </div>
         </header>
 
-        {/* Linear/Mac Style Segmented Switcher */}
-        <div className="px-3 pt-2.5 pb-1.5 bg-[#f8fafc] dark:bg-[#0b0f19] border-b border-slate-200/50 dark:border-slate-800/60">
-          <div className="p-0.5 bg-slate-200/60 dark:bg-[#131b2c] rounded-xl flex items-center gap-0.5 border border-slate-200/60 dark:border-slate-800/60">
+        {/* Google M3 Style Segmented Switcher */}
+        <div className="px-3 pt-2.5 pb-2 bg-[#f6f8fc] dark:bg-[#111318] border-b border-[#e0e2ec] dark:border-[#282a2d]">
+          <div className="p-1 bg-[#eaeff8] dark:bg-[#1e1f20] rounded-xl flex items-center gap-1 border border-[#d3e3fd]/60 dark:border-[#2c2d30]">
             <button
               onClick={() => setActiveTab('buckets')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'buckets'
-                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
+                  : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 shrink-0 opacity-80" />
+              <Layers className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Buckets</span>
               {inboxItems.length > 0 && (
-                <span className="font-mono text-[9px] font-semibold text-slate-400 dark:text-slate-500">
+                <span className="font-mono text-[9px] font-semibold opacity-75">
                   {inboxItems.length}
                 </span>
               )}
@@ -891,16 +900,16 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('deadlines')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'deadlines'
-                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
+                  : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+              <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
               <span className="truncate">Deadlines</span>
               {pendingDeadlinesCount > 0 && (
-                <span className="font-mono text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                <span className="font-mono text-[9px] font-bold text-amber-700 dark:text-amber-400">
                   {pendingDeadlinesCount}
                 </span>
               )}
@@ -908,25 +917,25 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'chat'
-                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
+                  : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Bot className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+              <Bot className="w-3.5 h-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
               <span className="truncate">Copilot</span>
             </button>
 
             <button
               onClick={() => setActiveTab('detail')}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'detail'
-                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#004a77] text-[#0b57d0] dark:text-[#c2e7ff] shadow-xs font-semibold'
+                  : 'text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
               <span className="truncate">Detail</span>
               {email && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>}
             </button>
@@ -937,10 +946,10 @@ export default function App() {
         <main className="flex-1 p-3.5 space-y-3">
           {/* Settings Drawer */}
           {showSettings && (
-            <div className="bg-white dark:bg-[#0f172a] border border-blue-200/80 dark:border-blue-900/50 rounded-2xl p-3.5 shadow-xs space-y-3 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-xs space-y-3 animate-in fade-in duration-200">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-blue-950 dark:text-blue-300 font-bold text-xs">
-                  <Key className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <div className="flex items-center gap-1.5 text-[#1f1f1f] dark:text-[#e3e3e3] font-bold text-xs">
+                  <Key className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
                   <span>AI Configuration</span>
                 </div>
                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
@@ -951,14 +960,14 @@ export default function App() {
               <form onSubmit={handleSaveSettings} className="space-y-2.5">
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-[#444746] dark:text-[#c4c7c5]">
                       Google Gemini Key
                     </span>
                     <a
                       href="https://aistudio.google.com/"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5 text-[10px] font-medium"
+                      className="text-[#0b57d0] dark:text-[#a8c7fa] hover:underline flex items-center gap-0.5 text-[10px] font-medium"
                     >
                       Get Free Key <ExternalLink className="w-2.5 h-2.5" />
                     </a>
@@ -968,13 +977,13 @@ export default function App() {
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Paste Gemini API Key..."
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50/50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 font-mono"
+                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl focus:bg-white dark:focus:bg-[#1e1f20] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa] text-[#1f1f1f] dark:text-[#e3e3e3] font-mono"
                   />
                 </div>
 
-                <div className="space-y-1 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                <div className="space-y-1 pt-1.5 border-t border-[#f1f3f4] dark:border-[#2c2d30]">
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <span className="font-semibold text-[#444746] dark:text-[#c4c7c5] flex items-center gap-1">
                       <span>Groq Key</span>
                       <span className="px-1 py-0.2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 text-[8px] rounded font-bold">
                         Zero Downtime
@@ -984,7 +993,7 @@ export default function App() {
                       href="https://console.groq.com/keys"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5 text-[10px] font-medium"
+                      className="text-[#0b57d0] dark:text-[#a8c7fa] hover:underline flex items-center gap-0.5 text-[10px] font-medium"
                     >
                       Free Groq Key <ExternalLink className="w-2.5 h-2.5" />
                     </a>
@@ -994,18 +1003,18 @@ export default function App() {
                     value={groqKey}
                     onChange={(e) => setGroqKey(e.target.value)}
                     placeholder="gsk_... (Optional backup)"
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50/50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 font-mono"
+                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl focus:bg-white dark:focus:bg-[#1e1f20] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa] text-[#1f1f1f] dark:text-[#e3e3e3] font-mono"
                   />
                 </div>
 
                 {/* In-Gmail Integration & Revert Options */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="pt-2 border-t border-[#f1f3f4] dark:border-[#2c2d30] space-y-2">
                   <div>
-                    <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] flex items-center gap-1.5">
-                      <LayoutGrid className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <div className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-[11px] flex items-center gap-1.5">
+                      <LayoutGrid className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa] shrink-0" />
                       <span>Gmail Integration & Revert</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                    <p className="text-[10px] text-[#5f6368] dark:text-[#8e918f] leading-tight mt-0.5">
                       Select how AcadMail integrates inside Gmail
                     </p>
                   </div>
@@ -1016,15 +1025,15 @@ export default function App() {
                       onClick={() => handleSetUiMode('blended')}
                       className={`p-2 rounded-xl text-left border transition ${
                         uiMode === 'blended'
-                          ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-700 dark:text-blue-300 font-bold shadow-2xs'
-                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          ? 'bg-[#c2e7ff] dark:bg-[#004a77] border-[#7fcfff] dark:border-[#005c93] text-[#001d35] dark:text-[#c2e7ff] font-bold shadow-2xs'
+                          : 'bg-white dark:bg-[#1e1f20] border-[#e0e2ec] dark:border-[#2c2d30] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                       }`}
                     >
                       <div className="flex items-center gap-1.5 text-[10px]">
-                        <Layers className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        <Layers className="w-3 h-3 text-[#0b57d0] dark:text-[#a8c7fa]" />
                         <span>Blended M3</span>
                       </div>
-                      <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Native Google UI</p>
+                      <p className="text-[8px] text-[#5f6368] dark:text-[#8e918f] font-normal mt-0.5 leading-tight">Native Google UI</p>
                     </button>
 
                     <button
@@ -1032,15 +1041,15 @@ export default function App() {
                       onClick={() => handleSetUiMode('floating')}
                       className={`p-2 rounded-xl text-left border transition ${
                         uiMode === 'floating'
-                          ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-700 dark:text-blue-300 font-bold shadow-2xs'
-                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          ? 'bg-[#c2e7ff] dark:bg-[#004a77] border-[#7fcfff] dark:border-[#005c93] text-[#001d35] dark:text-[#c2e7ff] font-bold shadow-2xs'
+                          : 'bg-white dark:bg-[#1e1f20] border-[#e0e2ec] dark:border-[#2c2d30] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                       }`}
                     >
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <Zap className="w-3 h-3 text-amber-500" />
                         <span>Floating Bar</span>
                       </div>
-                      <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Capsule toolbar</p>
+                      <p className="text-[8px] text-[#5f6368] dark:text-[#8e918f] font-normal mt-0.5 leading-tight">Capsule toolbar</p>
                     </button>
 
                     <button
@@ -1049,30 +1058,30 @@ export default function App() {
                       className={`p-2 rounded-xl text-left border transition ${
                         uiMode === 'off'
                           ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-500 text-rose-700 dark:text-rose-300 font-bold shadow-2xs'
-                          : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          : 'bg-white dark:bg-[#1e1f20] border-[#e0e2ec] dark:border-[#2c2d30] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                       }`}
                     >
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <ShieldCheck className="w-3 h-3 text-slate-500" />
                         <span>Revert (Off)</span>
                       </div>
-                      <p className="text-[8px] text-slate-400 font-normal mt-0.5 leading-tight">Side panel only</p>
+                      <p className="text-[8px] text-[#5f6368] dark:text-[#8e918f] font-normal mt-0.5 leading-tight">Side panel only</p>
                     </button>
                   </div>
                 </div>
 
                 {/* Custom Academic Filters Management */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="pt-2 border-t border-[#f1f3f4] dark:border-[#2c2d30] space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] flex items-center gap-1.5">
+                    <div className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-[11px] flex items-center gap-1.5">
                       <Tag className="w-3.5 h-3.5 text-purple-500 shrink-0" />
                       <span>Custom Academic Filters</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
+                    <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f] font-medium">
                       {customFilters.length} active
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400 leading-tight">
+                  <p className="text-[10px] text-[#5f6368] dark:text-[#8e918f] leading-tight">
                     Add custom filters for placements, hostels, clubs, or research labs.
                   </p>
 
@@ -1082,21 +1091,21 @@ export default function App() {
                       {customFilters.map((f) => (
                         <div
                           key={f.id}
-                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800"
+                          className="flex items-center justify-between p-2 rounded-xl bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30]"
                         >
                           <div className="min-w-0 flex-1 pr-2">
-                            <div className="font-bold text-[11px] text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
+                            <div className="font-bold text-[11px] text-[#1f1f1f] dark:text-[#e3e3e3] truncate flex items-center gap-1.5">
                               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: f.color || '#8b5cf6' }} />
                               <span className="truncate">{f.name}</span>
                             </div>
-                            <div className="text-[9px] text-slate-400 truncate mt-0.5">
+                            <div className="text-[9px] text-[#5f6368] dark:text-[#8e918f] truncate mt-0.5">
                               Keywords: {f.keywords.join(', ')}
                             </div>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleDeleteCustomFilter(f.id)}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition shrink-0"
+                            className="p-1 text-[#5f6368] hover:text-rose-600 rounded-lg transition shrink-0"
                             title="Delete custom filter"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1107,9 +1116,9 @@ export default function App() {
                   )}
 
                   {/* Add New Filter Inline */}
-                  <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-900/40 space-y-2">
-                    <div className="text-[10px] font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1">
-                      <Plus className="w-3 h-3" />
+                  <div className="p-2.5 rounded-xl bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] space-y-2">
+                    <div className="text-[10px] font-bold text-[#1f1f1f] dark:text-[#e3e3e3] flex items-center gap-1">
+                      <Plus className="w-3 h-3 text-[#0b57d0] dark:text-[#a8c7fa]" />
                       <span>Add New Custom Filter</span>
                     </div>
                     <div className="space-y-1.5">
@@ -1118,14 +1127,14 @@ export default function App() {
                         placeholder="Filter Name (e.g. Library & Fines)"
                         value={newFilterName}
                         onChange={(e) => setNewFilterName(e.target.value)}
-                        className="w-full px-2 py-1 text-[11px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none"
+                        className="w-full px-2.5 py-1.5 text-[11px] bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl text-[#1f1f1f] dark:text-[#e3e3e3] focus:outline-none focus:border-[#0b57d0]"
                       />
                       <input
                         type="text"
                         placeholder="Keywords (e.g. library, book, fine, return)"
                         value={newFilterKeywords}
                         onChange={(e) => setNewFilterKeywords(e.target.value)}
-                        className="w-full px-2 py-1 text-[11px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none"
+                        className="w-full px-2.5 py-1.5 text-[11px] bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl text-[#1f1f1f] dark:text-[#e3e3e3] focus:outline-none focus:border-[#0b57d0]"
                       />
                     </div>
                     <div className="flex justify-end">
@@ -1133,7 +1142,7 @@ export default function App() {
                         type="button"
                         disabled={!newFilterName.trim()}
                         onClick={handleAddCustomFilter}
-                        className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-2xs"
+                        className="px-3 py-1 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] disabled:opacity-40 rounded-full text-[10px] font-bold transition flex items-center gap-1 shadow-2xs"
                       >
                         <Plus className="w-3 h-3" />
                         <span>Create Filter</span>
@@ -1145,7 +1154,7 @@ export default function App() {
                 <div className="flex justify-end pt-1">
                   <button
                     type="submit"
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition shadow-xs"
+                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] font-semibold rounded-full text-xs transition shadow-xs"
                   >
                     Save Settings
                   </button>
@@ -1163,18 +1172,18 @@ export default function App() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-0.5">
                 <button
                   onClick={() => handleCategoryFilterChange('ALL')}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] transition shrink-0 flex items-center gap-1.5 ${
                     selectedCategory === 'ALL'
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold'
-                      : 'bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold border border-[#7fcfff] dark:border-[#005c93] shadow-2xs'
+                      : 'bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] border border-[#c4c7c5] dark:border-[#444746] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                   }`}
                 >
                   <span>All</span>
                   <span
-                    className={`font-mono text-[10px] px-1 py-0.2 rounded ${
+                    className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
                       selectedCategory === 'ALL'
-                        ? 'bg-slate-800 text-slate-200 dark:bg-slate-200 dark:text-slate-800'
-                        : 'text-slate-400 dark:text-slate-500'
+                        ? 'bg-[#001d35]/12 text-[#001d35] dark:bg-[#c2e7ff]/20 dark:text-[#c2e7ff]'
+                        : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-[#28292a] dark:text-[#8e918f]'
                     }`}
                   >
                     {counts.all}
@@ -1189,24 +1198,25 @@ export default function App() {
                   { id: 'General', label: 'General', count: counts.general, icon: ScrollText },
                 ].map((cat) => {
                   const isSelected = selectedCategory === cat.id;
+                  const theme = getCategoryTheme(cat.id as CategoryType);
                   const Icon = cat.icon;
                   return (
                     <button
                       key={cat.id}
                       onClick={() => handleCategoryFilterChange(cat.id as CategoryType)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-full text-[11px] transition shrink-0 flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-semibold'
-                          : 'bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                          ? `${theme.activeBtn}`
+                          : 'bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] border border-[#c4c7c5] dark:border-[#444746] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                       }`}
                     >
-                      <Icon className={`w-3 h-3 ${isSelected ? 'text-white dark:text-slate-900' : 'text-slate-400'}`} />
+                      <Icon className={`w-3 h-3 ${isSelected ? 'opacity-90' : 'text-[#5f6368] dark:text-[#8e918f]'}`} />
                       <span>{cat.label}</span>
                       <span
-                        className={`font-mono text-[10px] px-1 py-0.2 rounded ${
+                        className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
                           isSelected
-                            ? 'bg-slate-800 text-slate-200 dark:bg-slate-200 dark:text-slate-800'
-                            : 'text-slate-400 dark:text-slate-500'
+                            ? `${theme.countBadge}`
+                            : 'bg-[#f1f3f4] text-[#5f6368] dark:bg-[#28292a] dark:text-[#8e918f]'
                         }`}
                       >
                         {cat.count}
@@ -1218,21 +1228,24 @@ export default function App() {
                 {/* Custom Filters */}
                 {customFilters.map((filter) => {
                   const isSelected = selectedCategory === filter.name;
+                  const theme = getCategoryTheme(filter.name);
                   return (
                     <button
                       key={filter.id}
                       onClick={() => handleCategoryFilterChange(filter.name)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-full text-[11px] transition shrink-0 flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-purple-600 text-white shadow-2xs font-semibold'
-                          : 'bg-white dark:bg-[#111827] text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/40'
+                          ? `${theme.activeBtn}`
+                          : 'bg-white dark:bg-[#1e1f20] text-[#7e22ce] dark:text-[#d8b4fe] border border-[#e9d5ff] dark:border-[#582987] hover:bg-[#f3e8ff]/50 dark:hover:bg-[#321c4d]/50'
                       }`}
                     >
                       <Tag className="w-3 h-3" />
                       <span>{filter.name}</span>
                       <span
-                        className={`font-mono text-[10px] px-1 py-0.2 rounded ${
-                          isSelected ? 'bg-purple-700 text-purple-100' : 'text-purple-500'
+                        className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
+                          isSelected
+                            ? `${theme.countBadge}`
+                            : 'bg-[#f3e8ff] text-[#7e22ce] dark:bg-[#321c4d] dark:text-[#d8b4fe]'
                         }`}
                       >
                         {counts[filter.name] || 0}
@@ -1245,7 +1258,7 @@ export default function App() {
                 <button
                   onClick={() => setShowAddFilterModal(true)}
                   title="Add custom academic filter"
-                  className="px-2 py-1 rounded-lg text-[11px] font-medium text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition shrink-0 flex items-center gap-1"
+                  className="px-2.5 py-1.5 rounded-full text-[11px] font-medium text-[#444746] dark:text-[#c4c7c5] border border-dashed border-[#c4c7c5] dark:border-[#444746] hover:border-[#747775] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0 flex items-center gap-1"
                 >
                   <Plus className="w-3 h-3" />
                   <span>Filter</span>
@@ -1255,18 +1268,18 @@ export default function App() {
               {/* Search & Actions Toolbar */}
               <div className="flex items-center gap-1.5">
                 <div className="relative flex-1">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                  <Search className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f] absolute left-3 top-2.5 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={`Search in ${selectedCategory === 'ALL' ? 'all emails' : selectedCategory}...`}
-                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 shadow-2xs"
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#eaeff8] dark:bg-[#1e1f20] border border-transparent focus:border-[#0b57d0] dark:focus:border-[#a8c7fa] rounded-full focus:outline-none focus:bg-white dark:focus:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] shadow-2xs transition-colors"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      className="absolute right-2.5 top-2 text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3]"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -1276,10 +1289,10 @@ export default function App() {
                 <button
                   onClick={() => handleToggleSyncDom(!syncGmailDom)}
                   title="Dim non-matching rows on Gmail"
-                  className={`py-1.5 px-2 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition shrink-0 ${
+                  className={`py-1.5 px-3 rounded-full border text-[11px] font-medium flex items-center gap-1.5 transition shrink-0 ${
                     syncGmailDom
-                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-transparent shadow-2xs'
-                      : 'bg-white dark:bg-[#111827] border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93] shadow-2xs font-semibold'
+                      : 'bg-white dark:bg-[#1e1f20] border-[#c4c7c5] dark:border-[#444746] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                   }`}
                 >
                   <Eye className="w-3 h-3" />
@@ -1290,65 +1303,65 @@ export default function App() {
                   onClick={() => scanInbox()}
                   disabled={isScanningInbox}
                   title="Refresh & scan visible inbox rows"
-                  className="p-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#111827] text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition shrink-0"
+                  className="p-1.5 rounded-full border border-[#c4c7c5] dark:border-[#444746] bg-white dark:bg-[#1e1f20] text-[#444746] dark:text-[#c4c7c5] hover:text-[#1f1f1f] dark:hover:text-[#e3e3e3] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition shrink-0"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isScanningInbox ? 'animate-spin text-blue-600' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isScanningInbox ? 'animate-spin text-[#0b57d0] dark:text-[#a8c7fa]' : ''}`} />
                 </button>
               </div>
 
               {/* Email List */}
               {filteredInbox.length === 0 ? (
-                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-3 shadow-2xs">
-                  <div className="w-9 h-9 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center">
-                    <Mail className="w-4 h-4" />
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-8 text-center space-y-3 shadow-2xs">
+                  <div className="w-10 h-10 mx-auto rounded-full bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center">
+                    <Mail className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                    <h4 className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                       {inboxItems.length === 0
                         ? 'No visible emails detected'
                         : `No emails found in "${selectedCategory}"`}
                     </h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-[260px] mx-auto">
+                    <p className="text-[11px] text-[#5f6368] dark:text-[#8e918f] mt-1 max-w-[260px] mx-auto">
                       Scan your visible Gmail inbox rows to categorize them automatically.
                     </p>
                   </div>
                   <button
                     onClick={() => scanInbox()}
                     disabled={isScanningInbox}
-                    className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium text-xs rounded-lg transition shadow-xs inline-flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] font-semibold text-xs rounded-full transition shadow-xs inline-flex items-center gap-1.5"
                   >
                     <RefreshCw className={`w-3 h-3 ${isScanningInbox ? 'animate-spin' : ''}`} />
                     <span>Scan Visible Inbox</span>
                   </button>
                 </div>
               ) : (
-                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#111827] divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden shadow-2xs">
+                <div className="rounded-2xl border border-[#e0e2ec] dark:border-[#2c2d30] bg-white dark:bg-[#1e1f20] divide-y divide-[#f1f3f4] dark:divide-[#28292a] overflow-hidden shadow-2xs">
                   {filteredInbox.map((item) => {
                     const theme = getCategoryTheme(item.category);
                     return (
                       <div
                         key={item.id}
                         onClick={() => handleSelectInboxRow(item)}
-                        className="p-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group flex flex-col gap-1"
+                        className="p-3 hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] cursor-pointer transition-colors group flex flex-col gap-1"
                       >
                         {/* Header: Sender & Timestamp */}
                         <div className="flex items-center justify-between gap-2 min-w-0">
-                          <span className="font-semibold text-slate-900 dark:text-slate-100 text-xs truncate">
+                          <span className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs truncate">
                             {item.sender}
                           </span>
-                          <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                          <span className="font-mono text-[10px] text-[#5f6368] dark:text-[#8e918f] shrink-0 tabular-nums">
                             {item.date}
                           </span>
                         </div>
 
                         {/* Subject */}
-                        <div className="font-medium text-xs text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1 leading-snug">
+                        <div className="font-medium text-xs text-[#3c4043] dark:text-[#c4c7c5] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] transition-colors line-clamp-1 leading-snug">
                           {item.subject}
                         </div>
 
                         {/* Snippet preview */}
                         {item.snippet && (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                          <p className="text-[11px] text-[#5f6368] dark:text-[#8e918f] line-clamp-2 leading-relaxed">
                             {item.snippet}
                           </p>
                         )}
@@ -1357,20 +1370,20 @@ export default function App() {
                         <div className="flex items-center justify-between pt-1 gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${theme.chip}`}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${theme.chip}`}
                             >
-                              <span className={`w-1 h-1 rounded-full ${theme.dot}`} />
+                              <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
                               <span>{item.category}</span>
                             </span>
 
                             {item.courseCode && (
-                              <span className="font-mono px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                              <span className="font-mono px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">
                                 {item.courseCode}
                               </span>
                             )}
                           </div>
 
-                          <span className="text-[10px] font-medium text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
+                          <span className="text-[10px] font-medium text-[#5f6368] dark:text-[#8e918f] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
                             <span>Open</span>
                             <ChevronRight className="w-3 h-3" />
                           </span>
@@ -1388,56 +1401,56 @@ export default function App() {
           {/* ========================================================================= */}
           {activeTab === 'deadlines' && (
             <div className="space-y-3">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 <button
                   onClick={() => setDeadlineFilter('all')}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition shrink-0 ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 ${
                     deadlineFilter === 'all'
-                      ? 'bg-slate-900 dark:bg-blue-600 text-white'
-                      : 'bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                      ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold border border-[#7fcfff] dark:border-[#005c93] shadow-2xs'
+                      : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#444746] dark:text-[#c4c7c5] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c]'
                   }`}
                 >
                   All ({deadlines.length})
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('urgent')}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition shrink-0 flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1 ${
                     deadlineFilter === 'urgent'
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50'
+                      ? 'bg-[#fce8e6] text-[#c5221f] dark:bg-[#3d1417] dark:text-[#f29e99] font-semibold border border-[#fad2cf] dark:border-[#66272c] shadow-2xs'
+                      : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#c5221f] dark:text-[#f29e99] hover:bg-[#fce8e6]/40 dark:hover:bg-[#3d1417]/40'
                   }`}
                 >
-                  <Flame className="w-3 h-3" /> Due Soon / Urgent
+                  <Flame className="w-3 h-3 text-[#c5221f] dark:text-[#f29e99]" /> Due Soon / Urgent
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('academics')}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition shrink-0 flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1 ${
                     deadlineFilter === 'academics'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 text-blue-700 dark:text-blue-400 hover:bg-blue-50'
+                      ? 'bg-[#edf5fd] text-[#1a73e8] dark:bg-[#1a2d48] dark:text-[#a8c7fa] font-semibold border border-[#d2e3fc] dark:border-[#2b4c7e] shadow-2xs'
+                      : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#1a73e8] dark:text-[#a8c7fa] hover:bg-[#edf5fd]/40 dark:hover:bg-[#1a2d48]/40'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5" /> Coursework
+                  <BookOpen className="w-3.5 h-3.5 text-[#1a73e8] dark:text-[#a8c7fa]" /> Coursework
                 </button>
                 <button
                   onClick={() => setDeadlineFilter('competitions')}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition shrink-0 flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition shrink-0 flex items-center gap-1 ${
                     deadlineFilter === 'competitions'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 text-amber-800 dark:text-amber-400 hover:bg-amber-50'
+                      ? 'bg-[#fef7e0] text-[#b06000] dark:bg-[#3e2c0e] dark:text-[#f8d070] font-semibold border border-[#fce8b2] dark:border-[#63481b] shadow-2xs'
+                      : 'bg-white dark:bg-[#1e1f20] border border-[#c4c7c5] dark:border-[#444746] text-[#b06000] dark:text-[#f8d070] hover:bg-[#fef7e0]/40 dark:hover:bg-[#3e2c0e]/40'
                   }`}
                 >
-                  <Trophy className="w-3.5 h-3.5" /> Contests
+                  <Trophy className="w-3.5 h-3.5 text-[#b06000] dark:text-[#f8d070]" /> Contests
                 </button>
               </div>
 
               {filteredDeadlines.length === 0 ? (
-                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 text-center space-y-2 shadow-2xs">
-                  <CalendarCheck2 className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
-                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-6 text-center space-y-2 shadow-2xs">
+                  <CalendarCheck2 className="w-8 h-8 mx-auto text-[#5f6368] dark:text-[#8e918f]" />
+                  <h4 className="font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                     No pending deadlines found
                   </h4>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  <p className="text-[11px] text-[#5f6368] dark:text-[#8e918f]">
                     Scan your inbox in the Buckets tab to pull upcoming submission dates.
                   </p>
                 </div>
@@ -1448,19 +1461,19 @@ export default function App() {
                     return (
                       <div
                         key={dl.id}
-                        className={`p-3 bg-white dark:bg-[#111827] border rounded-2xl transition space-y-2 shadow-2xs ${
+                        className={`p-3 bg-white dark:bg-[#1e1f20] border rounded-2xl transition space-y-2 shadow-2xs ${
                           dl.completed
-                            ? 'opacity-60 bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800'
-                            : 'border-slate-200/80 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700'
+                            ? 'opacity-60 bg-[#f6f8fc]/60 dark:bg-[#111318]/60 border-[#e0e2ec] dark:border-[#2c2d30]'
+                            : 'border-[#e0e2ec] dark:border-[#2c2d30] hover:border-[#0b57d0] dark:hover:border-[#a8c7fa]'
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
                           <button
                             onClick={() => toggleDeadlineComplete(dl.id)}
-                            className="mt-0.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition shrink-0"
+                            className="mt-0.5 text-[#5f6368] hover:text-[#0b57d0] dark:text-[#8e918f] dark:hover:text-[#a8c7fa] transition shrink-0"
                           >
                             {dl.completed ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                              <CheckCircle2 className="w-4 h-4 text-[#137333] dark:text-[#85e0a3]" />
                             ) : (
                               <Circle className="w-4 h-4" />
                             )}
@@ -1468,27 +1481,27 @@ export default function App() {
 
                           <div className="flex-1 min-w-0">
                             <p
-                              className={`font-bold text-xs leading-snug ${
+                              className={`font-semibold text-xs leading-snug ${
                                 dl.completed
-                                  ? 'line-through text-slate-400 dark:text-slate-500'
-                                  : 'text-slate-900 dark:text-white'
+                                  ? 'line-through text-[#5f6368] dark:text-[#8e918f]'
+                                  : 'text-[#1f1f1f] dark:text-[#e3e3e3]'
                               }`}
                             >
                               {dl.title}
                             </p>
 
-                            <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[#5f6368] dark:text-[#8e918f]">
                               <span className="truncate">{dl.sourceSender}</span>
                               <span>•</span>
-                              <span className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-0.5">
-                                <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />{' '}
+                              <span className="font-semibold text-[#b06000] dark:text-[#f8d070] flex items-center gap-0.5">
+                                <Clock className="w-3 h-3 text-[#b06000] dark:text-[#f8d070]" />{' '}
                                 {dl.deadline}
                               </span>
                             </div>
 
-                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#f1f3f4] dark:border-[#282a2d]">
                               <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-bold border ${theme.chip}`}
+                                className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-medium border ${theme.chip}`}
                               >
                                 <span className={`w-1 h-1 rounded-full ${theme.dot}`} />
                                 {dl.courseCode
@@ -1499,7 +1512,7 @@ export default function App() {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => handleJumpToEmailFromDeadline(dl)}
-                                  className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold flex items-center gap-0.5"
+                                  className="text-[10px] text-[#5f6368] dark:text-[#8e918f] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] font-medium flex items-center gap-0.5"
                                 >
                                   <span>Open Email</span>
                                   <ArrowUpRight className="w-2.5 h-2.5" />
@@ -1513,7 +1526,7 @@ export default function App() {
                                   )}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-0.5"
+                                  className="text-[10px] text-[#0b57d0] dark:text-[#a8c7fa] hover:underline font-semibold flex items-center gap-0.5"
                                 >
                                   <span>+ Calendar</span>
                                   <ExternalLink className="w-2.5 h-2.5" />
@@ -1536,14 +1549,14 @@ export default function App() {
           {activeTab === 'chat' && (
             <div className="flex flex-col h-[calc(100vh-125px)] animate-in fade-in duration-200">
               {/* Copilot Header */}
-              <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl mb-2.5 shrink-0 shadow-2xs">
+              <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl mb-2.5 shrink-0 shadow-2xs">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-[12px] font-semibold text-slate-900 dark:text-white tracking-tight">
+                    <span className="text-[12px] font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] tracking-tight">
                       Inbox Copilot
                     </span>
-                    <span className="font-mono text-[9px] text-slate-400 dark:text-slate-500">
+                    <span className="font-mono text-[9px] text-[#5f6368] dark:text-[#8e918f]">
                       • {inboxItems.length} emails grounded
                     </span>
                   </div>
@@ -1552,10 +1565,10 @@ export default function App() {
                   <button
                     onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
                     title="Click to toggle between Instant Local Engine and Cloud LLM"
-                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
                       copilotMode === 'instant'
-                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                        : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
+                        ? 'bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] border-[#d3e3fd] dark:border-[#3c4043]'
+                        : 'bg-[#c2e7ff] dark:bg-[#004a77] text-[#001d35] dark:text-[#c2e7ff] border-[#7fcfff] dark:border-[#005c93]'
                     }`}
                   >
                     {copilotMode === 'instant' ? 'Instant Engine (0s)' : (apiKey || groqKey ? 'Cloud LLM' : 'Instant Engine')}
@@ -1571,7 +1584,7 @@ export default function App() {
                         },
                       ]);
                     }}
-                    className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-1.5 py-0.5 rounded transition"
+                    className="text-[10px] text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] px-1.5 py-0.5 rounded transition"
                   >
                     Clear
                   </button>
@@ -1581,10 +1594,10 @@ export default function App() {
               {/* Quick Prompt Queries */}
               <div className="mb-2.5 shrink-0 space-y-1">
                 <div className="flex items-center justify-between px-0.5">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-[#5f6368] dark:text-[#8e918f] font-semibold">
                     Quick Queries
                   </span>
-                  <span className="font-mono text-[9px] text-slate-400">1-tap</span>
+                  <span className="font-mono text-[9px] text-[#5f6368] dark:text-[#8e918f]">1-tap</span>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {QUICK_PROMPTS.map((qp) => {
@@ -1594,22 +1607,22 @@ export default function App() {
                         key={qp.id}
                         onClick={() => handleSendChatMessage(qp.prompt, true)}
                         disabled={isChatThinking}
-                        className="p-2 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
+                        className="p-2 rounded-xl text-left border border-[#e0e2ec] dark:border-[#2c2d30] bg-white dark:bg-[#1e1f20] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors">
+                          <div className="w-5 h-5 rounded-md bg-[#eaeff8] dark:bg-[#28292a] text-[#0b57d0] dark:text-[#a8c7fa] flex items-center justify-center shrink-0 group-hover:bg-[#0b57d0] group-hover:text-white dark:group-hover:bg-[#a8c7fa] dark:group-hover:text-[#001d35] transition-colors">
                             <Icon className="w-3 h-3" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                            <div className="text-[11px] font-medium text-[#1f1f1f] dark:text-[#e3e3e3] truncate">
                               {qp.label}
                             </div>
-                            <div className="font-mono text-[8px] text-slate-400 truncate">
+                            <div className="font-mono text-[8px] text-[#5f6368] dark:text-[#8e918f] truncate">
                               "{qp.prompt.slice(0, 24)}..."
                             </div>
                           </div>
                         </div>
-                        <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition shrink-0" />
+                        <ChevronRight className="w-3 h-3 text-[#5f6368] dark:text-[#8e918f] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] group-hover:translate-x-0.5 transition shrink-0" />
                       </button>
                     );
                   })}
@@ -1626,10 +1639,10 @@ export default function App() {
                     }`}
                   >
                     <div
-                      className={`max-w-[92%] rounded-xl px-3 py-2 text-xs shadow-2xs ${
+                      className={`max-w-[92%] rounded-2xl px-3 py-2 text-xs shadow-2xs ${
                         msg.role === 'user'
-                          ? 'bg-slate-900 dark:bg-blue-600 text-white rounded-br-xs font-medium'
-                          : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
+                          ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] rounded-br-xs font-medium'
+                          : 'bg-white dark:bg-[#1e1f20] text-[#1f1f1f] dark:text-[#e3e3e3] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-bl-xs'
                       }`}
                     >
                       <div className="whitespace-pre-line leading-relaxed space-y-1 text-[11px]">
@@ -1645,14 +1658,14 @@ export default function App() {
                             line.startsWith('🎉 ')
                           ) {
                             return (
-                              <div key={i} className="font-bold text-slate-900 dark:text-white pt-0.5">
+                              <div key={i} className="font-semibold text-[#1f1f1f] dark:text-white pt-0.5">
                                 {line.replace(/^#+\s*/, '')}
                               </div>
                             );
                           }
                           if (line.startsWith('• ') || line.startsWith('- ')) {
                             return (
-                              <div key={i} className="pl-1 text-slate-700 dark:text-slate-300">
+                              <div key={i} className="pl-1 text-[#3c4043] dark:text-[#c4c7c5]">
                                 {line}
                               </div>
                             );
@@ -1663,8 +1676,8 @@ export default function App() {
 
                       {/* Grounded Email References */}
                       {msg.references && msg.references.length > 0 && (
-                        <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                        <div className="mt-2 pt-1.5 border-t border-[#e0e2ec] dark:border-[#2c2d30] space-y-1">
+                          <span className="text-[9px] font-semibold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider block">
                             Matched Emails:
                           </span>
                           <div className="space-y-1">
@@ -1672,33 +1685,33 @@ export default function App() {
                               <button
                                 key={ref.id}
                                 onClick={() => handleJumpToEmailFromReference(ref)}
-                                className="w-full text-left p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/60 dark:border-slate-800 transition flex items-center justify-between gap-1.5 group cursor-pointer"
+                                className="w-full text-left p-1.5 rounded-lg bg-[#f6f8fc] dark:bg-[#111318] hover:bg-[#eaeff8] dark:hover:bg-[#28292c] border border-[#e0e2ec] dark:border-[#2c2d30] transition flex items-center justify-between gap-1.5 group cursor-pointer"
                               >
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                  <div className="text-[10px] font-semibold text-[#1f1f1f] dark:text-[#e3e3e3] truncate group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa]">
                                     {ref.subject}
                                   </div>
-                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
+                                  <div className="text-[9px] text-[#5f6368] dark:text-[#8e918f] truncate">
                                     {ref.sender} • {ref.date}
                                   </div>
                                 </div>
-                                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
+                                <ChevronRight className="w-3.5 h-3.5 text-[#5f6368] group-hover:text-[#0b57d0] dark:group-hover:text-[#a8c7fa] shrink-0" />
                               </button>
                             ))}
                           </div>
                         </div>
                       )}
                     </div>
-                    <span className="text-[8px] text-slate-400 mt-0.5 px-1">
+                    <span className="text-[8px] text-[#5f6368] dark:text-[#8e918f] mt-0.5 px-1 font-mono">
                       {msg.timestamp}
                     </span>
                   </div>
                 ))}
 
                 {isChatThinking && (
-                  <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200/80 dark:border-slate-800 w-fit">
-                    <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                  <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-[#1e1f20] rounded-2xl border border-[#e0e2ec] dark:border-[#2c2d30] w-fit">
+                    <div className="w-2 h-2 rounded-full bg-[#0b57d0] dark:bg-[#a8c7fa] animate-ping"></div>
+                    <span className="text-[11px] text-[#5f6368] dark:text-[#8e918f] italic">
                       Scanning campus emails & reasoning...
                     </span>
                   </div>
@@ -1711,7 +1724,7 @@ export default function App() {
                   e.preventDefault();
                   handleSendChatMessage();
                 }}
-                className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-1.5 shrink-0"
+                className="pt-2 border-t border-[#e0e2ec] dark:border-[#2c2d30] flex items-center gap-1.5 shrink-0"
               >
                 <input
                   type="text"
@@ -1719,12 +1732,12 @@ export default function App() {
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Ask a question about your emails..."
                   disabled={isChatThinking}
-                  className="flex-1 bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="flex-1 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-full px-3.5 py-2 text-xs text-[#1f1f1f] dark:text-[#e3e3e3] placeholder-[#5f6368] dark:placeholder-[#8e918f] focus:outline-none focus:border-[#0b57d0] dark:focus:border-[#a8c7fa]"
                 />
                 <button
                   type="submit"
                   disabled={!chatInput.trim() || isChatThinking}
-                  className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
+                  className="p-2 rounded-full bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] disabled:opacity-50 text-white dark:text-[#001d35] font-semibold transition flex items-center justify-center shadow-xs cursor-pointer"
                 >
                   <SendHorizontal className="w-4 h-4" />
                 </button>
@@ -1739,22 +1752,22 @@ export default function App() {
             <div className="space-y-3">
               <button
                 onClick={() => setActiveTab('buckets')}
-                className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 group transition"
+                className="text-[11px] font-semibold text-[#0b57d0] dark:text-[#a8c7fa] hover:underline flex items-center gap-1 group transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
                 <span>Back to Smart Buckets</span>
               </button>
 
               {!email && !loading && (
-                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 text-center space-y-2.5">
-                  <div className="w-10 h-10 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-6 text-center space-y-2.5">
+                  <div className="w-10 h-10 mx-auto rounded-2xl bg-[#f0f4f9] dark:bg-[#28292c] text-[#5f6368] dark:text-[#8e918f] flex items-center justify-center">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                    <h4 className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                       No email opened
                     </h4>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-[#5f6368] dark:text-[#8e918f] mt-0.5">
                       Select any email from <strong>Smart Buckets</strong> or click an email in
                       Gmail.
                     </p>
@@ -1763,17 +1776,17 @@ export default function App() {
               )}
 
               {email && (
-                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <h2
-                        className="text-xs font-extrabold text-slate-900 dark:text-white leading-snug"
+                        className="text-xs font-bold text-[#1f1f1f] dark:text-[#e3e3e3] leading-snug"
                         title={email.subject}
                       >
                         {email.subject}
                       </h2>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                      <div className="text-[10px] text-[#5f6368] dark:text-[#8e918f] mt-1 flex items-center gap-1.5">
+                        <span className="font-semibold text-[#444746] dark:text-[#c4c7c5] truncate">
                           {email.senderName}
                         </span>
                         <span>•</span>
@@ -1783,15 +1796,15 @@ export default function App() {
                     <button
                       onClick={() => triggerAnalysis(email)}
                       disabled={loading}
-                      className="shrink-0 p-1.5 px-2 bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200/60 dark:border-slate-700 rounded-xl transition flex items-center gap-1 font-semibold text-[10px]"
+                      className="shrink-0 p-1.5 px-2 bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 text-[#1f1f1f] dark:text-[#e3e3e3] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-full transition flex items-center gap-1 font-semibold text-[10px] cursor-pointer"
                     >
-                      <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                      <Sparkles className="w-3 h-3 text-[#0b57d0] dark:text-[#a8c7fa]" />
                       <span>Re-analyze</span>
                     </button>
                   </div>
 
                   {analysis && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-[#f1f3f4] dark:border-[#2c2d30]">
                       {(() => {
                         const theme = getCategoryTheme(analysis.category);
                         return (
@@ -1807,8 +1820,8 @@ export default function App() {
                             </button>
 
                             {showRelabelMenu && (
-                              <div className="absolute left-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 space-y-1 animate-in fade-in duration-150">
-                                <div className="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
+                              <div className="absolute left-0 top-full mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl shadow-xl p-1.5 space-y-1 animate-in fade-in duration-150">
+                                <div className="px-2 py-1 text-[9px] font-extrabold uppercase tracking-wider text-[#5f6368] dark:text-[#8e918f]">
                                   Change Email Category
                                 </div>
                                 {(
@@ -1823,21 +1836,21 @@ export default function App() {
                                   <button
                                     key={cat}
                                     onClick={() => handleRelabelEmail(email.id, cat)}
-                                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+                                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition cursor-pointer ${
                                       analysis.category === cat
-                                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-bold'
-                                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                        ? 'bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-bold'
+                                        : 'hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] text-[#1f1f1f] dark:text-[#e3e3e3]'
                                     }`}
                                   >
                                     <span>{cat}</span>
                                     {analysis.category === cat && (
-                                      <Check className="w-3 h-3 text-blue-600" />
+                                      <Check className="w-3 h-3 text-[#0b57d0] dark:text-[#a8c7fa]" />
                                     )}
                                   </button>
                                 ))}
 
                                 {customFilters.length > 0 && (
-                                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
+                                  <div className="border-t border-[#f1f3f4] dark:border-[#2c2d30] pt-1 mt-1">
                                     <div className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-purple-500">
                                       Custom Filters
                                     </div>
@@ -1845,10 +1858,10 @@ export default function App() {
                                       <button
                                         key={f.id}
                                         onClick={() => handleRelabelEmail(email.id, f.name)}
-                                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${
+                                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition cursor-pointer ${
                                           analysis.category === f.name
                                             ? 'bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold'
-                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                            : 'hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] text-[#1f1f1f] dark:text-[#e3e3e3]'
                                         }`}
                                       >
                                         <span className="truncate">{f.name}</span>
@@ -1866,21 +1879,21 @@ export default function App() {
                       })()}
 
                       {analysis.detectedCourseCode && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 text-[10px]">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-[#edf5fd] dark:bg-[#1a2d48] text-[#1a73e8] dark:text-[#a8c7fa] border border-[#d2e3fc] dark:border-[#2b4c7e] text-[10px]">
                           <BookOpen className="w-2.5 h-2.5" />
                           <span className="font-mono">{analysis.detectedCourseCode}</span>
                         </span>
                       )}
 
                       {analysis.urgency === 'high' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[10px]">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-[#fce8e6] dark:bg-[#3d1417] text-[#c5221f] dark:text-[#f29e99] border border-[#fad2cf] dark:border-[#66272c] text-[10px]">
                           <Flame className="w-2.5 h-2.5" />
                           <span>Urgent</span>
                         </span>
                       )}
 
                       {analysis.providerUsed && (
-                        <span className="ml-auto text-[9px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-0.5">
+                        <span className="ml-auto text-[9px] text-[#5f6368] dark:text-[#8e918f] font-medium flex items-center gap-0.5">
                           <Zap className="w-2.5 h-2.5 text-amber-500" />
                           <span>{analysis.providerUsed}</span>
                         </span>
@@ -1892,14 +1905,14 @@ export default function App() {
 
               {/* Skeleton Loader */}
               {loading && (
-                <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 space-y-3 animate-pulse shadow-2xs">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/3"></div>
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-4 space-y-3 animate-pulse shadow-2xs">
+                  <div className="h-4 bg-[#eaeff8] dark:bg-[#28292c] rounded-lg w-1/3"></div>
                   <div className="space-y-1.5">
-                    <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-full"></div>
-                    <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-5/6"></div>
-                    <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-4/6"></div>
+                    <div className="h-3 bg-[#f0f4f9] dark:bg-[#28292c] rounded w-full"></div>
+                    <div className="h-3 bg-[#f0f4f9] dark:bg-[#28292c] rounded w-5/6"></div>
+                    <div className="h-3 bg-[#f0f4f9] dark:bg-[#28292c] rounded w-4/6"></div>
                   </div>
-                  <div className="h-16 bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl"></div>
+                  <div className="h-16 bg-[#f6f8fc] dark:bg-[#111318] border border-dashed border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl"></div>
                 </div>
               )}
 
@@ -1907,15 +1920,15 @@ export default function App() {
               {analysis && !loading && (
                 <div className="space-y-3">
                   {/* 1. Bulleted Executive Summary */}
-                  <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs space-y-2">
+                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-xs">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
+                        <Sparkles className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
                         <span>AI Executive Summary</span>
                       </div>
                       <button
                         onClick={handleCopySummary}
-                        className="text-[10px] font-semibold text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center gap-1 transition"
+                        className="text-[10px] font-semibold text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] flex items-center gap-1 transition cursor-pointer"
                       >
                         {copiedSummary ? (
                           <>
@@ -1935,9 +1948,9 @@ export default function App() {
                       {analysis.summary.map((bullet, idx) => (
                         <li
                           key={idx}
-                          className="flex items-start gap-2 text-slate-600 dark:text-slate-300 leading-relaxed text-[11px]"
+                          className="flex items-start gap-2 text-[#444746] dark:text-[#c4c7c5] leading-relaxed text-[11px]"
                         >
-                          <span className="text-blue-500 font-extrabold leading-tight mt-0.5">•</span>
+                          <span className="text-[#0b57d0] dark:text-[#a8c7fa] font-extrabold leading-tight mt-0.5">•</span>
                           <span>{bullet}</span>
                         </li>
                       ))}
@@ -1945,19 +1958,19 @@ export default function App() {
                   </div>
 
                   {/* 2. Action Items & Deadlines */}
-                  <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
                         <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                         <span>Action Items & Deadlines</span>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full font-bold">
+                      <span className="text-[10px] px-2 py-0.5 bg-[#eaeff8] dark:bg-[#28292c] text-[#1f1f1f] dark:text-[#c4c7c5] rounded-full font-bold">
                         {analysis.actionItems.filter((i) => !i.completed).length} pending
                       </span>
                     </div>
 
                     {analysis.actionItems.length === 0 ? (
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">
+                      <p className="text-[11px] text-[#5f6368] dark:text-[#8e918f] italic">
                         No direct action items found.
                       </p>
                     ) : (
@@ -1967,14 +1980,14 @@ export default function App() {
                             key={item.id}
                             className={`p-2.5 rounded-xl border transition ${
                               item.completed
-                                ? 'bg-slate-50/70 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 opacity-60'
-                                : 'bg-white dark:bg-[#111827] border-slate-200/80 dark:border-slate-800 hover:border-slate-300 shadow-2xs'
+                                ? 'bg-[#f6f8fc]/70 dark:bg-[#111318]/50 border-[#f1f3f4] dark:border-[#2c2d30] opacity-60'
+                                : 'bg-white dark:bg-[#1e1f20] border-[#e0e2ec] dark:border-[#2c2d30] hover:border-[#0b57d0]/40 shadow-2xs'
                             }`}
                           >
                             <div className="flex items-start gap-2">
                               <button
                                 onClick={() => toggleActionItem(item.id)}
-                                className="mt-0.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition shrink-0"
+                                className="mt-0.5 text-[#5f6368] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] transition shrink-0 cursor-pointer"
                               >
                                 {item.completed ? (
                                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -1987,15 +2000,15 @@ export default function App() {
                                 <p
                                   className={`font-semibold text-[11px] leading-tight ${
                                     item.completed
-                                      ? 'line-through text-slate-400 dark:text-slate-500'
-                                      : 'text-slate-800 dark:text-slate-200'
+                                      ? 'line-through text-[#5f6368] dark:text-[#8e918f]'
+                                      : 'text-[#1f1f1f] dark:text-[#e3e3e3]'
                                   }`}
                                 >
                                   {item.title}
                                 </p>
 
                                 {item.deadline && (
-                                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#f1f3f4] dark:border-[#2c2d30]">
                                     <span className="text-[10px] text-amber-800 dark:text-amber-400 font-semibold flex items-center gap-1">
                                       <Calendar className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                                       {item.deadline}
@@ -2009,7 +2022,7 @@ export default function App() {
                                       )}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="inline-flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold transition"
+                                      className="inline-flex items-center gap-1 text-[10px] text-[#0b57d0] dark:text-[#a8c7fa] hover:underline font-bold transition"
                                     >
                                       <span>+ Google Calendar</span>
                                       <ExternalLink className="w-2.5 h-2.5" />
@@ -2026,9 +2039,9 @@ export default function App() {
 
                   {/* 3. Event & Registration Links */}
                   {analysis.meetingLinks && analysis.meetingLinks.length > 0 && (
-                    <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs space-y-2">
-                      <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-xs">
-                        <Video className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2">
+                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
+                        <Video className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
                         <span>Event & Registration Links</span>
                       </div>
                       <div className="space-y-1.5">
@@ -2038,14 +2051,14 @@ export default function App() {
                             href={link.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/60 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/60 border border-indigo-100 dark:border-indigo-800/60 text-indigo-950 dark:text-indigo-200 transition group"
+                            className="flex items-center justify-between p-2.5 rounded-xl bg-[#edf5fd] dark:bg-[#1a2d48] hover:bg-[#d2e3fc]/60 dark:hover:bg-[#2b4c7e]/60 border border-[#d2e3fc] dark:border-[#2b4c7e] text-[#1a73e8] dark:text-[#a8c7fa] transition group"
                           >
                             <div className="flex items-center gap-2 truncate">
                               <span className="font-bold text-[11px] truncate">
                                 {link.title || 'Join Event / Register'}
                               </span>
                             </div>
-                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5 shrink-0">
+                            <span className="text-[10px] font-bold text-[#0b57d0] dark:text-[#a8c7fa] group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5 shrink-0">
                               Open <ChevronRight className="w-3 h-3" />
                             </span>
                           </a>
@@ -2055,13 +2068,13 @@ export default function App() {
                   )}
 
                   {/* 4. Smart Academic Quick Replies */}
-                  <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                  <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-2xl p-3.5 shadow-2xs space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-xs">
-                        <SendHorizontal className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
+                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-xs">
+                        <SendHorizontal className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
                         <span>Academic Quick Replies</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                      <span className="text-[10px] text-[#5f6368] dark:text-[#8e918f] font-medium">
                         1-Click Copy
                       </span>
                     </div>
@@ -2071,10 +2084,10 @@ export default function App() {
                         <button
                           key={idx}
                           onClick={() => handleCopyReplyPreset(reply.text, idx)}
-                          className={`p-2 rounded-xl border text-center transition font-semibold text-[10px] flex flex-col items-center justify-center gap-1 ${
+                          className={`p-2 rounded-xl border text-center transition font-semibold text-[10px] flex flex-col items-center justify-center gap-1 cursor-pointer ${
                             copiedReplyIndex === idx
                               ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-slate-50 dark:bg-slate-900/70 hover:bg-blue-50 dark:hover:bg-blue-950 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                              : 'bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 border-[#e0e2ec] dark:border-[#2c2d30] text-[#1f1f1f] dark:text-[#e3e3e3]'
                           }`}
                         >
                           {copiedReplyIndex === idx ? (
@@ -2084,7 +2097,7 @@ export default function App() {
                             </>
                           ) : (
                             <>
-                              <Copy className="w-3 h-3 text-slate-400" />
+                              <Copy className="w-3 h-3 text-[#5f6368] dark:text-[#8e918f]" />
                               <span>{reply.title}</span>
                             </>
                           )}
@@ -2093,7 +2106,7 @@ export default function App() {
                     </div>
 
                     {analysis.suggestedReply && (
-                      <div className="p-2.5 bg-slate-50/70 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-300 text-[11px] italic leading-relaxed">
+                      <div className="p-2.5 bg-[#f0f4f9] dark:bg-[#28292c] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl text-[#444746] dark:text-[#c4c7c5] text-[11px] italic leading-relaxed">
                         "{analysis.suggestedReply}"
                       </div>
                     )}
@@ -2107,15 +2120,15 @@ export default function App() {
         {/* Add Filter Modal */}
         {showAddFilterModal && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
-            <div className="bg-white dark:bg-[#0f172a] rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-150">
+            <div className="bg-white dark:bg-[#1e1f20] rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl border border-[#e0e2ec] dark:border-[#2c2d30] animate-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                <h3 className="font-bold text-xs text-[#1f1f1f] dark:text-[#e3e3e3] flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-purple-600" />
                   <span>New Custom Academic Filter</span>
                 </h3>
                 <button
                   onClick={() => setShowAddFilterModal(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2123,7 +2136,7 @@ export default function App() {
 
               <form onSubmit={handleAddCustomFilter} className="space-y-2.5">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  <label className="text-[10px] font-bold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider block mb-1">
                     Filter Name
                   </label>
                   <input
@@ -2132,12 +2145,12 @@ export default function App() {
                     value={newFilterName}
                     onChange={(e) => setNewFilterName(e.target.value)}
                     placeholder="e.g. Placements, Library, Hostel"
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500 text-slate-900 dark:text-slate-100"
+                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl focus:outline-none focus:border-[#0b57d0] text-[#1f1f1f] dark:text-[#e3e3e3]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  <label className="text-[10px] font-bold text-[#5f6368] dark:text-[#8e918f] uppercase tracking-wider block mb-1">
                     Matching Keywords (Comma separated)
                   </label>
                   <input
@@ -2146,9 +2159,9 @@ export default function App() {
                     value={newFilterKeywords}
                     onChange={(e) => setNewFilterKeywords(e.target.value)}
                     placeholder="e.g. interview, ctc, tpo, offer"
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500 text-slate-900 dark:text-slate-100"
+                    className="w-full px-2.5 py-1.5 text-xs bg-[#f6f8fc] dark:bg-[#111318] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl focus:outline-none focus:border-[#0b57d0] text-[#1f1f1f] dark:text-[#e3e3e3]"
                   />
-                  <p className="text-[9px] text-slate-400 mt-1">
+                  <p className="text-[9px] text-[#5f6368] dark:text-[#8e918f] mt-1">
                     Emails containing these words in their subject or body will be auto-categorized here.
                   </p>
                 </div>
@@ -2157,13 +2170,13 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setShowAddFilterModal(false)}
-                    className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                    className="px-3 py-1.5 text-xs text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
+                    className="px-3.5 py-1.5 bg-[#0b57d0] hover:bg-[#0842a0] dark:bg-[#a8c7fa] dark:hover:bg-[#d3e3fd] text-white dark:text-[#001d35] rounded-full text-xs font-bold shadow-xs transition cursor-pointer"
                   >
                     Create Filter
                   </button>
@@ -2174,7 +2187,7 @@ export default function App() {
         )}
 
         {/* Footer */}
-        <footer className="border-t border-slate-200/70 dark:border-slate-800/80 px-3.5 py-2 text-center text-[10px] text-slate-400 dark:text-slate-500 bg-white dark:bg-[#0f172a] transition-colors">
+        <footer className="border-t border-[#e0e2ec] dark:border-[#2c2d30] px-3.5 py-2 text-center text-[10px] text-[#5f6368] dark:text-[#8e918f] bg-[#f6f8fc] dark:bg-[#111318] transition-colors">
           AcadMail AI • Intelligent Academic Copilot
         </footer>
       </div>

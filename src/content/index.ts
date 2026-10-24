@@ -47,8 +47,18 @@ function isGmailDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
+function syncGmailTheme() {
+  const isDark = isGmailDark();
+  const theme = isDark ? 'dark' : 'light';
+  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    chrome.storage.local.set({ acadmail_gmail_theme: theme });
+  }
+  safeSendMessage({ type: 'GMAIL_THEME_DETECTED', theme });
+}
+
 // Load UI Mode, Custom Filters & Label Overrides
 function loadSettings() {
+  syncGmailTheme();
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     chrome.storage.local.get(['acadmail_settings'], (res) => {
       if (res.acadmail_settings) {
@@ -1719,12 +1729,14 @@ if (document.readyState === 'loading') {
     setTimeout(checkAndInjectEmailBrief, 1200);
     setTimeout(injectSideRailIcon, 1200);
     setTimeout(injectComposePolisher, 1200);
+    setTimeout(syncGmailTheme, 1200);
   });
 } else {
   setTimeout(scanVisibleInbox, 1200);
   setTimeout(checkAndInjectEmailBrief, 1200);
   setTimeout(injectSideRailIcon, 1200);
   setTimeout(injectComposePolisher, 1200);
+  setTimeout(syncGmailTheme, 1200);
 }
 
 // Watch DOM mutations & URL changes
@@ -1735,6 +1747,7 @@ new MutationObserver(() => {
     lastUrl = url;
     setTimeout(() => {
       safeSendMessage({ type: 'EMAIL_CHANGED' });
+      syncGmailTheme();
       scanVisibleInbox();
       checkAndInjectEmailBrief();
       injectSideRailIcon();
