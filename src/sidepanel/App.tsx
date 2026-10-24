@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  GraduationCap,
   Sparkles,
   Calendar,
   Clock,
@@ -826,11 +825,13 @@ export default function App() {
         {/* Top Header */}
         <header className="sticky top-0 z-30 bg-[#f6f8fc] dark:bg-[#111318] border-b border-[#e0e2ec] dark:border-[#282a2d] px-3.5 py-2.5 flex items-center justify-between transition-colors">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#0b57d0] dark:bg-[#a8c7fa] text-white dark:text-[#001d35] flex items-center justify-center font-bold shadow-2xs">
-              <GraduationCap className="w-3.5 h-3.5" />
-            </div>
+            <img
+              src="/icons/envelope-logo.png"
+              alt="AcadMail"
+              className="w-6 h-6 rounded-md object-contain shadow-2xs shrink-0"
+            />
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[13px] font-semibold text-[#1f1f1f] dark:text-[#e3e3e3]">
+              <span className="font-batangas text-[14px] font-bold tracking-wide text-[#1f1f1f] dark:text-[#e3e3e3]">
                 AcadMail
               </span>
               <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-[#eaeff8] dark:bg-[#1e1f20] text-[#0b57d0] dark:text-[#a8c7fa] border border-[#d3e3fd] dark:border-[#3c4043]">

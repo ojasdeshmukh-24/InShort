@@ -13,6 +13,7 @@ export default {
       fontFamily: {
         sans: ['"Google Sans"', '"Google Sans Text"', 'Roboto', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', 'sans-serif'],
         mono: ['"Google Sans Mono"', '"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        batangas: ['"Batangas"', 'sans-serif'],
       },
       colors: {
         academic: {

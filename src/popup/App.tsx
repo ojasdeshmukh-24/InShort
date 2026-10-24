@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  GraduationCap,
   Sparkles,
   Key,
   ExternalLink,
@@ -73,11 +72,13 @@ export default function PopupApp() {
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-xs">
-              <GraduationCap className="w-4 h-4" />
-            </div>
+            <img
+              src="/icons/envelope-logo.png"
+              alt="AcadMail"
+              className="w-7 h-7 rounded-md object-contain shadow-xs shrink-0"
+            />
             <div>
-              <h1 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight leading-none">
+              <h1 className="font-batangas font-bold text-slate-900 dark:text-white text-sm tracking-wide leading-none">
                 AcadMail <span className="text-blue-600 dark:text-blue-400">AI</span>
               </h1>
               <p className="text-[10px] text-slate-500 dark:text-slate-400">Academic Copilot</p>

@@ -613,6 +613,13 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
     const styleEl = document.createElement('style');
     styleEl.id = 'acadmail-m3-css';
     styleEl.textContent = `
+      @font-face {
+        font-family: 'Batangas';
+        src: url('${chrome.runtime.getURL('fonts/Batangas-Bold.otf')}') format('opentype');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
       #acadmail-chip-scroll-track::-webkit-scrollbar {
         display: none !important;
         height: 0 !important;
@@ -740,13 +747,13 @@ function injectMaterial3ToolbarChips(items: InboxRowItem[]) {
     <div id="acadmail-chip-scroll-track" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; flex: 1; min-width: 0; padding: 2px 0;">
       
       <!-- Brand Pill -->
-      <div style="display: inline-flex; align-items: center; gap: 5px; height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: ${
+      <div style="display: inline-flex; align-items: center; gap: 6px; height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: ${
         isDark ? 'rgba(56, 139, 253, 0.12)' : 'rgba(26, 115, 232, 0.08)'
       }; color: ${isDark ? '#79c0ff' : '#1a73e8'}; flex-shrink: 0; white-space: nowrap; margin-right: 4px; border: 1px solid ${
         isDark ? 'rgba(56, 139, 253, 0.25)' : 'rgba(26, 115, 232, 0.2)'
-      }; font-family: Roboto, 'Google Sans', 'Google Sans Text', sans-serif;">
-        <span style="font-weight: 700; font-size: 11.5px; letter-spacing: 0.2px;">AM</span>
-        <span style="font-weight: 600; font-size: 12px;">AcadMail</span>
+      };">
+        <img src="${chrome.runtime.getURL('icons/envelope-logo.png')}" alt="AcadMail" style="width: 17px; height: 17px; border-radius: 3px; object-fit: contain;" />
+        <span style="font-family: 'Batangas', Roboto, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.2px;">AcadMail</span>
       </div>
 
       <!-- 1. All Emails -->
@@ -1181,8 +1188,8 @@ function checkAndInjectEmailBrief() {
     <!-- Top 1-Line Compact Summary Bar -->
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
       <div id="m3-brief-toggle-line" style="display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; overflow: hidden;">
-        <span style="color: ${isDark ? '#79c0ff' : '#1a73e8'}; font-size: 14px;">✨</span>
-        <span style="font-weight: 600; font-size: 11.5px; color: ${isDark ? '#79c0ff' : '#1a73e8'}; shrink: 0;">AcadMail:</span>
+        <img src="${chrome.runtime.getURL('icons/envelope-logo.png')}" alt="AcadMail" style="width: 14px; height: 14px; border-radius: 2.5px; object-fit: contain; flex-shrink: 0;" />
+        <span style="font-family: 'Batangas', Roboto, sans-serif; font-weight: 700; font-size: 12px; color: ${isDark ? '#79c0ff' : '#1a73e8'}; shrink: 0;">AcadMail:</span>
         <span style="font-size: 11.5px; color: ${isDark ? '#c4c7c5' : '#475569'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
           ${detectedDeadline ? `⏰ Due: <strong>${detectedDeadline}</strong> • ` : ''}${bullets[0]}
         </span>
@@ -1405,10 +1412,7 @@ function injectSideRailIcon() {
   );
 
   btn.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-    </svg>
+    <img src="${chrome.runtime.getURL('icons/envelope-logo.png')}" alt="AcadMail" style="width: 22px; height: 22px; border-radius: 4px; object-fit: contain;" />
   `;
 
   btn.onmouseenter = () => (btn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
