@@ -760,13 +760,39 @@ export function answerWithLocalHeuristic(
   };
 }
 
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 3500): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+export function isStandardQuickPrompt(query: string): boolean {
+  const q = query.toLowerCase().trim();
+  return (
+    q.includes('next assignment') ||
+    q.includes('assignment due') ||
+    q.includes('when is my next') ||
+    q.includes('all hackathon') ||
+    q.includes('hackathons this month') ||
+    q.includes('cancel a class') ||
+    q.includes('professor cancel') ||
+    q.includes('club interview') ||
+    q.includes('club interviews are coming up')
+  );
+}
+
 async function askCopilotWithGroq(
   query: string,
   emails: GroundingEmailItem[],
   groqKey: string
 ): Promise<{ text: string; references: ChatEmailReference[] }> {
   const emailSummaries = emails
-    .slice(0, 20)
+    .slice(0, 10)
     .map(
       (e, idx) =>
         `[Email ${idx + 1}] ID: ${e.id}
@@ -775,7 +801,7 @@ From: ${e.sender}
 Date: ${e.date}
 Category: ${e.category || 'General'}
 Content:
-${e.bodyOrSnippet.slice(0, 600)}`
+${e.bodyOrSnippet.slice(0, 350)}`
     )
     .join('\n\n---\n\n');
 
@@ -787,21 +813,25 @@ REFERENCES: ["id1", "id2"]`;
 
   const userPrompt = `Student Question: "${query}"\n\nCampus Emails:\n${emailSummaries}`;
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${groqKey.trim()}`,
-      'Content-Type': 'application/json',
+  const res = await fetchWithTimeout(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${groqKey.trim()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.2,
+      }),
     },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.2,
-    }),
-  });
+    3500
+  );
 
   if (!res.ok) {
     throw new Error(`Groq copilot error HTTP ${res.status}`);
@@ -820,7 +850,7 @@ async function askCopilotWithGemini(
 ): Promise<{ text: string; references: ChatEmailReference[] }> {
   const cleanKey = apiKey.trim();
   const emailSummaries = emails
-    .slice(0, 20)
+    .slice(0, 10)
     .map(
       (e, idx) =>
         `[Email ${idx + 1}] ID: ${e.id}
@@ -829,7 +859,7 @@ From: ${e.sender}
 Date: ${e.date}
 Category: ${e.category || 'General'}
 Content:
-${e.bodyOrSnippet.slice(0, 600)}`
+${e.bodyOrSnippet.slice(0, 350)}`
     )
     .join('\n\n---\n\n');
 
@@ -844,24 +874,27 @@ Student Question: "${query}"
 Campus Emails:
 ${emailSummaries}`;
 
+  // Prioritize fast, universally available models with strict 3.5s timeout
   const candidateModels = [
-    'models/gemini-2.0-flash',
-    'models/gemini-2.0-flash-lite',
-    'models/gemini-3.8-flash',
     'models/gemini-1.5-flash',
+    'models/gemini-2.0-flash',
   ];
 
   for (const modelPath of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${cleanKey}`;
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.2 },
-        }),
-      });
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2 },
+          }),
+        },
+        3500
+      );
 
       if (res.ok) {
         const resJson = await res.json();
@@ -873,7 +906,7 @@ ${emailSummaries}`;
     } catch (e) {}
   }
 
-  throw new Error('Gemini models unavailable for copilot');
+  throw new Error('Gemini models unavailable or timed out for copilot');
 }
 
 function parseCopilotResponse(
@@ -916,13 +949,15 @@ export async function askInboxCopilot(
   query: string,
   emails: GroundingEmailItem[],
   apiKey?: string,
-  groqKey?: string
-): Promise<{ text: string; references: ChatEmailReference[] }> {
+  groqKey?: string,
+  mode: 'auto' | 'instant' | 'cloud' = 'auto'
+): Promise<{ text: string; references: ChatEmailReference[]; engineUsed: string }> {
   const trimmed = query.trim();
   if (!trimmed) {
     return {
       text: 'Please enter a question about your emails.',
       references: [],
+      engineUsed: 'Instant Local Engine',
     };
   }
 
@@ -930,27 +965,43 @@ export async function askInboxCopilot(
     return {
       text: "I haven't scanned any emails yet. Please scan your inbox first to let me find the answers for you!",
       references: [],
+      engineUsed: 'Instant Local Engine',
     };
   }
 
-  // 1. Try Groq if key provided
+  // Fast Path: For standard quick prompts OR if mode is 'instant', return immediately (0ms latency!)
+  if (mode === 'instant' || (mode === 'auto' && isStandardQuickPrompt(trimmed))) {
+    const local = answerWithLocalHeuristic(trimmed, emails);
+    return {
+      ...local,
+      engineUsed: 'Instant Local Engine (0s)',
+    };
+  }
+
+  // 1. Try Groq if key provided (with 3.5s timeout)
   if (groqKey && groqKey.trim()) {
     try {
-      return await askCopilotWithGroq(trimmed, emails, groqKey);
+      const res = await askCopilotWithGroq(trimmed, emails, groqKey);
+      return { ...res, engineUsed: 'Groq (Llama 3.3 70B)' };
     } catch (e) {
-      console.warn('[AcadMail AI] Groq copilot failed, trying Gemini or local fallback:', e);
+      console.warn('[AcadMail AI] Groq copilot timed out or failed, using instant local engine:', e);
     }
   }
 
-  // 2. Try Gemini if key provided
+  // 2. Try Gemini if key provided (with 3.5s timeout)
   if (apiKey && apiKey.trim()) {
     try {
-      return await askCopilotWithGemini(trimmed, emails, apiKey);
+      const res = await askCopilotWithGemini(trimmed, emails, apiKey);
+      return { ...res, engineUsed: 'Google Gemini' };
     } catch (e) {
-      console.warn('[AcadMail AI] Gemini copilot failed, using smart local engine:', e);
+      console.warn('[AcadMail AI] Gemini copilot timed out or failed, using instant local engine:', e);
     }
   }
 
-  // 3. Robust Local Heuristic Engine
-  return answerWithLocalHeuristic(trimmed, emails);
+  // 3. Fallback to robust local engine immediately
+  const fallback = answerWithLocalHeuristic(trimmed, emails);
+  return {
+    ...fallback,
+    engineUsed: 'Instant Local Engine (Fallback)',
+  };
 }

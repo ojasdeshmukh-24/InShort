@@ -126,6 +126,7 @@ export default function App() {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatThinking, setIsChatThinking] = useState(false);
+  const [copilotMode, setCopilotMode] = useState<'instant' | 'cloud'>('instant');
 
   const QUICK_PROMPTS = [
     {
@@ -403,7 +404,7 @@ export default function App() {
     );
   };
 
-  const handleSendChatMessage = async (textToSend?: string) => {
+  const handleSendChatMessage = async (textToSend?: string, forceInstant = false) => {
     const query = (textToSend || chatInput).trim();
     if (!query || isChatThinking) return;
 
@@ -448,7 +449,8 @@ export default function App() {
         }
       }
 
-      const res = await askInboxCopilot(query, groundingEmails, apiKey, groqKey);
+      const modeToUse = forceInstant ? 'instant' : copilotMode;
+      const res = await askInboxCopilot(query, groundingEmails, apiKey, groqKey, modeToUse);
 
       const assistantMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -1697,9 +1699,23 @@ export default function App() {
                         Grounded AI
                       </span>
                     </h3>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-none">
-                      {inboxItems.length} emails loaded {apiKey || groqKey ? '• Cloud LLM' : '• Local Engine'}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1 leading-none">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {inboxItems.length} emails
+                      </span>
+                      <span className="text-slate-400 text-[10px]">•</span>
+                      <button
+                        onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
+                        title="Click to toggle between Instant Local Engine and Cloud LLM"
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition ${
+                          copilotMode === 'instant'
+                            ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                            : 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
+                        }`}
+                      >
+                        {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -1730,7 +1746,7 @@ export default function App() {
                     return (
                       <button
                         key={qp.id}
-                        onClick={() => handleSendChatMessage(qp.prompt)}
+                        onClick={() => handleSendChatMessage(qp.prompt, true)}
                         disabled={isChatThinking}
                         className={`p-2 rounded-xl text-left border bg-gradient-to-br ${qp.color} hover:scale-[1.01] active:scale-[0.98] transition flex flex-col justify-between gap-1 shadow-2xs group cursor-pointer`}
                       >

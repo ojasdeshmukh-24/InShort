@@ -132,6 +132,7 @@ export default function MobileApp() {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatThinking, setIsChatThinking] = useState(false);
+  const [copilotMode, setCopilotMode] = useState<'instant' | 'cloud'>('instant');
 
   const QUICK_PROMPTS = [
     {
@@ -309,7 +310,7 @@ export default function MobileApp() {
     }
   };
 
-  const handleSendChatMessage = async (textToSend?: string) => {
+  const handleSendChatMessage = async (textToSend?: string, forceInstant = false) => {
     const query = (textToSend || chatInput).trim();
     if (!query || isChatThinking) return;
 
@@ -333,7 +334,8 @@ export default function MobileApp() {
         date: item.dateStr,
       }));
 
-      const res = await askInboxCopilot(query, groundingEmails, apiKey, groqKey);
+      const modeToUse = forceInstant ? 'instant' : copilotMode;
+      const res = await askInboxCopilot(query, groundingEmails, apiKey, groqKey, modeToUse);
 
       const assistantMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -917,9 +919,22 @@ export default function MobileApp() {
                 </button>
               </div>
               <h2 className="text-sm font-extrabold">Instant Campus Answers</h2>
-              <p className="text-[11px] text-blue-100">
-                Grounded on your university emails {apiKey || groqKey ? '• Powered by Cloud LLM' : '• Smart Local Engine'}
-              </p>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <p className="text-[11px] text-blue-100">
+                  Grounded on campus emails
+                </p>
+                <span className="text-blue-300 text-[10px]">•</span>
+                <button
+                  onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
+                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition ${
+                    copilotMode === 'instant'
+                      ? 'bg-amber-400 text-slate-900'
+                      : 'bg-white/20 text-white'
+                  }`}
+                >
+                  {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
+                </button>
+              </div>
             </div>
 
             {/* Quick Questions Chips */}
@@ -933,7 +948,7 @@ export default function MobileApp() {
                   return (
                     <button
                       key={qp.id}
-                      onClick={() => handleSendChatMessage(qp.prompt)}
+                      onClick={() => handleSendChatMessage(qp.prompt, true)}
                       disabled={isChatThinking}
                       className={`p-2 rounded-xl text-left border bg-gradient-to-br ${qp.color} hover:scale-[1.01] active:scale-[0.98] transition flex flex-col justify-between gap-1 shadow-2xs group cursor-pointer`}
                     >
