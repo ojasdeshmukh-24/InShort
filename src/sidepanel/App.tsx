@@ -43,7 +43,8 @@ import {
   Bot,
   MessageSquare,
   MapPin,
-  User
+  User,
+  FileText
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -295,6 +296,24 @@ export default function App() {
   // Custom Filters & Relabeling State
   const [customFilters, setCustomFilters] = useState<CustomFilter[]>([
     {
+      id: 'filter-assignment',
+      name: 'Assignment',
+      color: '#0b57d0',
+      keywords: [
+        'assignment',
+        'assignments',
+        'tutorial',
+        'tutorials',
+        'homework',
+        'problem set',
+        'problem sets',
+        'pset',
+        'psets',
+        'lab submission',
+        'lab assignment',
+      ],
+    },
+    {
       id: 'filter-placements',
       name: 'Placements & Internships',
       color: '#8b5cf6',
@@ -318,6 +337,7 @@ export default function App() {
   const [hasCompletedSetup, setHasCompletedSetup] = useState<boolean>(true);
   const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
   const [priorityList, setPriorityList] = useState<string[]>([
+    'Assignment',
     'Academics',
     'Competitions & Tournaments',
     'Class Rescheduling',
@@ -325,9 +345,15 @@ export default function App() {
 
   const AVAILABLE_PRIORITY_CATEGORIES = [
     {
+      id: 'Assignment',
+      label: 'Assignment',
+      desc: 'Assignments, tutorials & problem sets',
+      icon: FileText,
+    },
+    {
       id: 'Academics',
       label: 'Academics',
-      desc: 'Coursework, assignments & exams',
+      desc: 'Coursework, lectures & exams',
       icon: BookOpen,
     },
     {

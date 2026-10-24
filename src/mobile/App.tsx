@@ -38,7 +38,8 @@ import {
   MessageSquare,
   MapPin,
   User,
-  Zap
+  Zap,
+  FileText
 } from 'lucide-react';
 import {
   ExtractedEmail,
@@ -66,6 +67,16 @@ const INITIAL_DEMO_EMAILS: ExtractedEmail[] = [
     recipient: 'cs201-students@campus.edu',
     dateStr: 'Oct 23, 2026, 4:15 PM',
     bodyText: `Dear Students,\n\nProgramming Assignment 3 on AVL Trees and Red-Black Tree balancing has been uploaded to the university portal. The submission deadline is Friday, Oct 28 at 11:59 PM.\n\nPlease ensure your code compiles with g++ -std=c++20. Late submissions will attract a 10% penalty per day. Academic integrity checks will be run through Moss.\n\nOffice hours are held on Wednesdays 4-6 PM on Zoom: https://zoom.us/j/9876543210.\n\nBest regards,\nProf. Arvind Sharma`,
+    url: '',
+  },
+  {
+    id: 'email-ma101-tut4',
+    subject: '[MA101] Tutorial Sheet 4: Multi-Variable Calculus & Green\'s Theorem',
+    senderName: 'Prof. S. K. Gupta (Mathematics Dept)',
+    senderEmail: 'skgupta@maths.iitr.ac.in',
+    recipient: 'ma101-students@campus.edu',
+    dateStr: 'Oct 23, 2026, 3:00 PM',
+    bodyText: `Dear Students,\n\nTutorial Sheet 4 covering vector fields and Green's Theorem has been posted. Please attempt all questions before the tutorial session on Monday.\n\nTutorial doubts will be discussed in LHC-104.\n\nRegards,\nCourse Instructor`,
     url: '',
   },
   {
@@ -366,6 +377,24 @@ export default function MobileApp() {
   // Custom Filters & Label Overrides State
   const [customFilters, setCustomFilters] = useState<CustomFilter[]>([
     {
+      id: 'filter-assignment',
+      name: 'Assignment',
+      color: '#0b57d0',
+      keywords: [
+        'assignment',
+        'assignments',
+        'tutorial',
+        'tutorials',
+        'homework',
+        'problem set',
+        'problem sets',
+        'pset',
+        'psets',
+        'lab submission',
+        'lab assignment',
+      ],
+    },
+    {
       id: 'filter-placements',
       name: 'Placements & Internships',
       color: '#8b5cf6',
@@ -422,6 +451,29 @@ export default function MobileApp() {
       try {
         const parsed = JSON.parse(savedFilters);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const hasAssignment = parsed.some(
+            (cf: any) => cf.id === 'filter-assignment' || cf.name?.toLowerCase() === 'assignment' || cf.name?.toLowerCase() === 'assignments'
+          );
+          if (!hasAssignment) {
+            parsed.unshift({
+              id: 'filter-assignment',
+              name: 'Assignment',
+              color: '#0b57d0',
+              keywords: [
+                'assignment',
+                'assignments',
+                'tutorial',
+                'tutorials',
+                'homework',
+                'problem set',
+                'problem sets',
+                'pset',
+                'psets',
+                'lab submission',
+                'lab assignment',
+              ],
+            });
+          }
           setCustomFilters(parsed);
         }
       } catch (e) {}
@@ -665,6 +717,12 @@ export default function MobileApp() {
           chip: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50',
           dot: 'bg-blue-500',
           badge: 'Academics',
+        };
+      case 'Assignment':
+        return {
+          chip: 'bg-blue-600/10 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800/60',
+          dot: 'bg-blue-600',
+          badge: 'Assignment',
         };
       case 'Competitions & Tournaments':
         return {

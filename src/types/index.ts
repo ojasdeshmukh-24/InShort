@@ -3,7 +3,8 @@ export type DefaultCategoryType =
   | 'Workshops'
   | 'Competitions & Tournaments'
   | 'Class Rescheduling'
-  | 'General';
+  | 'General'
+  | 'Assignment';
 
 export type CategoryType = DefaultCategoryType | string;
 

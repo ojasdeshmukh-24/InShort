@@ -9,6 +9,24 @@ let uiMode: UiIntegrationMode = 'blended';
 let isBriefExpanded = false;
 let customFiltersCache: CustomFilter[] = [
   {
+    id: 'filter-assignment',
+    name: 'Assignment',
+    color: '#0b57d0',
+    keywords: [
+      'assignment',
+      'assignments',
+      'tutorial',
+      'tutorials',
+      'homework',
+      'problem set',
+      'problem sets',
+      'pset',
+      'psets',
+      'lab submission',
+      'lab assignment',
+    ],
+  },
+  {
     id: 'filter-placements',
     name: 'Placements & Internships',
     color: '#8b5cf6',
@@ -22,8 +40,8 @@ let customFiltersCache: CustomFilter[] = [
   }
 ];
 let labelOverridesCache: Record<string, string> = {};
-let priorityListCache: string[] = ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
-let preferredLabelsCache: string[] = ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
+let priorityListCache: string[] = ['Assignment', 'Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
+let preferredLabelsCache: string[] = ['Assignment', 'Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
 
 // Safe message sender
 function safeSendMessage(message: any) {
@@ -74,6 +92,29 @@ function loadSettings() {
 
         if (Array.isArray(res.acadmail_settings.customFilters)) {
           customFiltersCache = res.acadmail_settings.customFilters;
+          const hasAssignment = customFiltersCache.some(
+            (cf) => cf.id === 'filter-assignment' || cf.name.toLowerCase() === 'assignment' || cf.name.toLowerCase() === 'assignments'
+          );
+          if (!hasAssignment) {
+            customFiltersCache.unshift({
+              id: 'filter-assignment',
+              name: 'Assignment',
+              color: '#0b57d0',
+              keywords: [
+                'assignment',
+                'assignments',
+                'tutorial',
+                'tutorials',
+                'homework',
+                'problem set',
+                'problem sets',
+                'pset',
+                'psets',
+                'lab submission',
+                'lab assignment',
+              ],
+            });
+          }
         }
         if (res.acadmail_settings.labelOverrides) {
           labelOverridesCache = res.acadmail_settings.labelOverrides;
@@ -214,7 +255,8 @@ function classifyInboxItem(
     'Class Rescheduling': 0,
     'Competitions & Tournaments': 0,
     'Workshops': 0,
-    'Academics': courseCode ? 6.0 : 0,
+    'Academics': courseCode ? 5.0 : 0,
+    'Assignment': 0,
     'General': 1.0,
   };
 
@@ -263,14 +305,44 @@ function classifyInboxItem(
 
   scoreWords(
     'Academics',
-    ['assignment', 'homework', 'syllabus', 'midterm', 'endterm', 'quiz', 'exam', 'examination', 'lab manual', 'grading', 'grade submission', 'project evaluation', 'teaching day'],
-    ['canvas', 'moodle', 'classroom', 'prof.', 'professor', 'lecture', 'faculty', 'tutorial', 'office hours', 'ug-i', 'ug-ii', 'pg-i', 'coursework', 'submission'],
-    ['acad', 'faculty', 'professor', 'instructor', 'doaa', 'dean']
+    ['syllabus', 'midterm', 'endterm', 'quiz', 'exam', 'examination', 'lab manual', 'grading', 'grade submission', 'project evaluation', 'teaching day'],
+    ['classroom', 'lecture', 'office hours', 'ug-i', 'ug-ii', 'pg-i', 'coursework', 'grades'],
+    ['acad', 'instructor']
   );
+
+  scoreWords(
+    'Assignment',
+    [
+      'assignment',
+      'assignments',
+      'tutorial',
+      'tutorials',
+      'homework',
+      'problem set',
+      'problem sets',
+      'pset',
+      'psets',
+      'lab submission',
+      'lab assignment',
+      'assignment submission',
+      'tutorial sheet',
+      'tutorial problem',
+      'tutorial problems',
+      'programming assignment',
+    ],
+    ['submission', 'submissions', 'due date', 'submit by', 'solution sheet', 'turnin'],
+    []
+  );
+
+  if (scoreMap['Assignment'] > 0 && courseCode) {
+    scoreMap['Assignment'] += 5.0;
+  }
 
   if (customFiltersCache && customFiltersCache.length > 0) {
     customFiltersCache.forEach((cf) => {
-      if (cf.keywords && cf.keywords.length > 0) {
+      if (cf.name.toLowerCase() === 'assignment') {
+        // Handled specifically with full keywords
+      } else if (cf.keywords && cf.keywords.length > 0) {
         scoreWords(cf.name, cf.keywords, [cf.name.toLowerCase()], []);
       }
     });
@@ -278,10 +350,15 @@ function classifyInboxItem(
 
   // 3. User Priority List Evaluation (Hierarchical Rank-Weighted Routing)
   const rankedPriorities = priorityListCache && priorityListCache.length > 0
-    ? priorityListCache
+    ? [...priorityListCache]
     : (preferredLabelsCache && preferredLabelsCache.length > 0
-        ? preferredLabelsCache
-        : ['Academics', 'Competitions & Tournaments', 'Class Rescheduling']);
+        ? [...preferredLabelsCache]
+        : ['Assignment', 'Academics', 'Competitions & Tournaments', 'Class Rescheduling']);
+
+  const acadRank = rankedPriorities.indexOf('Academics');
+  if (acadRank !== -1 && rankedPriorities.indexOf('Assignment') === -1) {
+    rankedPriorities.splice(acadRank, 0, 'Assignment');
+  }
 
   const boostedScores: Record<string, number> = {};
   const categories = Object.keys(scoreMap);

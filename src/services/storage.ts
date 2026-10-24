@@ -1,5 +1,24 @@
 import { UserSettings, AnalysisResult, ExtractedEmail, CustomFilter } from '../types';
 
+export const DEFAULT_ASSIGNMENT_FILTER: CustomFilter = {
+  id: 'filter-assignment',
+  name: 'Assignment',
+  color: '#0b57d0',
+  keywords: [
+    'assignment',
+    'assignments',
+    'tutorial',
+    'tutorials',
+    'homework',
+    'problem set',
+    'problem sets',
+    'pset',
+    'psets',
+    'lab submission',
+    'lab assignment',
+  ],
+};
+
 const DEFAULT_SETTINGS: UserSettings = {
   apiKey: '',
   provider: 'gemini',
@@ -9,9 +28,10 @@ const DEFAULT_SETTINGS: UserSettings = {
   inPageIntegration: true,
   uiMode: 'blended',
   hasCompletedSetup: false,
-  priorityList: ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'],
-  preferredLabels: ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'],
+  priorityList: ['Assignment', 'Academics', 'Competitions & Tournaments', 'Class Rescheduling'],
+  preferredLabels: ['Assignment', 'Academics', 'Competitions & Tournaments', 'Class Rescheduling'],
   customFilters: [
+    DEFAULT_ASSIGNMENT_FILTER,
     {
       id: 'filter-placements',
       name: 'Placements & Internships',
@@ -32,16 +52,32 @@ const DEFAULT_SETTINGS: UserSettings = {
   ],
 };
 
+function ensureAssignmentFilter(settings: UserSettings): UserSettings {
+  if (!settings.customFilters) {
+    settings.customFilters = [...(DEFAULT_SETTINGS.customFilters || [])];
+    return settings;
+  }
+  const hasAssignment = settings.customFilters.some(
+    (cf) => cf.id === 'filter-assignment' || cf.name.toLowerCase() === 'assignment' || cf.name.toLowerCase() === 'assignments'
+  );
+  if (!hasAssignment) {
+    settings.customFilters = [DEFAULT_ASSIGNMENT_FILTER, ...settings.customFilters];
+  }
+  return settings;
+}
+
 export async function getSettings(): Promise<UserSettings> {
   return new Promise((resolve) => {
     if (typeof chrome === 'undefined' || !chrome.storage?.local) {
       const local = localStorage.getItem('acadmail_settings');
-      resolve(local ? JSON.parse(local) : DEFAULT_SETTINGS);
+      const settings = local ? JSON.parse(local) : DEFAULT_SETTINGS;
+      resolve(ensureAssignmentFilter(settings));
       return;
     }
 
     chrome.storage.local.get(['acadmail_settings'], (result) => {
-      resolve(result.acadmail_settings || DEFAULT_SETTINGS);
+      const settings = result.acadmail_settings || DEFAULT_SETTINGS;
+      resolve(ensureAssignmentFilter(settings));
     });
   });
 }

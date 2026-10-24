@@ -115,9 +115,35 @@ const WORKSHOPS_MEDIUM = [
 ];
 const WORKSHOPS_SENDER = ['ieee', 'acm', 'chapter', 'society', 'cell', 'seminar'];
 
-const ACADEMICS_STRONG = [
+const ASSIGNMENT_STRONG = [
   'assignment',
+  'assignments',
+  'tutorial',
+  'tutorials',
   'homework',
+  'problem set',
+  'problem sets',
+  'pset',
+  'psets',
+  'lab submission',
+  'lab assignment',
+  'assignment submission',
+  'tutorial sheet',
+  'tutorial problem',
+  'tutorial problems',
+  'programming assignment',
+];
+const ASSIGNMENT_MEDIUM = [
+  'submission',
+  'submissions',
+  'due date',
+  'submit by',
+  'deadline',
+  'turnin',
+  'solution sheet',
+];
+
+const ACADEMICS_STRONG = [
   'syllabus',
   'midterm',
   'endterm',
@@ -133,13 +159,11 @@ const ACADEMICS_STRONG = [
 const ACADEMICS_MEDIUM = [
   'classroom',
   'lecture',
-  'tutorial',
   'office hours',
   'ug-i',
   'ug-ii',
   'pg-i',
   'coursework',
-  'submission',
   'grades',
 ];
 const ACADEMICS_SENDER = ['acad', 'instructor'];
@@ -207,7 +231,8 @@ export function calculateKeywordProbabilities(
     'Class Rescheduling': { rawScore: 0, matches: [] },
     'Competitions & Tournaments': { rawScore: 0, matches: [] },
     'Workshops': { rawScore: 0, matches: [] },
-    'Academics': { rawScore: courseCode ? 6.0 : 0, matches: courseCode ? [`course:${courseCode}`] : [] },
+    'Academics': { rawScore: courseCode ? 5.0 : 0, matches: courseCode ? [`course:${courseCode}`] : [] },
+    'Assignment': { rawScore: 0, matches: [] },
     'General': { rawScore: 0, matches: [] },
   };
 
@@ -265,11 +290,23 @@ export function calculateKeywordProbabilities(
   scoreHelper('Competitions & Tournaments', COMPETITIONS_STRONG, COMPETITIONS_MEDIUM, COMPETITIONS_SENDER);
   scoreHelper('Workshops', WORKSHOPS_STRONG, WORKSHOPS_MEDIUM, WORKSHOPS_SENDER);
   scoreHelper('Academics', ACADEMICS_STRONG, ACADEMICS_MEDIUM, ACADEMICS_SENDER);
+  scoreHelper('Assignment', ASSIGNMENT_STRONG, ASSIGNMENT_MEDIUM, []);
+
+  // If Assignment has genuine matches and there is a course code, give courseCode credit to Assignment as well
+  if (scoreMap['Assignment'].rawScore > 0 && courseCode) {
+    scoreMap['Assignment'].rawScore += 5.0;
+    scoreMap['Assignment'].matches.push(`course:${courseCode}`);
+  }
 
   // Score custom filters
   if (customFilters && customFilters.length > 0) {
     customFilters.forEach((cf) => {
-      if (cf.keywords && cf.keywords.length > 0) {
+      if (cf.name.toLowerCase() === 'assignment') {
+        const customOnlyKws = cf.keywords.filter((kw) => !ASSIGNMENT_STRONG.includes(kw.toLowerCase()));
+        if (customOnlyKws.length > 0) {
+          scoreHelper('Assignment', customOnlyKws, [], []);
+        }
+      } else if (cf.keywords && cf.keywords.length > 0) {
         scoreHelper(cf.name, cf.keywords, [cf.name.toLowerCase()], []);
       }
     });
@@ -281,8 +318,14 @@ export function calculateKeywordProbabilities(
   // "priority list is not working properly try again more refined way"
   // "even if prob is low then too add it in high prefernceial labels"
   const rankedPriorities = priorityList && priorityList.length > 0
-    ? priorityList
-    : ['Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
+    ? [...priorityList]
+    : ['Assignment', 'Academics', 'Competitions & Tournaments', 'Class Rescheduling'];
+
+  // If Academics is in the priority list but Assignment is not yet explicitly added, inherit Academics priority
+  const acadRank = rankedPriorities.indexOf('Academics');
+  if (acadRank !== -1 && rankedPriorities.indexOf('Assignment') === -1) {
+    rankedPriorities.splice(acadRank, 0, 'Assignment');
+  }
 
   const boostedScores: Record<string, number> = {};
 
