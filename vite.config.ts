@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
+  base: './',
   plugins: [react()],
   build: {
     rollupOptions: {
       input: {
+        index: resolve(__dirname, 'index.html'),
         sidepanel: resolve(__dirname, 'sidepanel.html'),
         popup: resolve(__dirname, 'popup.html'),
         mobile: resolve(__dirname, 'mobile.html'),
