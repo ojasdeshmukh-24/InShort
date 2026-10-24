@@ -131,31 +131,31 @@ export default function App() {
   const QUICK_PROMPTS = [
     {
       id: 'qp-assignment',
-      label: 'Next Assignment',
+      label: 'Assignment Due Date',
       prompt: 'When is my next assignment due?',
       icon: CalendarCheck2,
-      color: 'from-amber-500/10 to-orange-500/10 border-amber-300 dark:border-amber-700/50 text-amber-800 dark:text-amber-300',
+      category: 'Academics',
     },
     {
       id: 'qp-hackathon',
-      label: 'Hackathons',
+      label: 'Hackathons & Contests',
       prompt: 'Show all hackathons this month.',
       icon: Trophy,
-      color: 'from-purple-500/10 to-indigo-500/10 border-purple-300 dark:border-purple-700/50 text-purple-800 dark:text-purple-300',
+      category: 'Competitions',
     },
     {
       id: 'qp-cancelled',
       label: 'Class Cancellations',
       prompt: 'Did any professor cancel a class?',
       icon: AlertTriangle,
-      color: 'from-rose-500/10 to-pink-500/10 border-rose-300 dark:border-rose-700/50 text-rose-800 dark:text-rose-300',
+      category: 'Schedules',
     },
     {
       id: 'qp-club',
-      label: 'Club Interviews',
+      label: 'Club Inductions & Talks',
       prompt: 'Which club interviews are coming up?',
       icon: Briefcase,
-      color: 'from-emerald-500/10 to-teal-500/10 border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300',
+      category: 'Recruitment',
     },
   ];
 
@@ -813,34 +813,29 @@ export default function App() {
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
-      <div className="flex flex-col min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 font-sans antialiased text-xs selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-200">
+      <div className="flex flex-col min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans antialiased text-xs selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-200">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200/70 dark:border-slate-800/80 px-3.5 py-2.5 flex items-center justify-between transition-colors">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs">
-              <GraduationCap className="w-4 h-4" />
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#0e1526]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-3.5 py-2.5 flex items-center justify-between transition-colors">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs">
+              <GraduationCap className="w-3.5 h-3.5" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <h1 className="text-xs font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  AcadMail
-                </h1>
-                <span className="px-1 py-0.2 bg-gradient-to-r from-blue-600 to-indigo-600 text-[9px] font-black text-white rounded">
-                  AI
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none">
-                Academic Copilot
-              </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[13px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+                AcadMail
+              </span>
+              <span className="font-mono text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                v1.0
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+              className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-md transition"
             >
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
             </button>
@@ -852,7 +847,7 @@ export default function App() {
               }}
               disabled={isScanningInbox || loading}
               title="Refresh current mailbox"
-              className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+              className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 rounded-md transition"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${
@@ -863,10 +858,10 @@ export default function App() {
             <button
               onClick={() => setShowSettings(!showSettings)}
               title="AI Configuration"
-              className={`p-1.5 rounded-lg transition ${
+              className={`p-1.5 rounded-md transition ${
                 showSettings
                   ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70'
               }`}
             >
               <Settings className="w-3.5 h-3.5" />
@@ -874,79 +869,68 @@ export default function App() {
           </div>
         </header>
 
-        {/* 4-Tab Segmented Switcher Bar */}
-        <div className="px-2 pt-2 pb-1 bg-white dark:bg-[#0f172a] border-b border-slate-200/60 dark:border-slate-800/80 grid grid-cols-4 gap-1 transition-colors">
-          <button
-            onClick={() => setActiveTab('buckets')}
-            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
-              activeTab === 'buckets'
-                ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Buckets</span>
-            {inboxItems.length > 0 && (
-              <span
-                className={`px-1 py-0.2 rounded-full text-[8px] font-extrabold ${
-                  activeTab === 'buckets'
-                    ? 'bg-slate-800 dark:bg-blue-700 text-slate-200'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {inboxItems.length}
-              </span>
-            )}
-          </button>
+        {/* Linear/Mac Style Segmented Switcher */}
+        <div className="px-3 pt-2.5 pb-1.5 bg-[#f8fafc] dark:bg-[#0b0f19] border-b border-slate-200/50 dark:border-slate-800/60">
+          <div className="p-0.5 bg-slate-200/60 dark:bg-[#131b2c] rounded-xl flex items-center gap-0.5 border border-slate-200/60 dark:border-slate-800/60">
+            <button
+              onClick={() => setActiveTab('buckets')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'buckets'
+                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 shrink-0 opacity-80" />
+              <span className="truncate">Buckets</span>
+              {inboxItems.length > 0 && (
+                <span className="font-mono text-[9px] font-semibold text-slate-400 dark:text-slate-500">
+                  {inboxItems.length}
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => setActiveTab('deadlines')}
-            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
-              activeTab === 'deadlines'
-                ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
-            <span className="truncate">Deadlines</span>
-            {pendingDeadlinesCount > 0 && (
-              <span
-                className={`px-1 py-0.2 rounded-full text-[8px] font-extrabold ${
-                  activeTab === 'deadlines'
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
-                }`}
-              >
-                {pendingDeadlinesCount}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => setActiveTab('deadlines')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'deadlines'
+                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <CalendarCheck2 className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+              <span className="truncate">Deadlines</span>
+              {pendingDeadlinesCount > 0 && (
+                <span className="font-mono text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                  {pendingDeadlinesCount}
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition relative ${
-              activeTab === 'chat'
-                ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Bot className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
-            <span className="truncate">Ask AI</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0"></span>
-          </button>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'chat'
+                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+              <span className="truncate">Copilot</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('detail')}
-            className={`py-1.5 px-1 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition ${
-              activeTab === 'detail'
-                ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 shrink-0 text-blue-400" />
-            <span className="truncate">Detail</span>
-            {email && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>}
-          </button>
+            <button
+              onClick={() => setActiveTab('detail')}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'detail'
+                  ? 'bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+              <span className="truncate">Detail</span>
+              {email && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>}
+            </button>
+          </div>
         </div>
 
         {/* Main Content Area */}
@@ -1687,59 +1671,56 @@ export default function App() {
           {activeTab === 'chat' && (
             <div className="flex flex-col h-[calc(100vh-125px)] animate-in fade-in duration-200">
               {/* Copilot Header */}
-              <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-blue-200/60 dark:border-blue-900/40 rounded-xl mb-2.5 shrink-0">
+              <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl mb-2.5 shrink-0 shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 leading-none">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[12px] font-semibold text-slate-900 dark:text-white tracking-tight">
                       Inbox Copilot
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
-                        Grounded AI
-                      </span>
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1 leading-none">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                        {inboxItems.length} emails
-                      </span>
-                      <span className="text-slate-400 text-[10px]">•</span>
-                      <button
-                        onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
-                        title="Click to toggle between Instant Local Engine and Cloud LLM"
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition ${
-                          copilotMode === 'instant'
-                            ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                            : 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
-                        }`}
-                      >
-                        {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
-                      </button>
-                    </div>
+                    </span>
+                    <span className="font-mono text-[9px] text-slate-400 dark:text-slate-500">
+                      • {inboxItems.length} emails grounded
+                    </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setChatMessages([
-                      {
-                        id: 'msg-welcome',
-                        role: 'assistant',
-                        text: "Chat cleared! Ask me anything about your university emails or pick a prompt below.",
-                        timestamp: 'Just now',
-                      },
-                    ]);
-                  }}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  Clear
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
+                    title="Click to toggle between Instant Local Engine and Cloud LLM"
+                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                      copilotMode === 'instant'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                        : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
+                    }`}
+                  >
+                    {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setChatMessages([
+                        {
+                          id: 'msg-welcome',
+                          role: 'assistant',
+                          text: "Chat cleared. Ask anything about coursework, deadlines, or campus notices.",
+                          timestamp: 'Just now',
+                        },
+                      ]);
+                    }}
+                    className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-1.5 py-0.5 rounded transition"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
 
-              {/* Quick Prompt Suggestions */}
-              <div className="mb-2 shrink-0">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
-                  Suggested Questions
-                </p>
+              {/* Quick Prompt Queries */}
+              <div className="mb-2.5 shrink-0 space-y-1">
+                <div className="flex items-center justify-between px-0.5">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
+                    Quick Queries
+                  </span>
+                  <span className="font-mono text-[9px] text-slate-400">1-tap</span>
+                </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {QUICK_PROMPTS.map((qp) => {
                     const Icon = qp.icon;
@@ -1748,13 +1729,22 @@ export default function App() {
                         key={qp.id}
                         onClick={() => handleSendChatMessage(qp.prompt, true)}
                         disabled={isChatThinking}
-                        className={`p-2 rounded-xl text-left border bg-gradient-to-br ${qp.color} hover:scale-[1.01] active:scale-[0.98] transition flex flex-col justify-between gap-1 shadow-2xs group cursor-pointer`}
+                        className="p-2 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
                       >
-                        <div className="flex items-center gap-1.5">
-                          <Icon className="w-3.5 h-3.5 shrink-0 opacity-80 group-hover:opacity-100" />
-                          <span className="text-[10px] font-bold line-clamp-1">{qp.label}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors">
+                            <Icon className="w-3 h-3" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                              {qp.label}
+                            </div>
+                            <div className="font-mono text-[8px] text-slate-400 truncate">
+                              "{qp.prompt.slice(0, 24)}..."
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-[9px] opacity-75 line-clamp-1">"{qp.prompt}"</span>
+                        <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition shrink-0" />
                       </button>
                     );
                   })}
@@ -1771,10 +1761,10 @@ export default function App() {
                     }`}
                   >
                     <div
-                      className={`max-w-[92%] rounded-2xl px-3 py-2 text-xs shadow-xs ${
+                      className={`max-w-[92%] rounded-xl px-3 py-2 text-xs shadow-2xs ${
                         msg.role === 'user'
-                          ? 'bg-blue-600 text-white rounded-br-xs'
-                          : 'bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
+                          ? 'bg-slate-900 dark:bg-blue-600 text-white rounded-br-xs font-medium'
+                          : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
                       }`}
                     >
                       <div className="whitespace-pre-line leading-relaxed space-y-1 text-[11px]">

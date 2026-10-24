@@ -137,31 +137,31 @@ export default function MobileApp() {
   const QUICK_PROMPTS = [
     {
       id: 'qp-assignment',
-      label: 'Next Assignment',
+      label: 'Assignment Due Date',
       prompt: 'When is my next assignment due?',
       icon: CalendarCheck2,
-      color: 'from-amber-500/10 to-orange-500/10 border-amber-300 dark:border-amber-700/50 text-amber-800 dark:text-amber-300',
+      category: 'Academics',
     },
     {
       id: 'qp-hackathon',
-      label: 'Hackathons',
+      label: 'Hackathons & Contests',
       prompt: 'Show all hackathons this month.',
       icon: Trophy,
-      color: 'from-purple-500/10 to-indigo-500/10 border-purple-300 dark:border-purple-700/50 text-purple-800 dark:text-purple-300',
+      category: 'Competitions',
     },
     {
       id: 'qp-cancelled',
       label: 'Class Cancellations',
       prompt: 'Did any professor cancel a class?',
       icon: AlertTriangle,
-      color: 'from-rose-500/10 to-pink-500/10 border-rose-300 dark:border-rose-700/50 text-rose-800 dark:text-rose-300',
+      category: 'Schedules',
     },
     {
       id: 'qp-club',
-      label: 'Club Interviews',
+      label: 'Club Inductions & Talks',
       prompt: 'Which club interviews are coming up?',
       icon: Briefcase,
-      color: 'from-emerald-500/10 to-teal-500/10 border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300',
+      category: 'Recruitment',
     },
   ];
 
@@ -466,51 +466,51 @@ export default function MobileApp() {
         return {
           chip: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50',
           dot: 'bg-blue-500',
-          badge: '🎓 Academics',
+          badge: 'Academics',
         };
       case 'Competitions & Tournaments':
         return {
           chip: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/50',
           dot: 'bg-amber-500',
-          badge: '🏆 Contests',
+          badge: 'Competitions',
         };
       case 'Workshops':
         return {
           chip: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50',
           dot: 'bg-emerald-500',
-          badge: '🛠️ Workshop',
+          badge: 'Workshop',
         };
       case 'Class Rescheduling':
         return {
           chip: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/50',
           dot: 'bg-rose-500',
-          badge: '⏰ Rescheduled',
+          badge: 'Rescheduled',
         };
       case 'General':
         return {
           chip: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800',
           dot: 'bg-slate-500',
-          badge: '📜 General',
+          badge: 'General',
         };
       default:
         if (category.toLowerCase().includes('placement') || category.toLowerCase().includes('intern')) {
           return {
             chip: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/50',
             dot: 'bg-purple-500',
-            badge: `💼 ${category}`,
+            badge: category,
           };
         }
         if (category.toLowerCase().includes('hostel') || category.toLowerCase().includes('mess')) {
           return {
             chip: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-900/50',
             dot: 'bg-cyan-500',
-            badge: `🏠 ${category}`,
+            badge: category,
           };
         }
         return {
           chip: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900/50',
           dot: 'bg-violet-500',
-          badge: `🏷️ ${category}`,
+          badge: category,
         };
     }
   };
@@ -540,27 +540,22 @@ export default function MobileApp() {
     <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="flex flex-col min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 font-sans pb-20 select-none">
         {/* Mobile App Header */}
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs">
-              <GraduationCap className="w-4 h-4" />
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0e1526]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs">
+              <GraduationCap className="w-3.5 h-3.5" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <h1 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  AcadMail
-                </h1>
-                <span className="px-1.5 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-[9px] font-black text-white rounded">
-                  MOBILE
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-none">
-                Campus AI Email Copilot
-              </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[13px] font-semibold text-slate-900 dark:text-white tracking-[-0.02em]">
+                AcadMail
+              </span>
+              <span className="font-mono text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                Mobile
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               onClick={toggleTheme}
               className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-lg transition"
@@ -785,18 +780,19 @@ export default function MobileApp() {
         {/* ========================================================================= */}
         {activeTab === 'deadlines' && (
           <main className="p-4 space-y-3.5">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-xs space-y-1">
+            {/* Clean Deadlines Header */}
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-200">
-                  Campus Deadlines Timeline
+                <span className="font-mono text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                  Deadlines & Schedule
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold">
-                  {deadlines.filter((d) => !d.completed).length} Pending
+                <span className="font-mono text-[9px] font-medium px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+                  {deadlines.filter((d) => !d.completed).length} pending
                 </span>
               </div>
-              <h2 className="text-base font-extrabold">Active Academic Due Dates</h2>
-              <p className="text-[11px] text-blue-100">
-                1-tap direct sync to your phone's Google Calendar
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight">Active Academic Deadlines</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Extracted from professor emails with 1-tap Google Calendar sync.
               </p>
             </div>
 
@@ -896,52 +892,55 @@ export default function MobileApp() {
         {activeTab === 'chat' && (
           <main className="p-4 flex flex-col h-[calc(100vh-130px)]">
             {/* Header info */}
-            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-3.5 text-white shadow-xs space-y-1 shrink-0 mb-2.5">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs space-y-1 shrink-0 mb-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-200 flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5" />
-                  Grounded Inbox Copilot
-                </span>
-                <button
-                  onClick={() => {
-                    setChatMessages([
-                      {
-                        id: 'msg-welcome',
-                        role: 'assistant',
-                        text: "Chat cleared! Ask me anything about your university emails or select a suggestion below.",
-                        timestamp: 'Just now',
-                      },
-                    ]);
-                  }}
-                  className="text-[10px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-lg transition"
-                >
-                  Clear
-                </button>
-              </div>
-              <h2 className="text-sm font-extrabold">Instant Campus Answers</h2>
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <p className="text-[11px] text-blue-100">
-                  Grounded on campus emails
-                </p>
-                <span className="text-blue-300 text-[10px]">•</span>
-                <button
-                  onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
-                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition ${
-                    copilotMode === 'instant'
-                      ? 'bg-amber-400 text-slate-900'
-                      : 'bg-white/20 text-white'
-                  }`}
-                >
-                  {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[12px] font-semibold text-slate-900 dark:text-white tracking-tight">
+                    Inbox Copilot
+                  </span>
+                  <span className="font-mono text-[9px] text-slate-400">
+                    • {emails.length} emails
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCopilotMode(prev => prev === 'instant' ? 'cloud' : 'instant')}
+                    className={`font-mono text-[9px] font-medium px-2 py-0.5 rounded border transition cursor-pointer ${
+                      copilotMode === 'instant'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                        : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900'
+                    }`}
+                  >
+                    {copilotMode === 'instant' ? '⚡ Instant (0s)' : (apiKey || groqKey ? '☁️ Cloud LLM' : '⚡ Local Engine')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setChatMessages([
+                        {
+                          id: 'msg-welcome',
+                          role: 'assistant',
+                          text: "Chat cleared. Ask anything about coursework, deadlines, or campus notices.",
+                          timestamp: 'Just now',
+                        },
+                      ]);
+                    }}
+                    className="text-[10px] text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded transition"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Quick Questions Chips */}
-            <div className="mb-2 shrink-0">
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
-                Suggested Questions
-              </p>
+            {/* Quick Prompt Queries */}
+            <div className="mb-2.5 shrink-0 space-y-1">
+              <div className="flex items-center justify-between px-0.5">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Quick Queries
+                </span>
+                <span className="font-mono text-[9px] text-slate-400">1-tap</span>
+              </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {QUICK_PROMPTS.map((qp) => {
                   const Icon = qp.icon;
@@ -950,13 +949,22 @@ export default function MobileApp() {
                       key={qp.id}
                       onClick={() => handleSendChatMessage(qp.prompt, true)}
                       disabled={isChatThinking}
-                      className={`p-2 rounded-xl text-left border bg-gradient-to-br ${qp.color} hover:scale-[1.01] active:scale-[0.98] transition flex flex-col justify-between gap-1 shadow-2xs group cursor-pointer`}
+                      className="p-2 rounded-xl text-left border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-slate-400 dark:hover:border-slate-600 transition flex items-center justify-between gap-1.5 group cursor-pointer shadow-2xs"
                     >
-                      <div className="flex items-center gap-1.5">
-                        <Icon className="w-3.5 h-3.5 shrink-0 opacity-80" />
-                        <span className="text-[10px] font-bold line-clamp-1">{qp.label}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors">
+                          <Icon className="w-3 h-3" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                            {qp.label}
+                          </div>
+                          <div className="font-mono text-[8px] text-slate-400 truncate">
+                            "{qp.prompt.slice(0, 24)}..."
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-[9px] opacity-75 line-clamp-1">"{qp.prompt}"</span>
+                      <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition shrink-0" />
                     </button>
                   );
                 })}
@@ -973,9 +981,9 @@ export default function MobileApp() {
                   }`}
                 >
                   <div
-                    className={`max-w-[90%] rounded-2xl px-3 py-2 text-xs shadow-xs ${
+                    className={`max-w-[90%] rounded-xl px-3 py-2 text-xs shadow-2xs ${
                       msg.role === 'user'
-                        ? 'bg-blue-600 text-white rounded-br-xs'
+                        ? 'bg-slate-900 dark:bg-blue-600 text-white rounded-br-xs font-medium'
                         : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800/80 rounded-bl-xs'
                     }`}
                   >
@@ -1082,18 +1090,23 @@ export default function MobileApp() {
         {/* ========================================================================= */}
         {activeTab === 'polish' && (
           <main className="p-4 space-y-3.5">
-            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-4 text-white shadow-xs space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-violet-200">
-                Professor Tone Polisher
-              </span>
-              <h2 className="text-base font-extrabold">Instant Academic Email Drafter</h2>
-              <p className="text-[11px] text-violet-100">
-                Turns informal shorthand into courteous university correspondence
+            {/* Professional Tone Header */}
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                  Email Studio
+                </span>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Academic Formality</span>
+              </div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight">Professor Tone Polisher</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Transforms informal rough thoughts into respectful university correspondence.
               </p>
             </div>
 
             {/* Input Box */}
-            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 space-y-2.5 shadow-2xs">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
               <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
                 Type your rough notes:
               </label>
@@ -1160,7 +1173,7 @@ export default function MobileApp() {
               <button
                 onClick={handlePolishDraft}
                 disabled={isPolishing || !roughNotes.trim()}
-                className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition disabled:opacity-50"
+                className="w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition disabled:opacity-50 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>{isPolishing ? 'Polishing Academic Tone...' : 'Generate Polished Email'}</span>
@@ -1461,10 +1474,10 @@ export default function MobileApp() {
                 })()}
 
                 {/* AI Executive Summary Card */}
-                <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-blue-950/40 dark:to-indigo-950/30 border border-blue-200/80 dark:border-blue-900/40 rounded-2xl p-3.5 space-y-2">
+                <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1 font-mono">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-500" />
                       <span>Executive Summary</span>
                     </span>
                     {analyzingEmailId && (
@@ -1716,16 +1729,16 @@ export default function MobileApp() {
         {/* ========================================================================= */}
         {/* TOUCH-FRIENDLY BOTTOM NAVIGATION BAR */}
         {/* ========================================================================= */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 px-2 py-2 flex items-center justify-around">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0e1526]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 px-2 py-2 flex items-center justify-around">
           <button
             onClick={() => setActiveTab('inbox')}
             className={`flex flex-col items-center gap-1 transition ${
               activeTab === 'inbox'
-                ? 'text-blue-600 dark:text-blue-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'text-slate-900 dark:text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            <Layers className="w-5 h-5" />
+            <Layers className="w-4 h-4" />
             <span className="text-[10px]">Buckets</span>
           </button>
 
@@ -1733,14 +1746,14 @@ export default function MobileApp() {
             onClick={() => setActiveTab('deadlines')}
             className={`flex flex-col items-center gap-1 transition relative ${
               activeTab === 'deadlines'
-                ? 'text-blue-600 dark:text-blue-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'text-slate-900 dark:text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            <Calendar className="w-5 h-5" />
+            <Calendar className="w-4 h-4" />
             <span className="text-[10px]">Deadlines</span>
             {deadlines.filter((d) => !d.completed).length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-0 right-2" />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 absolute top-0 right-2" />
             )}
           </button>
 
@@ -1748,24 +1761,24 @@ export default function MobileApp() {
             onClick={() => setActiveTab('chat')}
             className={`flex flex-col items-center gap-1 transition relative ${
               activeTab === 'chat'
-                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'text-slate-900 dark:text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            <Bot className="w-5 h-5" />
-            <span className="text-[10px]">Ask AI</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 absolute top-0 right-1.5 animate-pulse" />
+            <Bot className="w-4 h-4" />
+            <span className="text-[10px]">Copilot</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 absolute top-0 right-1.5" />
           </button>
 
           <button
             onClick={() => setActiveTab('polish')}
             className={`flex flex-col items-center gap-1 transition ${
               activeTab === 'polish'
-                ? 'text-blue-600 dark:text-blue-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'text-slate-900 dark:text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-4 h-4" />
             <span className="text-[10px]">Polish</span>
           </button>
 
@@ -1773,11 +1786,11 @@ export default function MobileApp() {
             onClick={() => setActiveTab('settings')}
             className={`flex flex-col items-center gap-1 transition ${
               activeTab === 'settings'
-                ? 'text-blue-600 dark:text-blue-400 font-bold'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'text-slate-900 dark:text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4" />
             <span className="text-[10px]">Settings</span>
           </button>
         </nav>
