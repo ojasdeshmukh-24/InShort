@@ -599,13 +599,13 @@ export default function MobileApp() {
             </div>
 
             {/* Horizontal Scrolling Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[13px]">
               <button
                 onClick={() => setSelectedCategory('ALL')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'ALL'
-                    ? 'bg-slate-900 dark:bg-blue-600 text-white border-transparent'
-                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 All ({emails.length})
@@ -613,10 +613,10 @@ export default function MobileApp() {
 
               <button
                 onClick={() => setSelectedCategory('Academics')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Academics'
-                    ? 'bg-blue-600 text-white border-transparent'
-                    : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/50'
+                    ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>Academics</span>
@@ -624,10 +624,10 @@ export default function MobileApp() {
 
               <button
                 onClick={() => setSelectedCategory('Competitions & Tournaments')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Competitions & Tournaments'
-                    ? 'bg-amber-600 text-white border-transparent'
-                    : 'bg-amber-50/60 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50'
+                    ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>Competitions</span>
@@ -635,10 +635,10 @@ export default function MobileApp() {
 
               <button
                 onClick={() => setSelectedCategory('Workshops')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Workshops'
-                    ? 'bg-emerald-600 text-white border-transparent'
-                    : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
+                    ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>Workshops</span>
@@ -646,10 +646,10 @@ export default function MobileApp() {
 
               <button
                 onClick={() => setSelectedCategory('Class Rescheduling')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'Class Rescheduling'
-                    ? 'bg-rose-600 text-white border-transparent'
-                    : 'bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50'
+                    ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>Rescheduled</span>
@@ -657,10 +657,10 @@ export default function MobileApp() {
 
               <button
                 onClick={() => setSelectedCategory('General')}
-                className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                   selectedCategory === 'General'
-                    ? 'bg-slate-700 text-white border-transparent'
-                    : 'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                    ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>PhD & General</span>
@@ -668,17 +668,16 @@ export default function MobileApp() {
 
               {/* Dynamic User Custom Filter Pills */}
               {customFilters.map((f) => {
-                const styles = getCategoryStyles(f.name);
                 const isSelected = selectedCategory === f.name;
 
                 return (
                   <button
                     key={f.id}
                     onClick={() => setSelectedCategory(f.name)}
-                    className={`px-3 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
+                    className={`px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap transition border ${
                       isSelected
-                        ? 'bg-purple-600 text-white border-transparent shadow-xs'
-                        : `${styles.chip}`
+                        ? 'bg-blue-600 text-white border-transparent shadow-xs'
+                        : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     <span>{f.name}</span>
