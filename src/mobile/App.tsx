@@ -1814,9 +1814,8 @@ export default function MobileApp() {
                 {/* AI Executive Summary Card */}
                 <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1 font-mono">
-                      <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Executive Summary</span>
+                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider font-mono">
+                      Executive Summary
                     </span>
                     {analyzingEmailId && (
                       <span className="text-[9px] font-bold text-blue-600 animate-pulse">
@@ -1850,15 +1849,13 @@ export default function MobileApp() {
                           className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800"
                         >
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                             <span className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
                               {act.title}
                             </span>
                           </div>
                           {act.deadline && (
-                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-amber-500" />
-                              <span>{act.deadline}</span>
+                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md shrink-0">
+                              {act.deadline}
                             </span>
                           )}
                         </div>
@@ -1876,9 +1873,8 @@ export default function MobileApp() {
                         href={m.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs transition"
+                        className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center shadow-2xs transition"
                       >
-                        <Video className="w-3.5 h-3.5" />
                         <span>Join Meeting: {m.title}</span>
                       </a>
                     ))}

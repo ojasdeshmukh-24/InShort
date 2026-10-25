@@ -2472,26 +2472,19 @@ export default function App() {
             <div className="space-y-3">
               <button
                 onClick={() => setActiveTab('buckets')}
-                className="text-xs font-semibold text-[#0b57d0] dark:text-[#a8c7fa] hover:underline flex items-center gap-1 group transition cursor-pointer"
+                className="text-xs font-semibold text-[#0b57d0] dark:text-[#a8c7fa] hover:underline transition cursor-pointer"
               >
-                <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-                <span>Back to Smart Buckets</span>
+                ← Back to Smart Buckets
               </button>
 
               {!email && !loading && (
-                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-6 text-center space-y-2.5">
-                  <div className="w-10 h-10 mx-auto rounded-lg bg-[#f0f4f9] dark:bg-[#28292c] text-[#5f6368] dark:text-[#8e918f] flex items-center justify-center">
-                    <Mail className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
-                      No email opened
-                    </h4>
-                    <p className="text-xs text-[#5f6368] dark:text-[#8e918f] mt-0.5">
-                      Select any email from <strong>Smart Buckets</strong> or click an email in
-                      Gmail.
-                    </p>
-                  </div>
+                <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-6 text-center space-y-1.5">
+                  <h4 className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
+                    No email opened
+                  </h4>
+                  <p className="text-xs text-[#5f6368] dark:text-[#8e918f]">
+                    Select any email from <strong>Smart Buckets</strong> or click an email in Gmail.
+                  </p>
                 </div>
               )}
 
@@ -2516,9 +2509,8 @@ export default function App() {
                     <button
                       onClick={() => triggerAnalysis(email)}
                       disabled={loading}
-                      className="shrink-0 py-1.5 px-2.5 bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 text-[#1f1f1f] dark:text-[#e3e3e3] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] border border-[#dadce0] dark:border-[#3c4043] rounded-lg transition flex items-center gap-1 font-semibold text-xs cursor-pointer"
+                      className="shrink-0 py-1.5 px-2.5 bg-[#f0f4f9] dark:bg-[#28292c] hover:bg-[#c2e7ff]/30 dark:hover:bg-[#004a77]/40 text-[#1f1f1f] dark:text-[#e3e3e3] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] border border-[#dadce0] dark:border-[#3c4043] rounded-lg transition font-semibold text-xs cursor-pointer"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
                       <span>Re-analyze</span>
                     </button>
                   </div>
@@ -2599,22 +2591,19 @@ export default function App() {
                       })()}
 
                       {analysis.detectedCourseCode && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold bg-[#f1f3f4] dark:bg-[#28292d] text-[#3c4043] dark:text-[#c4c7c5] border border-[#dadce0] dark:border-[#3c4043] text-[11px]">
-                          <BookOpen className="w-3 h-3" />
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold bg-[#f1f3f4] dark:bg-[#28292d] text-[#3c4043] dark:text-[#c4c7c5] border border-[#dadce0] dark:border-[#3c4043] text-[11px]">
                           <span className="font-mono">{analysis.detectedCourseCode}</span>
                         </span>
                       )}
 
                       {analysis.urgency === 'high' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold bg-[#fce8e6] dark:bg-[#3d1417] text-[#c5221f] dark:text-[#f29e99] border border-[#fad2cf] dark:border-[#66272c] text-[11px]">
-                          <Flame className="w-3 h-3" />
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold bg-[#fce8e6] dark:bg-[#3d1417] text-[#c5221f] dark:text-[#f29e99] border border-[#fad2cf] dark:border-[#66272c] text-[11px]">
                           <span>Urgent</span>
                         </span>
                       )}
 
                       {analysis.providerUsed && (
-                        <span className="ml-auto text-[10.5px] text-[#5f6368] dark:text-[#8e918f] font-medium flex items-center gap-0.5">
-                          <Zap className="w-3 h-3 text-amber-500" />
+                        <span className="ml-auto text-[10.5px] text-[#5f6368] dark:text-[#8e918f] font-medium">
                           <span>{analysis.providerUsed}</span>
                         </span>
                       )}
@@ -2642,24 +2631,17 @@ export default function App() {
                   {/* 1. Bulleted Executive Summary */}
                   <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
-                        <Sparkles className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
-                        <span>AI Executive Summary</span>
+                      <div className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
+                        AI Executive Summary
                       </div>
                       <button
                         onClick={handleCopySummary}
-                        className="text-xs font-semibold text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] flex items-center gap-1 transition cursor-pointer"
+                        className="text-xs font-semibold text-[#5f6368] hover:text-[#1f1f1f] dark:text-[#8e918f] dark:hover:text-[#e3e3e3] transition cursor-pointer"
                       >
                         {copiedSummary ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                            <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
-                          </>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">Copied</span>
                         ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" />
-                            <span>Copy</span>
-                          </>
+                          <span>Copy</span>
                         )}
                       </button>
                     </div>
@@ -2680,9 +2662,8 @@ export default function App() {
                   {/* 2. Action Items & Deadlines */}
                   <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
-                        <Clock className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
-                        <span>Action Items & Deadlines</span>
+                      <div className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
+                        Action Items & Deadlines
                       </div>
                       <span className="text-xs px-2.5 py-0.5 bg-[#eaeff8] dark:bg-[#28292c] text-[#1f1f1f] dark:text-[#c4c7c5] rounded-md font-bold">
                         {analysis.actionItems.filter((i) => !i.completed).length} pending
@@ -2705,16 +2686,13 @@ export default function App() {
                             }`}
                           >
                             <div className="flex items-start gap-2.5">
-                              <button
-                                onClick={() => toggleActionItem(item.id)}
-                                className="mt-0.5 text-[#5f6368] hover:text-[#0b57d0] dark:hover:text-[#a8c7fa] transition shrink-0 cursor-pointer"
-                              >
-                                {item.completed ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                ) : (
-                                  <Circle className="w-4 h-4" />
-                                )}
-                              </button>
+                              <input
+                                type="checkbox"
+                                checked={item.completed}
+                                onChange={() => toggleActionItem(item.id)}
+                                className="w-4 h-4 mt-0.5 rounded cursor-pointer accent-[#0b57d0] dark:accent-[#a8c7fa] shrink-0"
+                                aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
+                              />
 
                               <div className="flex-1 min-w-0">
                                 <p
@@ -2730,13 +2708,8 @@ export default function App() {
                                 {item.deadline && (
                                   <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#f1f3f4] dark:border-[#2c2d30]">
                                     <span
-                                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold border ${getDeadlineBadgeStyle(item.deadline).chip}`}
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${getDeadlineBadgeStyle(item.deadline).chip}`}
                                     >
-                                      {getDeadlineBadgeStyle(item.deadline).isTime ? (
-                                        <Clock className={`w-3.5 h-3.5 shrink-0 ${getDeadlineBadgeStyle(item.deadline).icon}`} />
-                                      ) : (
-                                        <Calendar className={`w-3.5 h-3.5 shrink-0 ${getDeadlineBadgeStyle(item.deadline).icon}`} />
-                                      )}
                                       <span>{item.deadline}</span>
                                     </span>
 
@@ -2748,10 +2721,9 @@ export default function App() {
                                       )}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="inline-flex items-center gap-1 text-xs text-[#0b57d0] hover:text-[#0842a0] dark:text-[#a8c7fa] hover:underline font-semibold transition"
+                                      className="text-xs text-[#0b57d0] hover:text-[#0842a0] dark:text-[#a8c7fa] hover:underline font-semibold transition"
                                     >
-                                      <span>+ Google Calendar</span>
-                                      <ExternalLink className="w-3 h-3" />
+                                      + Google Calendar
                                     </a>
                                   </div>
                                 )}
@@ -2766,9 +2738,8 @@ export default function App() {
                   {/* 3. Event & Registration Links */}
                   {analysis.meetingLinks && analysis.meetingLinks.length > 0 && (
                     <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2">
-                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
-                        <Video className="w-3.5 h-3.5 text-[#0b57d0] dark:text-[#a8c7fa]" />
-                        <span>Event & Registration Links</span>
+                      <div className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
+                        Event & Registration Links
                       </div>
                       <div className="space-y-1.5">
                         {analysis.meetingLinks.map((link, idx) => (
@@ -2784,8 +2755,8 @@ export default function App() {
                                 {link.title || 'Join Event / Register'}
                               </span>
                             </div>
-                            <span className="text-xs font-semibold text-[#0b57d0] dark:text-[#a8c7fa] group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5 shrink-0">
-                              Open <ChevronRight className="w-3.5 h-3.5" />
+                            <span className="text-xs font-semibold text-[#0b57d0] dark:text-[#a8c7fa] group-hover:underline shrink-0">
+                              Open
                             </span>
                           </a>
                         ))}
@@ -2796,9 +2767,8 @@ export default function App() {
                   {/* 4. Smart Academic Quick Replies */}
                   <div className="bg-white dark:bg-[#1e1f20] border border-[#e0e2ec] dark:border-[#2c2d30] rounded-xl p-3.5 shadow-2xs space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
-                        <SendHorizontal className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
-                        <span>Academic Quick Replies</span>
+                      <div className="font-bold text-[#1f1f1f] dark:text-[#e3e3e3] text-sm">
+                        Academic Quick Replies
                       </div>
                       <span className="text-xs text-[#5f6368] dark:text-[#8e918f] font-medium">
                         1-Click Copy
@@ -2810,22 +2780,16 @@ export default function App() {
                         <button
                           key={idx}
                           onClick={() => handleCopyReplyPreset(reply.text, idx)}
-                          className={`p-2.5 rounded-lg border text-center transition font-semibold text-xs flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                          className={`py-2.5 px-2 rounded-lg border text-center transition font-semibold text-xs flex items-center justify-center cursor-pointer ${
                             copiedReplyIndex === idx
                               ? 'bg-[#eaeff8] dark:bg-[#28292c] border-[#0b57d0] text-[#0b57d0] dark:text-[#a8c7fa]'
                               : 'bg-white dark:bg-[#1e1f20] hover:bg-[#f0f4f9] dark:hover:bg-[#28292c] border-[#dadce0] dark:border-[#3c4043] text-[#1f1f1f] dark:text-[#e3e3e3]'
                           }`}
                         >
                           {copiedReplyIndex === idx ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                              <span>Copied!</span>
-                            </>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">Copied!</span>
                           ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5 text-[#5f6368] dark:text-[#8e918f]" />
-                              <span>{reply.title}</span>
-                            </>
+                            <span>{reply.title}</span>
                           )}
                         </button>
                       ))}
